@@ -11,8 +11,11 @@
 #include <iostream>
 #include <fstream>
 
-#include "AndorCCD.h"
+#include "andorCCD.h"
 #include "atmcdLXd.h"
+
+#include <iocsh.h>
+#include <epicsExport.h>
 
 using std::cout;
 using std::endl;
@@ -1576,7 +1579,8 @@ static void andorDataTaskC(void *drvPvt)
  * @param maxBuffers The maximum number of data frame buffers for the ADDriver class.
  * @param maxMemory The maximum memory size allowed in the ADDriver class.
  */
-extern "C" int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, int maxSizeX, int maxSizeY)
+extern "C" {
+int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, int maxSizeX, int maxSizeY)
 {
   /*Instantiate class.*/
   new AndorCCD(portName, maxBuffers, maxMemory, maxSizeX, maxSizeY);
@@ -1584,5 +1588,31 @@ extern "C" int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMe
 }
 
 
+/* Code for iocsh registration */
 
+/* andorCCDConfig */
+static const iocshArg andorCCDConfigArg0 = {"Port name", iocshArgString};
+static const iocshArg andorCCDConfigArg1 = {"maxBuffers", iocshArgInt};
+static const iocshArg andorCCDConfigArg2 = {"maxMemory", iocshArgInt};
+static const iocshArg andorCCDConfigArg3 = {"maxSizeX", iocshArgInt};
+static const iocshArg andorCCDConfigArg4 = {"maxSizeY", iocshArgInt};
+static const iocshArg * const andorCCDConfigArgs[] =  {&andorCCDConfigArg0,
+						       &andorCCDConfigArg1,
+						       &andorCCDConfigArg2,
+                                                       &andorCCDConfigArg3,
+                                                       &andorCCDConfigArg4};
 
+static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 5, andorCCDConfigArgs};
+static void configAndorCCDCallFunc(const iocshArgBuf *args)
+{
+    andorCCDConfig(args[0].sval, args[1].ival, args[2].ival, args[3].ival, args[4].ival);
+}
+
+static void andorCCDRegister(void)
+{
+
+    iocshRegister(&configAndorCCD, configAndorCCDCallFunc);
+}
+
+epicsExportRegistrar(andorCCDRegister);
+}
