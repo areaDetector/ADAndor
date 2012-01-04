@@ -1,40 +1,47 @@
 TOP=../..
-
 include $(TOP)/configure/CONFIG
+#----------------------------------------
+#  ADD MACRO DEFINITIONS AFTER THIS LINE
+#=============================
 
-# -------------------------------
-# Build an Diamond Support Module
-# -------------------------------
-
-LIBRARY_IOC += andorCCD
+LIBRARY_IOC_WIN32 += andorCCD
+LIBRARY_IOC_Linux += andorCCD
+LIB_SRCS += andorCCD.cpp
 
 DATA+=GREY.PAL
 
-USR_INCLUDES += -I$(ANDORCCDSDK)/sdk_include
+PROD_IOC_WIN32 += andorCCDApp
+PROD_IOC_Linux += andorCCDApp
 
-# xxxRecord.dbd will be installed into <top>/dbd
-DBD += andorCCD.dbd
+# <name>.dbd will be created from <name>Include.dbd
+DBD += andorCCDApp.dbd
 DBD += andorCCDSupport.dbd
 
-andorCCD_DBD += base.dbd
-andorCCD_DBD += ADSupport.dbd
-andorCCD_DBD += asyn.dbd
-andorCCD_DBD += calcSupport.dbd
+# <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
+PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
 
-# The following are compiled and added to the support library
-andorCCD_SRCS += drvAndorCCDEpics.c
-andorCCD_SRCS += AndorCCD.cpp
+# Add locally compiled object code
+PROD_LIBS += andorCCD
 
-andorCCD_LIBS += asyn
-andorCCD_LIBS += NDPlugin 
-andorCCD_LIBS += ADBase
-andorCCD_LIBS += calc
+ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
+PROD_LIBS += ATMCD32M
 
-andor_DIR += $(ANDORCCDSDK)/sdk_libs/
+else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
+PROD_LIBS += atmcd64m
 
-andorCCD_LIBS += andor
+else ifeq (linux-x86_64, $(findstring linux-x86_64, $(T_A)))
+PROD_LIBS += andor64
 
-# We need to link against the EPICS Base libraries
-andorCCD_LIBS += $(EPICS_BASE_IOC_LIBS)
+else ifeq (linux-x86, $(findstring linux-x86, $(T_A)))
+PROD_LIBS += andor32
+
+endif
+
+include $(TOP)/ADApp/commonDriverMakefile
+
+#=============================
 
 include $(TOP)/configure/RULES
+#----------------------------------------
+#  ADD RULES AFTER THIS LINE
+
