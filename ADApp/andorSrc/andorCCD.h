@@ -36,6 +36,12 @@
 
 #include "ADDriver.h"
 
+#ifdef _WIN32
+#include "ATMCD32D.h"
+#else
+#include "atmcdLXd.h"
+#endif
+
 #define AndorCoolerParamString             "ANDOR_COOLER"
 #define AndorShutdownParamString           "ANDOR_SHUTDOWN"
 #define AndorStartupParamString            "ANDOR_STARTUP"
@@ -50,7 +56,6 @@
 #define AndorMessageString                 "ANDOR_MESSAGE"
 #define AndorShutterModeString             "ANDOR_SHUTTER_MODE"
 #define AndorShutterExTTLString            "ANDOR_SHUTTER_EXTTL"
-#define AndorFileFormatString              "ANDOR_FILE_FORMAT"
 #define AndorPalFileNameString             "ANDOR_PAL_FILE_PATH"
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
 
@@ -89,7 +94,6 @@ class AndorCCD : public ADDriver {
   int AndorMessage;
   int AndorShutterMode;
   int AndorShutterExTTL;
-  int AndorFileFormat;
   int AndorPalFileName;
   int AndorAdcSpeed;
   #define LAST_ANDOR_PARAM AndorAdcSpeed
@@ -193,12 +197,9 @@ class AndorCCD : public ADDriver {
   epicsInt32 mShutterCloseTime;
   epicsInt32 mShutterOpenTime;
 
-  //File format parameters
-  int mFileFormat;
-
   //Data array
   int mDataSize;
-  long *mData;
+  at_32 *mData;
   
 
 };
