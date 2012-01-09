@@ -30,10 +30,10 @@ else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
 PROD_LIBS += atmcd64m
 
 else ifeq (linux-x86_64, $(findstring linux-x86_64, $(T_A)))
-PROD_LIBS += andor64
+PROD_LIBS += andor
 
 else ifeq (linux-x86, $(findstring linux-x86, $(T_A)))
-PROD_LIBS += andor32
+PROD_LIBS += andor
 
 endif
 
