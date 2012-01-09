@@ -12,7 +12,6 @@
 #include <fstream>
 
 #include "andorCCD.h"
-#include "atmcdLXd.h"
 
 #include <iocsh.h>
 #include <epicsExport.h>
@@ -77,11 +76,11 @@ static void andorDataTaskC(void *drvPvt);
 AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int maxSizeX, int maxSizeY)
 
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 0, 0,
-	     ASYN_CANBLOCK, 1, 0, 0)
+             ASYN_CANBLOCK, 1, 0, 0)
 {
 
   int status = asynSuccess;
-  int param1 = 0;
+  at_32 param1 = 0;
   const char *functionName = "AndorCCD::AndorCCD";
 
   cout << "Constructing AndorCCD driver..." << endl;
@@ -103,7 +102,6 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
   createParam(AndorMessageString,                 asynParamOctet, &AndorMessage);
   createParam(AndorShutterModeString,             asynParamInt32, &AndorShutterMode);
   createParam(AndorShutterExTTLString,            asynParamInt32, &AndorShutterExTTL);
-  createParam(AndorFileFormatString,              asynParamInt32, &AndorFileFormat);
   createParam(AndorPalFileNameString,             asynParamOctet, &AndorPalFileName);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
 
@@ -149,7 +147,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
   initializeCCD(INSTALL_PATH);
 
   try {
-    checkStatus(GetAvailableCameras(reinterpret_cast<long *>(&param1)));
+    checkStatus(GetAvailableCameras(&param1));
     cout << "Number of cameras found: " << param1 << endl;
   } catch (const std::string &e) {
     cout << e << endl;
@@ -184,7 +182,6 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
   AAModeMulti = AAAccumulate;
   mACTInKinetics = 0;
   mTriggerMode = ATInternal;
-  mFileFormat = AFFTIFF;
   
   
   if (status) {
@@ -201,7 +198,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
   //Allocate space for data (single image)
   mDataSize = mXSize * mYSize;
   mData = NULL;
-  mData = (long *) calloc(mDataSize, sizeof(long));
+  mData = (at_32 *) calloc(mDataSize, sizeof(at_32));
   if (mData == NULL) {
     cout << driverName << ":" << functionName << "  ERROR: Could not allocate enough memory for data" << endl;
     return;
@@ -210,26 +207,26 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
 
   /* Create the thread that updates the detector status */
   status = (epicsThreadCreate("AndorStatusTask",
-			      epicsThreadPriorityMedium,
-			      epicsThreadGetStackSize(epicsThreadStackMedium),
-			      (EPICSTHREADFUNC)andorStatusTaskC,
-			      this) == NULL);
+                              epicsThreadPriorityMedium,
+                              epicsThreadGetStackSize(epicsThreadStackMedium),
+                              (EPICSTHREADFUNC)andorStatusTaskC,
+                              this) == NULL);
   if (status) {
     printf("%s:%s epicsThreadCreate failure for status task\n",
-	   driverName, functionName);
+           driverName, functionName);
     return;
   }
 
   
   /* Create the thread that does data readout */
   status = (epicsThreadCreate("AndorDataTask",
-			      epicsThreadPriorityMedium,
-			      epicsThreadGetStackSize(epicsThreadStackMedium),
-			      (EPICSTHREADFUNC)andorDataTaskC,
-			      this) == NULL);
+                              epicsThreadPriorityMedium,
+                              epicsThreadGetStackSize(epicsThreadStackMedium),
+                              (EPICSTHREADFUNC)andorDataTaskC,
+                              this) == NULL);
   if (status) {
     printf("%s:%s epicsThreadCreate failure for data task\n",
-	   driverName, functionName);
+           driverName, functionName);
     return;
   }
 
@@ -332,8 +329,8 @@ asynStatus AndorCCD::runAtInitialization(void)
       float temp = 0.0;
       checkStatus(GetHSSpeed(i,0,0,&temp));
       if (temp > maxSpeed) {
-	maxSpeed = temp;
-	fastestChannel = i;
+        maxSpeed = temp;
+        fastestChannel = i;
       }
     }
     cout << "  Defaulting to the fastest ADC channel, channel: " << fastestChannel << " (" << maxSpeed << ")." << endl;
@@ -412,176 +409,141 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     if (function == ADAcquire) {
       getIntegerParam(ADStatus, &adstatus);
       if (value && (adstatus == ADStatusIdle)) {
-	try {
-	  mAcquiringData = 1;
-	  //We send an event at the bottom of this function.
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Acquiring data...\n", functionName);
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  return(asynError);
-	}
+        try {
+          mAcquiringData = 1;
+          //We send an event at the bottom of this function.
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Acquiring data...\n", functionName);
+        } catch (const std::string &e) {
+          cout << e << endl;
+          return(asynError);
+        }
       }
       if (!value && (adstatus != ADStatusIdle)) {
-	try {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, AbortAcquisition()\n", functionName);
-	  checkStatus(AbortAcquisition());
-	  mAcquiringData = 0;
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, FreeInternalMemory()\n", functionName);
-	  checkStatus(FreeInternalMemory());
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CancelWait()\n", functionName);
-	  checkStatus(CancelWait());
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  return(asynError);
-	} 
+        try {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, AbortAcquisition()\n", functionName);
+          checkStatus(AbortAcquisition());
+          mAcquiringData = 0;
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, FreeInternalMemory()\n", functionName);
+          checkStatus(FreeInternalMemory());
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CancelWait()\n", functionName);
+          checkStatus(CancelWait());
+        } catch (const std::string &e) {
+          cout << e << endl;
+          return(asynError);
+        } 
       }
     }
     else if (function == ADTriggerMode) {
       try {
-	if (value == 0) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetTriggerMode(%d)\n", functionName, ATInternal);
-	  checkStatus(SetTriggerMode(ATInternal));
-	  mTriggerMode = ATInternal;
-	} else if (value == 1) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetTriggerMode(%d)\n", functionName, ATExternal);
-	  checkStatus(SetTriggerMode(ATExternal));
-	  mTriggerMode = ATExternal;
-	}
+        if (value == 0) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetTriggerMode(%d)\n", functionName, ATInternal);
+          checkStatus(SetTriggerMode(ATInternal));
+          mTriggerMode = ATInternal;
+        } else if (value == 1) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetTriggerMode(%d)\n", functionName, ATExternal);
+          checkStatus(SetTriggerMode(ATExternal));
+          mTriggerMode = ATExternal;
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
-      }
-    }
-    else if (function == AndorFileFormat) {
-      try {
-	if (value == 0) {
-	  //TIFF file format
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting TIFF file format.\n", functionName);
-	  mFileFormat = AFFTIFF;
-	} else if (value == 1) {
-	  //BMP file format
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting BMP file format.\n", functionName);
-	  mFileFormat = AFFBMP;
-	} else if (value == 2) {
-	  //SIF file format
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting SIF file format.\n", functionName);
-	  mFileFormat = AFFSIF;
-	} else if (value == 3) {
-	  //EDF file format
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting EDF file format.\n", functionName);
-	  mFileFormat = AFFEDF;
-	} else if (value == 4) {
-	  //RAW file format
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting RAW file format.\n", functionName);
-	  mFileFormat = AFFRAW;
-	} else if (value == 5) {
-	  //TEXT file format
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting TEXT file format.\n", functionName);
-	  mFileFormat = AFFTEXT;
-	} else {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Unknown file format.\n", functionName);
-	  return asynError;
-	}
-      } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADImageMode) {
       try {
-	if (value == 0) {
-	  //Single image mode
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting single image mode.\n", functionName);
-	  checkStatus(SetAcquisitionMode(AASingle));
-	  setIntegerParam(ADNumImages, 1);
-	  AAModeCurrent = AASingle;
-	} else if (value == 1) {
-	  //Multiple image mode (by default do accumulate mode. Use AndorImageModeAMultiParam to change to other types.)
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (accumulate) mode.\n", functionName);
-	  checkStatus(SetAcquisitionMode(AAAccumulate));
-	  AAModeCurrent = AAAccumulate;
-	} else if (value == 2) {
-	  //Continues mode
-	  //Set Run Till Abort mode here.
-	  setStringParam(AndorMessage, "Continues mode not supported.");
-	  callParamCallbacks();
-	  return asynError;
-	}
+        if (value == 0) {
+          //Single image mode
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting single image mode.\n", functionName);
+          checkStatus(SetAcquisitionMode(AASingle));
+          setIntegerParam(ADNumImages, 1);
+          AAModeCurrent = AASingle;
+        } else if (value == 1) {
+          //Multiple image mode (by default do accumulate mode. Use AndorImageModeAMultiParam to change to other types.)
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (accumulate) mode.\n", functionName);
+          checkStatus(SetAcquisitionMode(AAAccumulate));
+          AAModeCurrent = AAAccumulate;
+        } else if (value == 2) {
+          //Continues mode
+          //Set Run Till Abort mode here.
+          setStringParam(AndorMessage, "Continues mode not supported.");
+          callParamCallbacks();
+          return asynError;
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == AndorImageModeAMultiParam) {
       try {
-	//If we are not already in Multiple Image mode, do nothing here.
-	if (AAModeCurrent != AASingle) {
-	  if (value == 0) {
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (accumulate) mode.\n", functionName);
-	    checkStatus(SetAcquisitionMode(AAAccumulate));
-	    AAModeCurrent = AAAccumulate;
-	  } else if (value == 1) {
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (kinetics) mode.\n", functionName);
-	    checkStatus(SetAcquisitionMode(AAKinetics));
-	    AAModeCurrent = AAKinetics;
-	  } else if (value == 2) {
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (fast kinetics) mode.\n", functionName);
-	    checkStatus(SetAcquisitionMode(AAFastKinetics));
-	    //Also send the SetFastKineticsEx command here.
-	    AAModeCurrent = AAFastKinetics;
-	  }
-	} else {
-	  setStringParam(AndorMessage, "Not in multiple image mode. No action taken.");
-	  callParamCallbacks();
-	  return asynError;
-	}
+        //If we are not already in Multiple Image mode, do nothing here.
+        if (AAModeCurrent != AASingle) {
+          if (value == 0) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (accumulate) mode.\n", functionName);
+            checkStatus(SetAcquisitionMode(AAAccumulate));
+            AAModeCurrent = AAAccumulate;
+          } else if (value == 1) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (kinetics) mode.\n", functionName);
+            checkStatus(SetAcquisitionMode(AAKinetics));
+            AAModeCurrent = AAKinetics;
+          } else if (value == 2) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (fast kinetics) mode.\n", functionName);
+            checkStatus(SetAcquisitionMode(AAFastKinetics));
+            //Also send the SetFastKineticsEx command here.
+            AAModeCurrent = AAFastKinetics;
+          }
+        } else {
+          setStringParam(AndorMessage, "Not in multiple image mode. No action taken.");
+          callParamCallbacks();
+          return asynError;
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADNumImages) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting number of images....\n", functionName);
       try {
-	if (AAModeCurrent == AAAccumulate) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetNumberAccumulations(%d).\n", functionName, value);
-	  checkStatus(SetNumberAccumulations(value));
-	} else if (AAModeCurrent == AAKinetics) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetNumberKinetics(%d).\n", functionName, value);
-	  checkStatus(SetNumberKinetics(value));
-	} else if (AAModeCurrent == AAFastKinetics) {
-	  getIntegerParam(AndorFKHeightParam, &FKheight);
-	  getIntegerParam(AndorFKHBinningParam, &FKhbin);
-	  getIntegerParam(AndorFKVBinningParam, &FKvbin);
-	  getIntegerParam(AndorFKOffsetParam, &FKoffset);
-	  getDoubleParam(ADAcquireTime, &FKtime);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, value, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
-	  checkStatus(SetFastKineticsEx(FKheight, value, FKtime, FKmode, FKhbin, FKvbin, FKoffset));
-	} else {
-	  //Force user to set this after defining the multiple acquisition mode
-	  setStringParam(AndorMessage, "Not in multiple image mode. No action taken.");
-	  callParamCallbacks();
-	  return(asynError);
-	}
+        if (AAModeCurrent == AAAccumulate) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetNumberAccumulations(%d).\n", functionName, value);
+          checkStatus(SetNumberAccumulations(value));
+        } else if (AAModeCurrent == AAKinetics) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetNumberKinetics(%d).\n", functionName, value);
+          checkStatus(SetNumberKinetics(value));
+        } else if (AAModeCurrent == AAFastKinetics) {
+          getIntegerParam(AndorFKHeightParam, &FKheight);
+          getIntegerParam(AndorFKHBinningParam, &FKhbin);
+          getIntegerParam(AndorFKVBinningParam, &FKvbin);
+          getIntegerParam(AndorFKOffsetParam, &FKoffset);
+          getDoubleParam(ADAcquireTime, &FKtime);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, value, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
+          checkStatus(SetFastKineticsEx(FKheight, value, FKtime, FKmode, FKhbin, FKvbin, FKoffset));
+        } else {
+          //Force user to set this after defining the multiple acquisition mode
+          setStringParam(AndorMessage, "Not in multiple image mode. No action taken.");
+          callParamCallbacks();
+          return(asynError);
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADNumExposures) {
     }
     else if (function == AndorCoolerParam) {
       try {
-	if (value == 0) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerOFF().\n", functionName);
-	  checkStatus(CoolerOFF());
-	} else if (value == 1) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerON().\n", functionName);
-	  checkStatus(CoolerON());
-	}
+        if (value == 0) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerOFF().\n", functionName);
+          checkStatus(CoolerOFF());
+        } else if (value == 1) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerON().\n", functionName);
+          checkStatus(CoolerON());
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == AndorShutdownParam) {
@@ -592,245 +554,245 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     }
     else if (function == AndorANumInKineticsParam) {
       try {
-	if (AAModeCurrent == AAKinetics) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting number of accumulations in kinetics mode...\n", functionName);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetNumberAccumulations(%d).\n", functionName, value);
-	  checkStatus(SetNumberAccumulations(value));
-	} else {
-	  setStringParam(AndorMessage, "Not in kinetics mode. No action taken.");
-	  callParamCallbacks();
-	  return(asynError);
-	}
+        if (AAModeCurrent == AAKinetics) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting number of accumulations in kinetics mode...\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetNumberAccumulations(%d).\n", functionName, value);
+          checkStatus(SetNumberAccumulations(value));
+        } else {
+          setStringParam(AndorMessage, "Not in kinetics mode. No action taken.");
+          callParamCallbacks();
+          return(asynError);
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == AndorFKHeightParam) {
       if (AAModeCurrent == AAFastKinetics) {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK Height Param...\n", functionName);
-	try {
-	  getIntegerParam(AndorFKHBinningParam, &FKhbin);
-	  getIntegerParam(ADNumImages, &FKseries);
-	  getIntegerParam(AndorFKVBinningParam, &FKvbin);
-	  getIntegerParam(AndorFKOffsetParam, &FKoffset);
-	  getDoubleParam(ADAcquireTime, &FKtime);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, value, FKseries, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
-	  checkStatus(SetFastKineticsEx(value, FKseries, FKtime, FKmode, FKhbin, FKvbin, FKoffset));
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  return(asynError);
-	}
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK Height Param...\n", functionName);
+        try {
+          getIntegerParam(AndorFKHBinningParam, &FKhbin);
+          getIntegerParam(ADNumImages, &FKseries);
+          getIntegerParam(AndorFKVBinningParam, &FKvbin);
+          getIntegerParam(AndorFKOffsetParam, &FKoffset);
+          getDoubleParam(ADAcquireTime, &FKtime);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, value, FKseries, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
+          checkStatus(SetFastKineticsEx(value, FKseries, FKtime, FKmode, FKhbin, FKvbin, FKoffset));
+        } catch (const std::string &e) {
+          cout << e << endl;
+          return(asynError);
+        }
       } else {
-	setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
-	callParamCallbacks();
-	return(asynError);
+        setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
+        callParamCallbacks();
+        return(asynError);
       }
     }
     else if (function == AndorFKHBinningParam) {
       if (AAModeCurrent == AAFastKinetics) {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK Horizontal binning param...\n", functionName);
-	try {
-	  getIntegerParam(AndorFKHeightParam, &FKheight);
-	  getIntegerParam(ADNumImages, &FKseries);
-	  getIntegerParam(AndorFKVBinningParam, &FKvbin);
-	  getIntegerParam(AndorFKOffsetParam, &FKoffset);
-	  getDoubleParam(ADAcquireTime, &FKtime);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, FKtime, FKmode, value, FKvbin, FKoffset);
-	  checkStatus(SetFastKineticsEx(FKheight, FKseries, FKtime, FKmode, value, FKvbin, FKoffset));
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  return(asynError);
-	}
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK Horizontal binning param...\n", functionName);
+        try {
+          getIntegerParam(AndorFKHeightParam, &FKheight);
+          getIntegerParam(ADNumImages, &FKseries);
+          getIntegerParam(AndorFKVBinningParam, &FKvbin);
+          getIntegerParam(AndorFKOffsetParam, &FKoffset);
+          getDoubleParam(ADAcquireTime, &FKtime);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, FKtime, FKmode, value, FKvbin, FKoffset);
+          checkStatus(SetFastKineticsEx(FKheight, FKseries, FKtime, FKmode, value, FKvbin, FKoffset));
+        } catch (const std::string &e) {
+          cout << e << endl;
+          return(asynError);
+        }
       } else {
-	setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
-	callParamCallbacks();
-	return(asynError);
+        setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
+        callParamCallbacks();
+        return(asynError);
       }
     }
     else if (function == AndorFKVBinningParam) {
       if (AAModeCurrent == AAFastKinetics) {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK Vertical binning param...\n", functionName);
-	try {
-	  getIntegerParam(AndorFKHeightParam, &FKheight);
-	  getIntegerParam(ADNumImages, &FKseries);
-	  getIntegerParam(AndorFKHBinningParam, &FKhbin);
-	  getIntegerParam(AndorFKOffsetParam, &FKoffset);
-	  getDoubleParam(ADAcquireTime, &FKtime);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, FKtime, FKmode, FKhbin, value, FKoffset);
-	  checkStatus(SetFastKineticsEx(FKheight, FKseries, FKtime, FKmode, FKhbin, value, FKoffset));
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  return(asynError);
-	}
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK Vertical binning param...\n", functionName);
+        try {
+          getIntegerParam(AndorFKHeightParam, &FKheight);
+          getIntegerParam(ADNumImages, &FKseries);
+          getIntegerParam(AndorFKHBinningParam, &FKhbin);
+          getIntegerParam(AndorFKOffsetParam, &FKoffset);
+          getDoubleParam(ADAcquireTime, &FKtime);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, FKtime, FKmode, FKhbin, value, FKoffset);
+          checkStatus(SetFastKineticsEx(FKheight, FKseries, FKtime, FKmode, FKhbin, value, FKoffset));
+        } catch (const std::string &e) {
+          cout << e << endl;
+          return(asynError);
+        }
       } else {
-	setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
-	callParamCallbacks();
-	return(asynError);
+        setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
+        callParamCallbacks();
+        return(asynError);
       }
     }
     else if (function == AndorFKOffsetParam) {
       if (AAModeCurrent == AAFastKinetics) {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK offset param...\n", functionName);
-	try {
-	  getIntegerParam(AndorFKHeightParam, &FKheight);
-	  getIntegerParam(ADNumImages, &FKseries);
-	  getIntegerParam(AndorFKVBinningParam, &FKvbin);
-	  getIntegerParam(AndorFKHBinningParam, &FKhbin);
-	  getDoubleParam(ADAcquireTime, &FKtime);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, FKtime, FKmode, FKhbin, FKvbin, value);
-	  checkStatus(SetFastKineticsEx(FKheight, FKseries, FKtime, FKmode, FKhbin, FKvbin, value));
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  return(asynError);
-	}
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK offset param...\n", functionName);
+        try {
+          getIntegerParam(AndorFKHeightParam, &FKheight);
+          getIntegerParam(ADNumImages, &FKseries);
+          getIntegerParam(AndorFKVBinningParam, &FKvbin);
+          getIntegerParam(AndorFKHBinningParam, &FKhbin);
+          getDoubleParam(ADAcquireTime, &FKtime);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, FKtime, FKmode, FKhbin, FKvbin, value);
+          checkStatus(SetFastKineticsEx(FKheight, FKseries, FKtime, FKmode, FKhbin, FKvbin, value));
+        } catch (const std::string &e) {
+          cout << e << endl;
+          return(asynError);
+        }
       } else {
-	setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
-	callParamCallbacks();
-	return(asynError);
+        setStringParam(AndorMessage, "Not in fast kinetics mode. No action taken.");
+        callParamCallbacks();
+        return(asynError);
       }
     }
     else if (function == ADBinX) {
       try {
-	//If AreaDetector tries to set 0 for binning, assume it means 1.
-	if (value==0) {
-	  value++;
-	}
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting BinX...\n", functionName);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, value, mYBinning, mXStart, mXEnd, mYStart, mYEnd);
-	checkStatus(SetImage(static_cast<int>(value), mYBinning, mXStart, mXEnd, mYStart, mYEnd));
-	mXBinning = static_cast<int>(value);
+        //If AreaDetector tries to set 0 for binning, assume it means 1.
+        if (value==0) {
+          value++;
+        }
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting BinX...\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, value, mYBinning, mXStart, mXEnd, mYStart, mYEnd);
+        checkStatus(SetImage(static_cast<int>(value), mYBinning, mXStart, mXEnd, mYStart, mYEnd));
+        mXBinning = static_cast<int>(value);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADBinY) {
       try {
-	//If AreaDetector tries to set 0 for binning, assume it means 1.
-	if (value==0) {
-	  value++;
-	}
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting BinY...\n", functionName);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, value, mXStart, mXEnd, mYStart, mYEnd);
-	checkStatus(SetImage(mXBinning, static_cast<int>(value), mXStart, mXEnd, mYStart, mYEnd));
-	mYBinning = static_cast<int>(value);
+        //If AreaDetector tries to set 0 for binning, assume it means 1.
+        if (value==0) {
+          value++;
+        }
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting BinY...\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, value, mXStart, mXEnd, mYStart, mYEnd);
+        checkStatus(SetImage(mXBinning, static_cast<int>(value), mXStart, mXEnd, mYStart, mYEnd));
+        mYBinning = static_cast<int>(value);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADMinX) {
       try {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting MinX...\n", functionName);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, static_cast<int>(value)+1, mXEnd+(static_cast<int>(value)-mXStart)+1, mYStart, mYEnd);
-	checkStatus(SetImage(mXBinning, mYBinning, static_cast<int>(value)+1, mXEnd+(static_cast<int>(value)-mXStart)+1, mYStart, mYEnd));
-	mXEnd = mXEnd+(static_cast<int>(value)-mXStart)+1;
-	mXStart = static_cast<int>(value)+1;	
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting MinX...\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, static_cast<int>(value)+1, mXEnd+(static_cast<int>(value)-mXStart)+1, mYStart, mYEnd);
+        checkStatus(SetImage(mXBinning, mYBinning, static_cast<int>(value)+1, mXEnd+(static_cast<int>(value)-mXStart)+1, mYStart, mYEnd));
+        mXEnd = mXEnd+(static_cast<int>(value)-mXStart)+1;
+        mXStart = static_cast<int>(value)+1;        
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADMinY) {
       try {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting MinY...\n", functionName);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, mXStart, mXEnd, static_cast<int>(value)+1, mYEnd+(static_cast<int>(value)-mYStart)+1);
-	checkStatus(SetImage(mXBinning, mYBinning, mXStart, mXEnd, static_cast<int>(value)+1, mYEnd+(static_cast<int>(value)-mYStart)+1));
-	mYEnd = mYEnd + (static_cast<int>(value)-mYStart)+1;
-	mYStart = static_cast<int>(value)+1;
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting MinY...\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, mXStart, mXEnd, static_cast<int>(value)+1, mYEnd+(static_cast<int>(value)-mYStart)+1);
+        checkStatus(SetImage(mXBinning, mYBinning, mXStart, mXEnd, static_cast<int>(value)+1, mYEnd+(static_cast<int>(value)-mYStart)+1));
+        mYEnd = mYEnd + (static_cast<int>(value)-mYStart)+1;
+        mYStart = static_cast<int>(value)+1;
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADSizeX) {
       try {
-	//If AreaDetector tries to set 0 for binning, assume it means 1.
-	if (value==0) {
-	  value++;
-	}
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting SizeX...\n", functionName);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, mXStart, mXStart+static_cast<int>(value), mYStart, mYEnd);
-	checkStatus(SetImage(mXBinning, mYBinning, mXStart, mXStart+static_cast<int>(value), mYStart, mYEnd));
-	mXEnd = mXStart + static_cast<int>(value);
+        //If AreaDetector tries to set 0 for binning, assume it means 1.
+        if (value==0) {
+          value++;
+        }
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting SizeX...\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, mXStart, mXStart+static_cast<int>(value), mYStart, mYEnd);
+        checkStatus(SetImage(mXBinning, mYBinning, mXStart, mXStart+static_cast<int>(value), mYStart, mYEnd));
+        mXEnd = mXStart + static_cast<int>(value);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADSizeY) {
       try {
-	//If AreaDetector tries to set 0 for binning, assume it means 1.
-	if (value==0) {
-	  value++;
-	}
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting SizeY...\n", functionName);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, mXStart, mXEnd, mYStart, mYStart+static_cast<int>(value));
-	checkStatus(SetImage(mXBinning, mYBinning, mXStart, mXEnd, mYStart, mYStart+static_cast<int>(value)));
-	mYEnd = mYStart + static_cast<int>(value);
+        //If AreaDetector tries to set 0 for binning, assume it means 1.
+        if (value==0) {
+          value++;
+        }
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting SizeY...\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetImage(%d,%d,%d,%d,%d,%d).\n", functionName, mXBinning, mYBinning, mXStart, mXEnd, mYStart, mYStart+static_cast<int>(value));
+        checkStatus(SetImage(mXBinning, mYBinning, mXStart, mXEnd, mYStart, mYStart+static_cast<int>(value)));
+        mYEnd = mYStart + static_cast<int>(value);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADShutterControl) {
       try {
-	if (value == 0) { //Close shutter
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterClose, mShutterCloseTime, mShutterOpenTime);
-	  checkStatus(SetShutter(mShutterExTTL, AShutterClose, mShutterCloseTime, mShutterOpenTime)); 
-	  mShutterMode = AShutterClose;
-	} else { //Open shutter (check current value of AndorShutterMode)
-	  int aShutter = 999;
-	  getIntegerParam(AndorShutterMode, &aShutter);
-	  if (aShutter == AShutterAuto) {
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterAuto, mShutterCloseTime, mShutterOpenTime);
-	    checkStatus(SetShutter(mShutterExTTL, AShutterAuto, mShutterCloseTime, mShutterOpenTime)); 
-	    mShutterMode = AShutterAuto;
-	  } else if (aShutter == AShutterOpen) {
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterOpen, mShutterCloseTime, mShutterOpenTime);
-	    checkStatus(SetShutter(mShutterExTTL, AShutterOpen, mShutterCloseTime, mShutterOpenTime)); 
-	    mShutterMode = AShutterOpen;
-	  }
-	}
+        if (value == 0) { //Close shutter
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterClose, mShutterCloseTime, mShutterOpenTime);
+          checkStatus(SetShutter(mShutterExTTL, AShutterClose, mShutterCloseTime, mShutterOpenTime)); 
+          mShutterMode = AShutterClose;
+        } else { //Open shutter (check current value of AndorShutterMode)
+          int aShutter = 999;
+          getIntegerParam(AndorShutterMode, &aShutter);
+          if (aShutter == AShutterAuto) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterAuto, mShutterCloseTime, mShutterOpenTime);
+            checkStatus(SetShutter(mShutterExTTL, AShutterAuto, mShutterCloseTime, mShutterOpenTime)); 
+            mShutterMode = AShutterAuto;
+          } else if (aShutter == AShutterOpen) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterOpen, mShutterCloseTime, mShutterOpenTime);
+            checkStatus(SetShutter(mShutterExTTL, AShutterOpen, mShutterCloseTime, mShutterOpenTime)); 
+            mShutterMode = AShutterOpen;
+          }
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
 
     else if (function == AndorShutterMode) {
       try {
-	checkStatus(SetShutter(mShutterExTTL, static_cast<int>(value), mShutterCloseTime, mShutterOpenTime)); 
-	mShutterMode = static_cast<int>(value);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
+        checkStatus(SetShutter(mShutterExTTL, static_cast<int>(value), mShutterCloseTime, mShutterOpenTime)); 
+        mShutterMode = static_cast<int>(value);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
 
     else if (function == AndorShutterExTTL) {
       try {
-	checkStatus(SetShutter(static_cast<int>(value), mShutterMode, mShutterCloseTime, mShutterOpenTime)); 
-	mShutterExTTL = static_cast<int>(value);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
+        checkStatus(SetShutter(static_cast<int>(value), mShutterMode, mShutterCloseTime, mShutterOpenTime)); 
+        mShutterExTTL = static_cast<int>(value);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
 
     else if (function == AndorAdcSpeed) {
       try {
-	checkStatus(SetADChannel(value));
-	//Set fastest HS speed.
-	checkStatus(SetHSSpeed(0, 0));
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetADCChannel(%d).\n", functionName, value);
-	setIntegerParam(AndorAdcSpeed, value);
+        checkStatus(SetADChannel(value));
+        //Set fastest HS speed.
+        checkStatus(SetHSSpeed(0, 0));
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetADCChannel(%d).\n", functionName, value);
+        setIntegerParam(AndorAdcSpeed, value);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     } else {
       status = ADDriver::writeInt32(pasynUser, value);
@@ -879,10 +841,10 @@ asynStatus AndorCCD::readInt32(asynUser *pasynUser, epicsInt32 *value)
     if (function == AndorCoolerParam) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Reading cooler status...\n", functionName);
       try {
-	checkStatus(IsCoolerOn(&temp));
+        checkStatus(IsCoolerOn(&temp));
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else {
@@ -930,91 +892,91 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     }
     else if (function == ADAcquireTime) {
       try {
-	if (AAModeCurrent == AAFastKinetics) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting exposure time for fast kinetics.\n", functionName);
-	  getIntegerParam(AndorFKHeightParam, &FKheight);
-	  getIntegerParam(AndorFKHBinningParam, &FKhbin);
-	  getIntegerParam(ADNumImages, &FKseries);
-	  getIntegerParam(AndorFKVBinningParam, &FKvbin);
-	  getIntegerParam(AndorFKOffsetParam, &FKoffset);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%f,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, value, FKmode, FKhbin, FKvbin, FKoffset);
-	  checkStatus(SetFastKineticsEx(FKheight, FKseries, value, FKmode, FKhbin, FKvbin, FKoffset));
-	} else {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetExposureTime(%f).\n", functionName, value);
-	  checkStatus(SetExposureTime(value));
-	}
+        if (AAModeCurrent == AAFastKinetics) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting exposure time for fast kinetics.\n", functionName);
+          getIntegerParam(AndorFKHeightParam, &FKheight);
+          getIntegerParam(AndorFKHBinningParam, &FKhbin);
+          getIntegerParam(ADNumImages, &FKseries);
+          getIntegerParam(AndorFKVBinningParam, &FKvbin);
+          getIntegerParam(AndorFKOffsetParam, &FKoffset);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%f,%d,%d,%d,%d).\n", functionName, FKheight, FKseries, value, FKmode, FKhbin, FKvbin, FKoffset);
+          checkStatus(SetFastKineticsEx(FKheight, FKseries, value, FKmode, FKhbin, FKvbin, FKoffset));
+        } else {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetExposureTime(%f).\n", functionName, value);
+          checkStatus(SetExposureTime(value));
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADAcquirePeriod) {
       try {
-	if (AAModeCurrent == AAAccumulate) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetAccumulationCycleTime(%f).\n", functionName, value);
-	  checkStatus(SetAccumulationCycleTime(value));
-	} else if (AAModeCurrent == AAKinetics) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetKineticCycleTime(%f).\n", functionName, value);
-	  checkStatus(SetKineticCycleTime(value));
-	}
+        if (AAModeCurrent == AAAccumulate) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetAccumulationCycleTime(%f).\n", functionName, value);
+          checkStatus(SetAccumulationCycleTime(value));
+        } else if (AAModeCurrent == AAKinetics) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetKineticCycleTime(%f).\n", functionName, value);
+          checkStatus(SetKineticCycleTime(value));
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADTemperature) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting temperature value %f.\n", functionName, value);
       try {
-	checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CCD Min Temp: %d, Max Temp %d.\n", functionName, minTemp, maxTemp);
-	if ((static_cast<int>(value) > minTemp) & (static_cast<int>(value) < maxTemp)) {
-	  checkStatus(SetTemperature(static_cast<int>(value)));
-	} else {
-	  setStringParam(AndorMessage, "Temperature is out of range.");
-	  callParamCallbacks();
-	  return(asynError);
-	}
+        checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CCD Min Temp: %d, Max Temp %d.\n", functionName, minTemp, maxTemp);
+        if ((static_cast<int>(value) > minTemp) & (static_cast<int>(value) < maxTemp)) {
+          checkStatus(SetTemperature(static_cast<int>(value)));
+        } else {
+          setStringParam(AndorMessage, "Temperature is out of range.");
+          callParamCallbacks();
+          return(asynError);
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == AndorACTInKineticsParam) {
       try {
-	if (AAModeCurrent == AAKinetics) {
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting accumulated cycle time in kinetics mode...\n", functionName);
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetAccumulationCycleTime(%f).\n", functionName, value);
-	  checkStatus(SetAccumulationCycleTime(value));
-	} else {
-	  setStringParam(AndorMessage, "Not in kinetics mode. No action taken.");
-	  callParamCallbacks();
-	  return(asynError);
-	}
+        if (AAModeCurrent == AAKinetics) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting accumulated cycle time in kinetics mode...\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetAccumulationCycleTime(%f).\n", functionName, value);
+          checkStatus(SetAccumulationCycleTime(value));
+        } else {
+          setStringParam(AndorMessage, "Not in kinetics mode. No action taken.");
+          callParamCallbacks();
+          return(asynError);
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADShutterOpenDelay) {
       try {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting ADShutterOpenDelay to %f.\n", functionName, value);
-	checkStatus(SetShutter(mShutterExTTL, mShutterMode, mShutterCloseTime, static_cast<int>(value))); 
-	mShutterOpenTime = static_cast<int>(value);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting ADShutterOpenDelay to %f.\n", functionName, value);
+        checkStatus(SetShutter(mShutterExTTL, mShutterMode, mShutterCloseTime, static_cast<int>(value))); 
+        mShutterOpenTime = static_cast<int>(value);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADShutterCloseDelay) {
       try {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting ADShutterCloseDelay to %f.\n", functionName, value);
-	checkStatus(SetShutter(mShutterExTTL, mShutterMode, static_cast<int>(value), mShutterOpenTime)); 
-	mShutterCloseTime = static_cast<int>(value);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting ADShutterCloseDelay to %f.\n", functionName, value);
+        checkStatus(SetShutter(mShutterExTTL, mShutterMode, static_cast<int>(value), mShutterOpenTime)); 
+        mShutterCloseTime = static_cast<int>(value);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else {
@@ -1058,40 +1020,40 @@ asynStatus AndorCCD::readFloat64(asynUser *pasynUser, epicsFloat64 *value)
     else if (function == ADAcquireTime) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Reading exposure timimgs...\n", functionName);
       try {
-	checkStatus(GetAcquisitionTimings(&exposure, &accumulate, &kinetic));
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, exposure is %f.\n", functionName, exposure);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, accumulate is %f.\n", functionName, accumulate);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, kinetic is %f.\n", functionName, kinetic);
-	*value = exposure;
+        checkStatus(GetAcquisitionTimings(&exposure, &accumulate, &kinetic));
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, exposure is %f.\n", functionName, exposure);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, accumulate is %f.\n", functionName, accumulate);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, kinetic is %f.\n", functionName, kinetic);
+        *value = exposure;
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else if (function == ADAcquirePeriod) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Reading exposure timimgs...\n", functionName);
       try {
-	checkStatus(GetAcquisitionTimings(&exposure, &accumulate, &kinetic));
-	if (AAModeCurrent == AAAccumulate) {
-	  *value = accumulate;
-	} else if (AAModeCurrent == AAKinetics) {
-	  *value = kinetic;
-	}
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, exposure is %f.\n", functionName, exposure);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, accumulate is %f.\n", functionName, accumulate);
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, kinetic is %f.\n", functionName, kinetic);
+        checkStatus(GetAcquisitionTimings(&exposure, &accumulate, &kinetic));
+        if (AAModeCurrent == AAAccumulate) {
+          *value = accumulate;
+        } else if (AAModeCurrent == AAKinetics) {
+          *value = kinetic;
+        }
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, exposure is %f.\n", functionName, exposure);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, accumulate is %f.\n", functionName, accumulate);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, kinetic is %f.\n", functionName, kinetic);
       } catch (const std::string &e) {
-	  cout << e << endl;
-	  return(asynError);
+          cout << e << endl;
+          return(asynError);
       }
     }
     else if (function == ADTemperature) {
       try {
-	checkStatus(GetTemperature(&temp));
-	*value = (epicsFloat64)temp;
+        checkStatus(GetTemperature(&temp));
+        *value = (epicsFloat64)temp;
       } catch (const std::string &e) {
-	cout << e << endl;
-	return(asynError);
+        cout << e << endl;
+        return(asynError);
       }
     }
     else {
@@ -1222,7 +1184,7 @@ void AndorCCD::statusTask(void)
 
   unsigned int forcedFastPolls = 0;
 
-  const char *functionName = "AndorCCD::statusTask";
+  //const char *functionName = "AndorCCD::statusTask";
 
   cout << "Status thread started..." << endl;
 
@@ -1260,78 +1222,78 @@ void AndorCCD::statusTask(void)
       //Only read these if we are not acquiring data
       if (!mAcquiringData) {
       
-	//Read cooler status
-	try {
-	  checkStatus(IsCoolerOn(&value));
-	  status = setIntegerParam(AndorCoolerParam, value);
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  setStringParam(AndorMessage, e.c_str());
-	}
+        //Read cooler status
+        try {
+          checkStatus(IsCoolerOn(&value));
+          status = setIntegerParam(AndorCoolerParam, value);
+        } catch (const std::string &e) {
+          cout << e << endl;
+          setStringParam(AndorMessage, e.c_str());
+        }
       
-	//Read temperature of CCD
-	try {
-	  checkStatus(GetTemperature(&value));
-	  status = setDoubleParam(ADTemperature, static_cast<double>(value));
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  setStringParam(AndorMessage, e.c_str());
-	}
+        //Read temperature of CCD
+        try {
+          checkStatus(GetTemperature(&value));
+          status = setDoubleParam(ADTemperature, static_cast<double>(value));
+        } catch (const std::string &e) {
+          cout << e << endl;
+          setStringParam(AndorMessage, e.c_str());
+        }
       
-	//Read acquisition timings, and set ADAcquireTime and ADAcquirePeriod (depending on mode).
-	try {
-	  if (AAModeCurrent == AAFastKinetics) {
-	    checkStatus(GetFKExposureTime(&exposure));
-	    status |= setDoubleParam(ADAcquireTime, exposure);
-	  } else {
-	    checkStatus(GetAcquisitionTimings(&exposure, &accumulate, &kinetic));
-	    if (AAModeCurrent == AASingle) {
-	      status |= setDoubleParam(ADAcquireTime, exposure);
-	    } else if (AAModeCurrent == AAAccumulate) {
-	      status |= setDoubleParam(ADAcquirePeriod, accumulate);
-	    } else if (AAModeCurrent == AAKinetics) {
-	      status |= setDoubleParam(ADAcquirePeriod, kinetic);
-	    }
-	  }
-	} catch (const std::string &e) {
-	  cout << e << endl;
-	  setStringParam(AndorMessage, e.c_str());
-	}
+        //Read acquisition timings, and set ADAcquireTime and ADAcquirePeriod (depending on mode).
+        try {
+          if (AAModeCurrent == AAFastKinetics) {
+            checkStatus(GetFKExposureTime(&exposure));
+            status |= setDoubleParam(ADAcquireTime, exposure);
+          } else {
+            checkStatus(GetAcquisitionTimings(&exposure, &accumulate, &kinetic));
+            if (AAModeCurrent == AASingle) {
+              status |= setDoubleParam(ADAcquireTime, exposure);
+            } else if (AAModeCurrent == AAAccumulate) {
+              status |= setDoubleParam(ADAcquirePeriod, accumulate);
+            } else if (AAModeCurrent == AAKinetics) {
+              status |= setDoubleParam(ADAcquirePeriod, kinetic);
+            }
+          }
+        } catch (const std::string &e) {
+          cout << e << endl;
+          setStringParam(AndorMessage, e.c_str());
+        }
 
       }
 
       //Read detector status (idle, acquiring, error, etc.)
       try {
-	checkStatus(GetStatus(&value));
-	uvalue = static_cast<unsigned int>(value);
-	if (uvalue == ASIdle) {
-	  setIntegerParam(ADStatus, ADStatusIdle);
-	  setStringParam(ADStatusMessage, "IDLE. Waiting on instructions.");
-	} else if (uvalue == ASTempCycle) {
-	  setIntegerParam(ADStatus, ADStatusWaiting);
-	  setStringParam(ADStatusMessage, "Executing temperature cycle.");
-	} else if (uvalue == ASAcquiring) {
-	  setIntegerParam(ADStatus, ADStatusAcquire);
-	  setStringParam(ADStatusMessage, "Data acquisition in progress.");
-	} else if (uvalue == ASAccumTimeNotMet) {
-	  setIntegerParam(ADStatus, ADStatusError);
-	  setStringParam(ADStatusMessage, "Unable to meet accumulate time.");
-	} else if (uvalue == ASKineticTimeNotMet) {
-	  setIntegerParam(ADStatus, ADStatusError);
-	  setStringParam(ADStatusMessage, "Unable to meet kinetic cycle time.");
-	} else if (uvalue == ASErrorAck) {
-	  setIntegerParam(ADStatus, ADStatusError);
-	  setStringParam(ADStatusMessage, "Unable to communicate with device.");
-	} else if (uvalue == ASAcqBuffer) {
-	  setIntegerParam(ADStatus, ADStatusError);
-	  setStringParam(ADStatusMessage, "Computer unable to read data from device at required rate.");
-	} else if (uvalue == ASSpoolError) {
-	  setIntegerParam(ADStatus, ADStatusError);
-	  setStringParam(ADStatusMessage, "Overflow of the spool buffer.");
-	}
+        checkStatus(GetStatus(&value));
+        uvalue = static_cast<unsigned int>(value);
+        if (uvalue == ASIdle) {
+          setIntegerParam(ADStatus, ADStatusIdle);
+          setStringParam(ADStatusMessage, "IDLE. Waiting on instructions.");
+        } else if (uvalue == ASTempCycle) {
+          setIntegerParam(ADStatus, ADStatusWaiting);
+          setStringParam(ADStatusMessage, "Executing temperature cycle.");
+        } else if (uvalue == ASAcquiring) {
+          setIntegerParam(ADStatus, ADStatusAcquire);
+          setStringParam(ADStatusMessage, "Data acquisition in progress.");
+        } else if (uvalue == ASAccumTimeNotMet) {
+          setIntegerParam(ADStatus, ADStatusError);
+          setStringParam(ADStatusMessage, "Unable to meet accumulate time.");
+        } else if (uvalue == ASKineticTimeNotMet) {
+          setIntegerParam(ADStatus, ADStatusError);
+          setStringParam(ADStatusMessage, "Unable to meet kinetic cycle time.");
+        } else if (uvalue == ASErrorAck) {
+          setIntegerParam(ADStatus, ADStatusError);
+          setStringParam(ADStatusMessage, "Unable to communicate with device.");
+        } else if (uvalue == ASAcqBuffer) {
+          setIntegerParam(ADStatus, ADStatusError);
+          setStringParam(ADStatusMessage, "Computer unable to read data from device at required rate.");
+        } else if (uvalue == ASSpoolError) {
+          setIntegerParam(ADStatus, ADStatusError);
+          setStringParam(ADStatusMessage, "Overflow of the spool buffer.");
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	setStringParam(AndorMessage, e.c_str());
+        cout << e << endl;
+        setStringParam(AndorMessage, e.c_str());
       }
             
       /* Call the callbacks to update any changes */
@@ -1384,13 +1346,13 @@ void AndorCCD::dataTask(void)
     if (mRunning) {
       //Sanity check that main thread thinks we are acquiring data
       if (mAcquiringData) {
-	dataValid = 1;
-	//Read current acqusition setting
-	currentAcqMode = AAModeCurrent;
-	//Read the number of images set
-	getIntegerParam(ADNumImages, &numImages);
+        dataValid = 1;
+        //Read current acqusition setting
+        currentAcqMode = AAModeCurrent;
+        //Read the number of images set
+        getIntegerParam(ADNumImages, &numImages);
       } else {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Data thread is running but main thread thinks we are not acquiring.\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Data thread is running but main thread thinks we are not acquiring.\n", functionName);
       }
     }
     this->unlock();
@@ -1400,43 +1362,43 @@ void AndorCCD::dataTask(void)
       
       //Trigger and wait for data from SDK
       try {
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, StartAcquisition().\n", functionName);
-	checkStatus(StartAcquisition());
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, StartAcquisition().\n", functionName);
+        checkStatus(StartAcquisition());
 
-	if (currentAcqMode == AASingle) {
-	  //Single image mode. Wait for acquisiton then save data.
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition().\n", functionName);
-	  checkStatus(WaitForAcquisition());
-	  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition has returned.\n", functionName);
-	  //Save data
-	  this->saveDataFrame(fullFileName, palFilePath);
-	} else if (currentAcqMode == AAAccumulate) {
-	  //Wait for all images and then readout the single accumulated image from the SDK
-	  for (int i=0; i<numImages; i++) {
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, accumulate image %d.\n", functionName, i);
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition().\n", functionName);
-	    checkStatus(WaitForAcquisition());
-	  }
-	  //Save data
-	  this->saveDataFrame(fullFileName, palFilePath);
-	} else if (currentAcqMode == AAKinetics) {
-	  //Wait for each image acquisition and then read out one by one as they acquired. Save each one.
-	  for (int i=0; i<numImages; i++) {
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, kinetic image %d.\n", functionName, i);
-	    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition().\n", functionName);
-	    checkStatus(WaitForAcquisition());
-	    //Save data
-	    this->saveDataFrame(fullFileName, palFilePath);
-	  }
-	} else {
-	  this->lock();
-	  setStringParam(AndorMessage, "Error in data thread. Acquisition mode not recognised.");
-	  callParamCallbacks();
-	  this->unlock();
-	}
+        if (currentAcqMode == AASingle) {
+          //Single image mode. Wait for acquisiton then save data.
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition().\n", functionName);
+          checkStatus(WaitForAcquisition());
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition has returned.\n", functionName);
+          //Save data
+          this->saveDataFrame(fullFileName, palFilePath);
+        } else if (currentAcqMode == AAAccumulate) {
+          //Wait for all images and then readout the single accumulated image from the SDK
+          for (int i=0; i<numImages; i++) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, accumulate image %d.\n", functionName, i);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition().\n", functionName);
+            checkStatus(WaitForAcquisition());
+          }
+          //Save data
+          this->saveDataFrame(fullFileName, palFilePath);
+        } else if (currentAcqMode == AAKinetics) {
+          //Wait for each image acquisition and then read out one by one as they acquired. Save each one.
+          for (int i=0; i<numImages; i++) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, kinetic image %d.\n", functionName, i);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, WaitForAcquisition().\n", functionName);
+            checkStatus(WaitForAcquisition());
+            //Save data
+            this->saveDataFrame(fullFileName, palFilePath);
+          }
+        } else {
+          this->lock();
+          setStringParam(AndorMessage, "Error in data thread. Acquisition mode not recognised.");
+          callParamCallbacks();
+          this->unlock();
+        }
       } catch (const std::string &e) {
-	cout << e << endl;
-	errorString = const_cast<char *>(e.c_str());
+        cout << e << endl;
+        errorString = const_cast<char *>(e.c_str());
       }
       
 
@@ -1466,13 +1428,17 @@ void AndorCCD::dataTask(void)
 void AndorCCD::saveDataFrame(char *fullFileName, char *palFilePath) 
 {
 
-  long *dP = NULL;
+  at_32 *dP = NULL;
   char *errorString = NULL;
+  int fileFormat;
 
   const char *functionName = "AndorCCD::saveDataFrame";
 
   //Update data
   this->lock();
+  
+  // Fetch the file format
+  getIntegerParam(NDFileFormat, &fileFormat);
       
   ////////////////////////////////////
   //Put data into waveforms, or save to file
@@ -1480,17 +1446,17 @@ void AndorCCD::saveDataFrame(char *fullFileName, char *palFilePath)
   //Check we haven't cancelled data acquisition before trying to save file
   if (mAcquiringData) { 
     
-    if (mFileFormat == AFFTIFF) {
+    if (fileFormat == AFFTIFF) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in TIFF format.\n", functionName);
-    } else if (mFileFormat == AFFBMP) {
+    } else if (fileFormat == AFFBMP) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in BMP format.\n", functionName);
-    } else if (mFileFormat == AFFSIF) {
+    } else if (fileFormat == AFFSIF) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in SIF format.\n", functionName);
-    } else if (mFileFormat == AFFEDF) {
+    } else if (fileFormat == AFFEDF) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in EDF format.\n", functionName);
-    } else if (mFileFormat == AFFRAW) {
+    } else if (fileFormat == AFFRAW) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in RAW format.\n", functionName);
-    } else if (mFileFormat == AFFTEXT) {
+    } else if (fileFormat == AFFTEXT) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in TEXT format.\n", functionName);
     } 
     
@@ -1501,40 +1467,40 @@ void AndorCCD::saveDataFrame(char *fullFileName, char *palFilePath)
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data...\n", functionName);
 
     try {
-      if (mFileFormat == AFFTIFF) {
-	//checkStatus(SaveAsTiff(fullFileName, palFilePath, 1, 1)); //Didn't work
-	checkStatus(SaveAsTiffEx(fullFileName, palFilePath, 1, 1, 1));
-      } else if (mFileFormat == AFFBMP) {
-	checkStatus(SaveAsBmp(fullFileName, palFilePath, 0, 0));
-      } else if (mFileFormat == AFFSIF) {
-	checkStatus(SaveAsSif(fullFileName));
-      } else if (mFileFormat == AFFEDF) {
-	checkStatus(SaveAsEDF(fullFileName, 0));
-      } else if (mFileFormat == AFFRAW) {
-	checkStatus(SaveAsRaw(fullFileName, 1));
-      } else if (mFileFormat == AFFTEXT) {
-	//Get data into buffer and dump to file
-	checkStatus(GetMostRecentImage(mData, mDataSize));
-	
-	ofstream datafile;
-	datafile.open(fullFileName);
-	
-	if (datafile.is_open()) {
-	  datafile << fullFileName << endl;
-	  
-	  dP = mData;
-	  for (int d=0; d<mDataSize; ++d) {
-	    datafile << *dP << endl;
-	    //cout << "mData[" << d << "]: " << *dP << endl;
-	    dP++;
-	  }
-	  
-	  datafile << flush;
-	  datafile.close();
-	} else {
-	  setStringParam(AndorMessage, "ERROR: Could not open file.");
-	}
-	
+      if (fileFormat == AFFTIFF) {
+        //checkStatus(SaveAsTiff(fullFileName, palFilePath, 1, 1)); //Didn't work
+        checkStatus(SaveAsTiffEx(fullFileName, palFilePath, 1, 1, 1));
+      } else if (fileFormat == AFFBMP) {
+        checkStatus(SaveAsBmp(fullFileName, palFilePath, 0, 0));
+      } else if (fileFormat == AFFSIF) {
+        checkStatus(SaveAsSif(fullFileName));
+      } else if (fileFormat == AFFEDF) {
+        checkStatus(SaveAsEDF(fullFileName, 0));
+      } else if (fileFormat == AFFRAW) {
+        checkStatus(SaveAsRaw(fullFileName, 1));
+      } else if (fileFormat == AFFTEXT) {
+        //Get data into buffer and dump to file
+        checkStatus(GetMostRecentImage(mData, mDataSize));
+        
+        ofstream datafile;
+        datafile.open(fullFileName);
+        
+        if (datafile.is_open()) {
+          datafile << fullFileName << endl;
+          
+          dP = mData;
+          for (int d=0; d<mDataSize; ++d) {
+            datafile << *dP << endl;
+            //cout << "mData[" << d << "]: " << *dP << endl;
+            dP++;
+          }
+          
+          datafile << flush;
+          datafile.close();
+        } else {
+          setStringParam(AndorMessage, "ERROR: Could not open file.");
+        }
+        
       }
     } catch (const std::string &e) {
       cout << e << endl;
@@ -1578,6 +1544,8 @@ static void andorDataTaskC(void *drvPvt)
  * @param portName The ASYN port.
  * @param maxBuffers The maximum number of data frame buffers for the ADDriver class.
  * @param maxMemory The maximum memory size allowed in the ADDriver class.
+ * @param maxSizeX The maximum X dimension of the detector.
+ * @param maxSizeY The maximum Y dimension of the detector.
  */
 extern "C" {
 int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, int maxSizeX, int maxSizeY)
@@ -1597,8 +1565,8 @@ static const iocshArg andorCCDConfigArg2 = {"maxMemory", iocshArgInt};
 static const iocshArg andorCCDConfigArg3 = {"maxSizeX", iocshArgInt};
 static const iocshArg andorCCDConfigArg4 = {"maxSizeY", iocshArgInt};
 static const iocshArg * const andorCCDConfigArgs[] =  {&andorCCDConfigArg0,
-						       &andorCCDConfigArg1,
-						       &andorCCDConfigArg2,
+                                                       &andorCCDConfigArg1,
+                                                       &andorCCDConfigArg2,
                                                        &andorCCDConfigArg3,
                                                        &andorCCDConfigArg4};
 
