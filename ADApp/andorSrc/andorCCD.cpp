@@ -92,7 +92,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
   createParam(AndorShutdownParamString,           asynParamInt32, &AndorShutdownParam);
   createParam(AndorStartupParamString,            asynParamInt32, &AndorStartupParam);
   createParam(AndorImageModeAMultiParamString,    asynParamInt32, &AndorImageModeAMultiParam);
-  createParam(AndorACTInKineticsParamString,      asynParamInt32, &AndorACTInKineticsParam);
+  createParam(AndorACTInKineticsParamString,    asynParamFloat64, &AndorACTInKineticsParam);
   createParam(AndorANumInKineticsParamString,     asynParamInt32, &AndorANumInKineticsParam);
   createParam(AndorFKHeightParamString,           asynParamInt32, &AndorFKHeightParam);
   createParam(AndorFKHBinningParamString,         asynParamInt32, &AndorFKHBinningParam);
@@ -412,7 +412,9 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
         try {
           mAcquiringData = 1;
           //We send an event at the bottom of this function.
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Acquiring data...\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, Acquiring data...\n", 
+            functionName);
         } catch (const std::string &e) {
           cout << e << endl;
           return(asynError);
@@ -420,12 +422,18 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       }
       if (!value && (adstatus != ADStatusIdle)) {
         try {
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, AbortAcquisition()\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, AbortAcquisition()\n", 
+            functionName);
           checkStatus(AbortAcquisition());
           mAcquiringData = 0;
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, FreeInternalMemory()\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, FreeInternalMemory()\n", 
+            functionName);
           checkStatus(FreeInternalMemory());
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CancelWait()\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, CancelWait()\n", 
+            functionName);
           checkStatus(CancelWait());
         } catch (const std::string &e) {
           cout << e << endl;
@@ -479,15 +487,21 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
         //If we are not already in Multiple Image mode, do nothing here.
         if (AAModeCurrent != AASingle) {
           if (value == 0) {
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (accumulate) mode.\n", functionName);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+              "%s, Setting multiple image (accumulate) mode.\n", 
+              functionName);
             checkStatus(SetAcquisitionMode(AAAccumulate));
             AAModeCurrent = AAAccumulate;
           } else if (value == 1) {
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (kinetics) mode.\n", functionName);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+              "%s, Setting multiple image (kinetics) mode.\n", 
+              functionName);
             checkStatus(SetAcquisitionMode(AAKinetics));
             AAModeCurrent = AAKinetics;
           } else if (value == 2) {
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting multiple image (fast kinetics) mode.\n", functionName);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+              "%s, Setting multiple image (fast kinetics) mode.\n", 
+              functionName);
             checkStatus(SetAcquisitionMode(AAFastKinetics));
             //Also send the SetFastKineticsEx command here.
             AAModeCurrent = AAFastKinetics;
@@ -517,7 +531,9 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
           getIntegerParam(AndorFKVBinningParam, &FKvbin);
           getIntegerParam(AndorFKOffsetParam, &FKoffset);
           getDoubleParam(ADAcquireTime, &FKtime);
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, FKheight, value, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", 
+            functionName, FKheight, value, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
           checkStatus(SetFastKineticsEx(FKheight, value, FKtime, FKmode, FKhbin, FKvbin, FKoffset));
         } else {
           //Force user to set this after defining the multiple acquisition mode
@@ -555,8 +571,12 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if (function == AndorANumInKineticsParam) {
       try {
         if (AAModeCurrent == AAKinetics) {
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting number of accumulations in kinetics mode...\n", functionName);
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetNumberAccumulations(%d).\n", functionName, value);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, Setting number of accumulations in kinetics mode...\n", 
+            functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, SetNumberAccumulations(%d).\n", 
+            functionName, value);
           checkStatus(SetNumberAccumulations(value));
         } else {
           setStringParam(AndorMessage, "Not in kinetics mode. No action taken.");
@@ -570,14 +590,18 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     }
     else if (function == AndorFKHeightParam) {
       if (AAModeCurrent == AAFastKinetics) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Setting FK Height Param...\n", functionName);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+          "%s, Setting FK Height Param...\n", 
+          functionName);
         try {
           getIntegerParam(AndorFKHBinningParam, &FKhbin);
           getIntegerParam(ADNumImages, &FKseries);
           getIntegerParam(AndorFKVBinningParam, &FKvbin);
           getIntegerParam(AndorFKOffsetParam, &FKoffset);
           getDoubleParam(ADAcquireTime, &FKtime);
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", functionName, value, FKseries, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, SetFastKineticsEx(%d,%d,%d,%d,%d,%d,%d).\n", 
+            functionName, value, FKseries, FKtime, FKmode, FKhbin, FKvbin, FKoffset);
           checkStatus(SetFastKineticsEx(value, FKseries, FKtime, FKmode, FKhbin, FKvbin, FKoffset));
         } catch (const std::string &e) {
           cout << e << endl;
