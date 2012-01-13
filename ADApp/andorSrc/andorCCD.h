@@ -66,7 +66,8 @@
  */
 class AndorCCD : public ADDriver {
  public:
-  AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int maxSizeX, int maxSizeY);
+  AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
+           int maxSizeX, int maxSizeY, int priority, int stackSize);
   virtual ~AndorCCD();
 
   /* These are the methods that we override from ADDriver */

@@ -73,9 +73,10 @@ static void andorDataTaskC(void *drvPvt);
  * Constructor for AndorCCD::AndorCCD.
  *
  */
-AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int maxSizeX, int maxSizeY)
+AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
+                   int maxSizeX, int maxSizeY, int priority, int stackSize)
 
-  : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 0, 0,
+  : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, priority, stackSize,
              ASYN_CANBLOCK, 1, 0, 0)
 {
 
@@ -204,11 +205,13 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
     return;
   }
   
+  if (stackSize == 0) stackSize = epicsThreadGetStackSize(epicsThreadStackMedium);
+  printf("Stack size = %d\n", stackSize);
 
   /* Create the thread that updates the detector status */
   status = (epicsThreadCreate("AndorStatusTask",
                               epicsThreadPriorityMedium,
-                              epicsThreadGetStackSize(epicsThreadStackMedium),
+                              stackSize,
                               (EPICSTHREADFUNC)andorStatusTaskC,
                               this) == NULL);
   if (status) {
@@ -221,7 +224,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, int m
   /* Create the thread that does data readout */
   status = (epicsThreadCreate("AndorDataTask",
                               epicsThreadPriorityMedium,
-                              epicsThreadGetStackSize(epicsThreadStackMedium),
+                              stackSize,
                               (EPICSTHREADFUNC)andorDataTaskC,
                               this) == NULL);
   if (status) {
@@ -1572,10 +1575,11 @@ static void andorDataTaskC(void *drvPvt)
  * @param maxSizeY The maximum Y dimension of the detector.
  */
 extern "C" {
-int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, int maxSizeX, int maxSizeY)
+int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, 
+                   int maxSizeX, int maxSizeY, int priority, int stackSize)
 {
   /*Instantiate class.*/
-  new AndorCCD(portName, maxBuffers, maxMemory, maxSizeX, maxSizeY);
+  new AndorCCD(portName, maxBuffers, maxMemory, maxSizeX, maxSizeY, priority, stackSize);
   return(asynSuccess);
 }
 
@@ -1588,16 +1592,21 @@ static const iocshArg andorCCDConfigArg1 = {"maxBuffers", iocshArgInt};
 static const iocshArg andorCCDConfigArg2 = {"maxMemory", iocshArgInt};
 static const iocshArg andorCCDConfigArg3 = {"maxSizeX", iocshArgInt};
 static const iocshArg andorCCDConfigArg4 = {"maxSizeY", iocshArgInt};
+static const iocshArg andorCCDConfigArg5 = {"priority", iocshArgInt};
+static const iocshArg andorCCDConfigArg6 = {"stackSize", iocshArgInt};
 static const iocshArg * const andorCCDConfigArgs[] =  {&andorCCDConfigArg0,
                                                        &andorCCDConfigArg1,
                                                        &andorCCDConfigArg2,
                                                        &andorCCDConfigArg3,
-                                                       &andorCCDConfigArg4};
+                                                       &andorCCDConfigArg4,
+                                                       &andorCCDConfigArg5,
+                                                       &andorCCDConfigArg6};
 
-static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 5, andorCCDConfigArgs};
+static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 7, andorCCDConfigArgs};
 static void configAndorCCDCallFunc(const iocshArgBuf *args)
 {
-    andorCCDConfig(args[0].sval, args[1].ival, args[2].ival, args[3].ival, args[4].ival);
+    andorCCDConfig(args[0].sval, args[1].ival, args[2].ival, args[3].ival, 
+                   args[4].ival, args[5].ival, args[6].ival);
 }
 
 static void andorCCDRegister(void)
