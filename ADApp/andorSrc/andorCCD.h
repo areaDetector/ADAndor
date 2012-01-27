@@ -43,20 +43,15 @@
 #endif
 
 #define AndorCoolerParamString             "ANDOR_COOLER"
-#define AndorShutdownParamString           "ANDOR_SHUTDOWN"
-#define AndorStartupParamString            "ANDOR_STARTUP"
-#define AndorImageModeAMultiParamString    "ANDOR_IMAGE_MODE_AM"
-#define AndorACTInKineticsParamString      "ANDOR_ACT_KINETICS"
-#define AndorANumInKineticsParamString     "ANDOR_ANUM_KINETICS"
-#define AndorFKHeightParamString           "ANDOR_FK_HEIGHT"
-#define AndorFKHBinningParamString         "ANDOR_FKH_BINNING"
-#define AndorFKVBinningParamString         "ANDOR_FKV_BINNING"
-#define AndorFKOffsetParamString           "ANDOR_FK_OFFSET"
 #define AndorTempStatusMessageString       "ANDOR_TEMP_STAT"
 #define AndorMessageString                 "ANDOR_MESSAGE"
 #define AndorShutterModeString             "ANDOR_SHUTTER_MODE"
 #define AndorShutterExTTLString            "ANDOR_SHUTTER_EXTTL"
 #define AndorPalFileNameString             "ANDOR_PAL_FILE_PATH"
+#define AndorAccumulatePeriodString        "ANDOR_ACCUMULATE_PERIOD"
+#define AndorAcquireTimeActualString       "ANDOR_ACQUIRE_TIME_ACTUAL"
+#define AndorAcquirePeriodActualString     "ANDOR_ACQUIRE_PERIOD_ACTUAL"
+#define AndorAccumulatePeriodActualString  "ANDOR_ACCUMULATE_PERIOD_ACTUAL"
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
 
 
@@ -67,45 +62,44 @@
 class AndorCCD : public ADDriver {
  public:
   AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
-           int maxSizeX, int maxSizeY, int priority, int stackSize);
+           const char *installPath, int priority, int stackSize);
   virtual ~AndorCCD();
 
   /* These are the methods that we override from ADDriver */
   virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
   virtual asynStatus readInt32(asynUser *pasynUser, epicsInt32 *value);
   virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
-  virtual asynStatus readFloat64(asynUser *pasynUser, epicsFloat64 *value);
+  virtual void report(FILE *fp, int details);
 
+  // Should be private, but are called from C so must be public
   void statusTask(void);
   void dataTask(void);
+  void shutdownCCD(void);
 
  protected:
   int AndorCoolerParam;
   #define FIRST_ANDOR_PARAM AndorCoolerParam
-  int AndorShutdownParam;
-  int AndorStartupParam;
-  int AndorImageModeAMultiParam;
-  int AndorACTInKineticsParam;
-  int AndorANumInKineticsParam;
-  int AndorFKHeightParam;
-  int AndorFKHBinningParam;
-  int AndorFKVBinningParam;
-  int AndorFKOffsetParam;
   int AndorTempStatusMessage;
   int AndorMessage;
   int AndorShutterMode;
   int AndorShutterExTTL;
   int AndorPalFileName;
+  int AndorAccumulatePeriod;
+  int AndorAcquireTimeActual;
+  int AndorAcquirePeriodActual;
+  int AndorAccumulatePeriodActual;
   int AndorAdcSpeed;
   #define LAST_ANDOR_PARAM AndorAdcSpeed
 
  private:
 
   unsigned int checkStatus(unsigned int returnStatus) throw(std::string);
-  void initializeCCD(const std::string &path);
-  void shutdownCCD(void);
-  asynStatus runAtInitialization(void);
-  void saveDataFrame(char *fullFileName, char *palFilePath);
+  asynStatus SetupAcquisition();
+  void saveDataFrame();
+  /**
+   * Additional image mode to those in ADImageMode_t
+   */
+   static const epicsInt32 AImageFastKinetics;
 
   /**
    * List of acquisiton modes.
@@ -165,32 +159,12 @@ class AndorCCD : public ADDriver {
   static const epicsInt32 AFFRAW;
   static const epicsInt32 AFFTEXT;
 
-  //Path to local install config files
-  static const std::string INSTALL_PATH;
-
   epicsEventId statusEvent;
   epicsEventId dataEvent;
-  float mPollingPeriod;
-  float mFastPollingPeriod;
-
-  unsigned int mRunning;
-  unsigned int AAModeCurrent; //Current acquisition mode
-  unsigned int AAModeMulti; //Used to determine what type of multiple acquisiton mode.
-  unsigned int mTriggerMode;
-  double mACTInKinetics; //Used to hold accumulation cycle time for when we are in kinetics mode.
+  double mPollingPeriod;
+  double mFastPollingPeriod;
   unsigned int mAcquiringData;
-  
-  //Binning and sub-area readout parameters
-  int mXBinning;
-  int mYBinning;
-  int mXStart;
-  int mYStart;
-  int mXEnd;
-  int mYEnd;
-  int mXSize;
-  int mYSize;
-  int mXMaxSize;
-  int mYMaxSize;
+  char *mInstallPath;
 
   //Shutter control parameters
   epicsInt32 mShutterExTTL;
