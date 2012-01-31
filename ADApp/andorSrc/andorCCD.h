@@ -67,7 +67,6 @@ class AndorCCD : public ADDriver {
 
   /* These are the methods that we override from ADDriver */
   virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
-  virtual asynStatus readInt32(asynUser *pasynUser, epicsInt32 *value);
   virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
   virtual void report(FILE *fp, int details);
 
@@ -94,7 +93,7 @@ class AndorCCD : public ADDriver {
  private:
 
   unsigned int checkStatus(unsigned int returnStatus) throw(std::string);
-  asynStatus SetupAcquisition();
+  asynStatus setupAcquisition();
   void saveDataFrame();
   /**
    * Additional image mode to those in ADImageMode_t
