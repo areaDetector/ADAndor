@@ -104,15 +104,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   createParam(AndorShutterExTTLString,            asynParamInt32, &AndorShutterExTTL);
   createParam(AndorPalFileNameString,             asynParamOctet, &AndorPalFileName);
   createParam(AndorAccumulatePeriodString,      asynParamFloat64, &AndorAccumulatePeriod);
-  createParam(AndorAcquireTimeActualString,     asynParamFloat64, &AndorAcquireTimeActual);
-  createParam(AndorAcquirePeriodActualString,   asynParamFloat64, &AndorAcquirePeriodActual);
-  createParam(AndorAccumulatePeriodActualString,asynParamFloat64, &AndorAccumulatePeriodActual);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
-
-  mShutterExTTL = 1; //Use high TTL signal for external shutter
-  mShutterMode = AShutterAuto;  //Auto mode
-  mShutterCloseTime = 0; //milliseconds
-  mShutterOpenTime = 0; //milliseconds
 
   //Create the epicsEvent for signaling to the status task when parameters should have changed.
   //This will cause it to do a poll immediately, rather than wait for the poll time period.
@@ -138,7 +130,6 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
     checkStatus(GetHeadModel(model));
     checkStatus(SetReadMode(ARImage));
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
-    checkStatus(SetShutter(mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime));
     callParamCallbacks();
   } catch (const std::string &e) {
     cout << e << endl;
@@ -161,16 +152,24 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   status |= setIntegerParam(ADMaxSizeY, sizeY);  
   status |= setIntegerParam(ADImageMode, ADImageSingle);
   status |= setIntegerParam(ADTriggerMode, AndorCCD::ATInternal);
-  status |= setDoubleParam (ADAcquireTime, 1.0);
-  status |= setDoubleParam (ADAcquirePeriod, 1.0);
+  mAcquireTime = 1.0;
+  status |= setDoubleParam (ADAcquireTime, mAcquireTime);
+  mAcquirePeriod = 5.0;
+  status |= setDoubleParam (ADAcquirePeriod, mAcquirePeriod);
   status |= setIntegerParam(ADNumImages, 1);
   status |= setIntegerParam(ADNumExposures, 1);
   status |= setIntegerParam(NDArraySizeX, sizeX);
   status |= setIntegerParam(NDArraySizeY, sizeY);
   status |= setIntegerParam(NDArraySize, sizeX*sizeY*sizeof(at_32)); 
-  status |= setDoubleParam(AndorAccumulatePeriod, 2.0); 
+  mAccumulatePeriod = 2.0;
+  status |= setDoubleParam(AndorAccumulatePeriod, mAccumulatePeriod); 
   status |= setIntegerParam(AndorAdcSpeed, 0);
-  
+  status |= setIntegerParam(AndorShutterExTTL, 1);
+  status |= setIntegerParam(AndorShutterMode, AShutterAuto);
+  status |= setDoubleParam(ADShutterOpenDelay, 0.);
+  status |= setDoubleParam(ADShutterCloseDelay, 0.);
+  status |= setupShutter(-1);
+
   callParamCallbacks();
 
   /* Send a signal to the poller task which will make it do a poll, and switch to the fast poll rate */
@@ -186,15 +185,6 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   mFastPollingPeriod = 0.05; //seconds
 
   mAcquiringData = 0;
-
-  //Allocate space for data (single image)
-  mDataSize = sizeX * sizeY;
-  mData = NULL;
-  mData = (at_32 *) calloc(mDataSize, sizeof(at_32));
-  if (mData == NULL) {
-    cout << driverName << ":" << functionName << "  ERROR: Could not allocate enough memory for data" << endl;
-    return;
-  }
   
   if (stackSize == 0) stackSize = epicsThreadGetStackSize(epicsThreadStackMedium);
   printf("Stack size = %d\n", stackSize);
@@ -233,8 +223,6 @@ AndorCCD::~AndorCCD()
     checkStatus(FreeInternalMemory());
     checkStatus(ShutDown());
     cout << "Camera shutting down as part of IOC exit." << endl;
-    //Free data memory
-    free(mData);
     this->unlock();
   } catch (const std::string &e) {
     cout << e << endl;
@@ -265,33 +253,51 @@ void AndorCCD::report(FILE *fp, int details)
   unsigned int uIntParam4;
   unsigned int uIntParam5;
   unsigned int uIntParam6;
+  AndorCapabilities capabilities;
 
   fprintf(fp, "Andor CCD port=%s\n", this->portName);
-  try {
-    checkStatus(GetCameraSerialNumber(&param1));
-    fprintf(fp, "  serial number: %d\n", param1); 
-    checkStatus(GetHardwareVersion(&uIntParam1, &uIntParam2, &uIntParam3, &uIntParam4, &uIntParam5, &uIntParam6));
-    fprintf(fp, "  PCB Version: %d\n", uIntParam1);
-    fprintf(fp, "  Flex File Version: %d\n", uIntParam2);
-    fprintf(fp, "  Firmware Version: %d\n", uIntParam5);
-    fprintf(fp, "  Firmware Build: %d\n", uIntParam6);
-    getIntegerParam(ADMaxSizeX, &xsize);
-    getIntegerParam(ADMaxSizeY, &ysize);
-    fprintf(fp, "  xpixels: %d\n", xsize);
-    fprintf(fp, "  ypixels: %d\n", ysize);
-    checkStatus(GetNumberAmp(&param1));
-    fprintf(fp, "  Number of amplifier channels: %d\n", param1);
-    checkStatus(GetNumberADChannels(&param1));
-    fprintf(fp, "  Number of ADC channels: %d\n", param1);
-    checkStatus(GetNumberPreAmpGains(&param1));
-    fprintf(fp, "  Number of pre-amp gains: %d\n", param1);
-    for (i=0; i<param1; i++) {
-      checkStatus(GetPreAmpGain(i, &fParam1));
-      fprintf(fp, "    Gain[%d]: %f\n", i, fParam1);
+  if (details > 0) {
+    try {
+      checkStatus(GetCameraSerialNumber(&param1));
+      fprintf(fp, "  serial number: %d\n", param1); 
+      checkStatus(GetHardwareVersion(&uIntParam1, &uIntParam2, &uIntParam3, 
+                                     &uIntParam4, &uIntParam5, &uIntParam6));
+      fprintf(fp, "  PCB Version: %d\n", uIntParam1);
+      fprintf(fp, "  Flex File Version: %d\n", uIntParam2);
+      fprintf(fp, "  Firmware Version: %d\n", uIntParam5);
+      fprintf(fp, "  Firmware Build: %d\n", uIntParam6);
+      getIntegerParam(ADMaxSizeX, &xsize);
+      getIntegerParam(ADMaxSizeY, &ysize);
+      fprintf(fp, "  xpixels: %d\n", xsize);
+      fprintf(fp, "  ypixels: %d\n", ysize);
+      checkStatus(GetNumberAmp(&param1));
+      fprintf(fp, "  Number of amplifier channels: %d\n", param1);
+      checkStatus(GetNumberADChannels(&param1));
+      fprintf(fp, "  Number of ADC channels: %d\n", param1);
+      checkStatus(GetNumberPreAmpGains(&param1));
+      fprintf(fp, "  Number of pre-amp gains: %d\n", param1);
+      for (i=0; i<param1; i++) {
+        checkStatus(GetPreAmpGain(i, &fParam1));
+        fprintf(fp, "    Gain[%d]: %f\n", i, fParam1);
+      }
+      capabilities.ulSize = sizeof(capabilities);
+      checkStatus(GetCapabilities(&capabilities));
+      fprintf(fp, "  Capabilities\n");
+      fprintf(fp, "        AcqModes=0x%lx\n", capabilities.ulAcqModes);
+      fprintf(fp, "       ReadModes=0x%lx\n", capabilities.ulReadModes);
+      fprintf(fp, "     FTReadModes=0x%lx\n", capabilities.ulFTReadModes);
+      fprintf(fp, "    TriggerModes=0x%lx\n", capabilities.ulTriggerModes);
+      fprintf(fp, "      CameraType=0x%lx\n", capabilities.ulCameraType);
+      fprintf(fp, "      PixelModes=0x%lx\n", capabilities.ulPixelMode);
+      fprintf(fp, "    SetFunctions=0x%lx\n", capabilities.ulSetFunctions);
+      fprintf(fp, "    GetFunctions=0x%lx\n", capabilities.ulGetFunctions);
+      fprintf(fp, "        Features=0x%lx\n", capabilities.ulFeatures);
+      fprintf(fp, "         PCI MHz=%ld\n",   capabilities.ulPCICard);
+      fprintf(fp, "          EMGain=0x%lx\n", capabilities.ulEMGainCapability);
+
+    } catch (const std::string &e) {
+      cout << e << endl;
     }
-    
-  } catch (const std::string &e) {
-    cout << e << endl;
   }
   // Call the base class method
   ADDriver::report(fp, details);
@@ -356,10 +362,10 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if (function == AndorCoolerParam) {
       try {
         if (value == 0) {
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerOFF().\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerOFF()\n", functionName);
           checkStatus(CoolerOFF());
         } else if (value == 1) {
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerON().\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerON()\n", functionName);
           checkStatus(CoolerON());
         }
       } catch (const std::string &e) {
@@ -368,52 +374,12 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       }
     }
     else if (function == ADShutterControl) {
-      try {
-        if (value == 0) { //Close shutter
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterClose, mShutterCloseTime, mShutterOpenTime);
-          checkStatus(SetShutter(mShutterExTTL, AShutterClose, mShutterCloseTime, mShutterOpenTime)); 
-          mShutterMode = AShutterClose;
-        } else { //Open shutter (check current value of AndorShutterMode)
-          int aShutter = 999;
-          getIntegerParam(AndorShutterMode, &aShutter);
-          if (aShutter == AShutterAuto) {
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterAuto, mShutterCloseTime, mShutterOpenTime);
-            checkStatus(SetShutter(mShutterExTTL, AShutterAuto, mShutterCloseTime, mShutterOpenTime)); 
-            mShutterMode = AShutterAuto;
-          } else if (aShutter == AShutterOpen) {
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, AShutterOpen, mShutterCloseTime, mShutterOpenTime);
-            checkStatus(SetShutter(mShutterExTTL, AShutterOpen, mShutterCloseTime, mShutterOpenTime)); 
-            mShutterMode = AShutterOpen;
-          }
-        }
-      } catch (const std::string &e) {
-        cout << e << endl;
-        status = asynError;
-      }
+      status = setupShutter(value);
     }
-
-    else if (function == AndorShutterMode) {
-      try {
-        checkStatus(SetShutter(mShutterExTTL, static_cast<int>(value), mShutterCloseTime, mShutterOpenTime)); 
-        mShutterMode = static_cast<int>(value);
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
-      } catch (const std::string &e) {
-        cout << e << endl;
-        status = asynError;
-      }
+    else if ((function == AndorShutterMode) ||
+             (function == AndorShutterExTTL)) {
+      status = setupShutter(-1);
     }
-
-    else if (function == AndorShutterExTTL) {
-      try {
-        checkStatus(SetShutter(static_cast<int>(value), mShutterMode, mShutterCloseTime, mShutterOpenTime)); 
-        mShutterExTTL = static_cast<int>(value);
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, SetShutter(%d,%d,%d,%d).\n", functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
-      } catch (const std::string &e) {
-        cout << e << endl;
-        status = asynError;
-      }
-    }
-
     else {
       status = ADDriver::writeInt32(pasynUser, value);
     }
@@ -455,23 +421,41 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     int minTemp = 0;
     int maxTemp = 0;
 
-    /* Set the parameter and readback in the parameter library.  This may be overwritten when we read back the
-     * status at the end, but that's OK */
+    /* Set the parameter and readback in the parameter library.  */
     status = setDoubleParam(function, value);
 
-    if ((function == ADAcquireTime)   || 
-        (function == ADAcquirePeriod) ||
-        (function == AndorAccumulatePeriod)) {
+    if (function == ADAcquireTime) {
+      mAcquireTime = (float)value;  
+      status = setupAcquisition();
+    }
+    else if (function == ADAcquirePeriod) {
+      mAcquirePeriod = (float)value;  
+      status = setupAcquisition();
+    }
+    else if (function == ADGain) {
+      try {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+          "%s, SetPreAmpGain(%d)\n", functionName, (int)value);
+        checkStatus(SetPreAmpGain((int)value));
+      } catch (const std::string &e) {
+        cout << e << endl;
+        status = asynError;
+      }
+    }
+    else if (function == AndorAccumulatePeriod) {
+      mAccumulatePeriod = (float)value;  
       status = setupAcquisition();
     }
     else if (function == ADTemperature) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, Setting temperature value %f.\n", functionName, value);
+        "%s, Setting temperature value %f\n", functionName, value);
       try {
-        checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, CCD Min Temp: %d, Max Temp %d.\n", functionName, minTemp, maxTemp);
+          "%s, CCD Min Temp: %d, Max Temp %d\n", functionName, minTemp, maxTemp);
+        checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
         if ((static_cast<int>(value) > minTemp) & (static_cast<int>(value) < maxTemp)) {
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s, SetTemperature(%d)\n", functionName, static_cast<int>(value));
           checkStatus(SetTemperature(static_cast<int>(value)));
         } else {
           setStringParam(AndorMessage, "Temperature is out of range.");
@@ -483,34 +467,11 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
         status = asynError;
       }
     }
-    else if (function == ADShutterOpenDelay) {
-      try {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, Setting ADShutterOpenDelay to %f.\n", functionName, value);
-        checkStatus(SetShutter(mShutterExTTL, mShutterMode, mShutterCloseTime, static_cast<int>(value))); 
-        mShutterOpenTime = static_cast<int>(value);
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetShutter(%d,%d,%d,%d).\n", 
-          functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
-      } catch (const std::string &e) {
-        cout << e << endl;
-        status = asynError;
-      }
+    else if ((function == ADShutterOpenDelay) ||
+             (function == ADShutterCloseDelay)) {             
+      status = setupShutter(-1);
     }
-    else if (function == ADShutterCloseDelay) {
-      try {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, Setting ADShutterCloseDelay to %f.\n", functionName, value);
-        checkStatus(SetShutter(mShutterExTTL, mShutterMode, static_cast<int>(value), mShutterOpenTime)); 
-        mShutterCloseTime = static_cast<int>(value);
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetShutter(%d,%d,%d,%d).\n", 
-            functionName, mShutterExTTL, mShutterMode, mShutterCloseTime, mShutterOpenTime);
-      } catch (const std::string &e) {
-        cout << e << endl;
-        status = asynError;
-      }
-    }
+      
     else {
       status = ADDriver::writeFloat64(pasynUser, value);
     }
@@ -530,6 +491,52 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
               driverName, functionName, function, value);
     return status;
 }
+
+
+// command: 0=close, 1=open, -1=no change, only set other parameters
+asynStatus AndorCCD::setupShutter(int command)
+{
+  double dTemp;
+  int openTime, closeTime;
+  int shutterExTTL;
+  int shutterMode;
+  asynStatus status=asynSuccess;
+  static const char *functionName = "AndorCCD::setupShutter";
+  
+  getDoubleParam(ADShutterOpenDelay, &dTemp);
+  // Convert to ms
+  openTime = (int)(dTemp * 1000.);
+  getDoubleParam(ADShutterCloseDelay, &dTemp);
+  closeTime = (int)(dTemp * 1000.);
+  getIntegerParam(AndorShutterMode, &shutterMode);
+  getIntegerParam(AndorShutterExTTL, &shutterExTTL);
+  
+  if (command == ADShutterClosed) {
+    shutterMode = AShutterClose;
+    setIntegerParam(ADShutterStatus, ADShutterClosed);
+  }
+  else if (command == ADShutterOpen) {
+    if (shutterMode == AShutterOpen) {
+      setIntegerParam(ADShutterStatus, ADShutterOpen);
+    }
+    // No need to change shutterMode, we leave it alone and it shutter
+    // will do correct thing, i.e. auto or open depending shutterMode
+  }
+
+  try {
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+      "%s, SetShutter(%d,%d,%d,%d)\n", 
+      functionName, shutterExTTL, shutterMode, closeTime, openTime);
+    checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime)); 
+
+  } catch (const std::string &e) {
+    cout << e << endl;
+    status = asynError;
+  }
+  return status;
+}
+
+
 
 /**
  * Function to check the return status of Andor SDK library functions.
@@ -661,30 +668,18 @@ void AndorCCD::statusTask(void)
     this->lock();
     //cout << " Status poll." << endl;
 
-    //Only read these if we are not acquiring data
-    if (!mAcquiringData) {
-
-      //Read cooler status
-      try {
+    try {
+      //Only read these if we are not acquiring data
+      if (!mAcquiringData) {
+        //Read cooler status
         checkStatus(IsCoolerOn(&value));
         status = setIntegerParam(AndorCoolerParam, value);
-      } catch (const std::string &e) {
-        cout << e << endl;
-        setStringParam(AndorMessage, e.c_str());
-      }
-
-      //Read temperature of CCD
-      try {
+        //Read temperature of CCD
         checkStatus(GetTemperature(&value));
         status = setDoubleParam(ADTemperatureActual, static_cast<double>(value));
-      } catch (const std::string &e) {
-        cout << e << endl;
-        setStringParam(AndorMessage, e.c_str());
       }
-    }
 
-    //Read detector status (idle, acquiring, error, etc.)
-    try {
+      //Read detector status (idle, acquiring, error, etc.)
       checkStatus(GetStatus(&value));
       uvalue = static_cast<unsigned int>(value);
       if (uvalue == ASIdle) {
@@ -733,7 +728,6 @@ asynStatus AndorCCD::setupAcquisition()
   int adcChannel;
   int triggerMode;
   int binX, binY, minX, minY, sizeX, sizeY, maxSizeX, maxSizeY;
-  double acquireTime, acquirePeriod, accumulatePeriod;
   float acquireTimeAct, acquirePeriodAct, accumulatePeriodAct;
   int FKmode = 4;
   static const char *functionName = "AndorCCD::setupAcquisition";
@@ -781,15 +775,12 @@ asynStatus AndorCCD::setupAcquisition()
     sizeY = maxSizeY - minY;
     setIntegerParam(ADSizeY, sizeY);
   }
-  getDoubleParam(ADAcquireTime, &acquireTime);
-  getDoubleParam(ADAcquirePeriod, &acquirePeriod);
-  getDoubleParam(AndorAccumulatePeriod, &accumulatePeriod);
   
   getIntegerParam(ADTriggerMode, &triggerMode);
   getIntegerParam(AndorAdcSpeed, &adcChannel);
   
-  // Unfortunately there does not seem to be a way to query the Andor SDK for the actual size of the image,
-  // so we must compute it.
+  // Unfortunately there does not seem to be a way to query the Andor SDK 
+  // for the actual size of the image, so we must compute it.
   setIntegerParam(NDArraySizeX, sizeX/binX);
   setIntegerParam(NDArraySizeY, sizeY/binY);
   setIntegerParam(NDArraySize, sizeX/binX * sizeY/binY * sizeof(at_32));
@@ -811,8 +802,8 @@ asynStatus AndorCCD::setupAcquisition()
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetExposureTime(%f).\n", functionName, acquireTime);
-    checkStatus(SetExposureTime((float)acquireTime));
+      "%s, SetExposureTime(%f)\n", functionName, mAcquireTime);
+    checkStatus(SetExposureTime(mAcquireTime));
     
     switch (imageMode) {
       case ADImageSingle:
@@ -829,8 +820,8 @@ asynStatus AndorCCD::setupAcquisition()
             functionName, numExposures);
           checkStatus(SetNumberAccumulations(numExposures));
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, SetAccumulationCycleTime(%f).\n", functionName, accumulatePeriod);
-          checkStatus(SetAccumulationCycleTime((float)accumulatePeriod));
+            "%s, SetAccumulationCycleTime(%f)\n", functionName, mAccumulatePeriod);
+          checkStatus(SetAccumulationCycleTime(mAccumulatePeriod));
         }
         break;
 
@@ -843,14 +834,14 @@ asynStatus AndorCCD::setupAcquisition()
           functionName, numExposures);
         checkStatus(SetNumberAccumulations(numExposures));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetAccumulationCycleTime(%f).\n", functionName, accumulatePeriod);
-        checkStatus(SetAccumulationCycleTime((float)accumulatePeriod));
+          "%s, SetAccumulationCycleTime(%f)\n", functionName, mAccumulatePeriod);
+        checkStatus(SetAccumulationCycleTime(mAccumulatePeriod));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetNumberKinetics(%d).\n", functionName, numImages);
+          "%s, SetNumberKinetics(%d)\n", functionName, numImages);
         checkStatus(SetNumberKinetics(numImages));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetKineticCycleTime(%f).\n", functionName,acquirePeriod);
-        checkStatus(SetKineticCycleTime((float)acquirePeriod));
+          "%s, SetKineticCycleTime(%f)\n", functionName, mAcquirePeriod);
+        checkStatus(SetKineticCycleTime(mAcquirePeriod));
         break;
 
       case ADImageContinuous:
@@ -858,8 +849,8 @@ asynStatus AndorCCD::setupAcquisition()
           "%s, SetAcquisitionMode(AARunTillAbort)\n", functionName);
         checkStatus(SetAcquisitionMode(AARunTillAbort));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetKineticCycleTime(%f).\n", functionName,acquirePeriod);
-        checkStatus(SetKineticCycleTime((float)acquirePeriod));
+          "%s, SetKineticCycleTime(%f)\n", functionName, mAcquirePeriod);
+        checkStatus(SetKineticCycleTime(mAcquirePeriod));
         break;
 
       case AImageFastKinetics:
@@ -867,9 +858,16 @@ asynStatus AndorCCD::setupAcquisition()
           "%s, SetAcquisitionMode(AAFastKinetics)\n", functionName);
         checkStatus(SetAcquisitionMode(AAFastKinetics));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetFastKineticsEx(%d,%d,%f,%d,%d,%d,%d).\n", 
-          functionName, sizeY, numExposures, acquireTime, FKmode, binX, binY, minY);
-        checkStatus(SetFastKineticsEx(sizeY, numImages, (float)acquireTime, FKmode, binX, binY, minY));
+          "%s, SetImage(%d,%d,%d,%d,%d,%d)\n", 
+          functionName, binX, binY, 1, maxSizeX, 1, maxSizeY);
+        checkStatus(SetImage(binX, binY, 1, maxSizeX, 1, maxSizeY));
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+          "%s, SetFastKineticsEx(%d,%d,%f,%d,%d,%d,%d)\n", 
+          functionName, sizeY, numImages, mAcquireTime, FKmode, binX, binY, minY);
+        checkStatus(SetFastKineticsEx(sizeY, numImages, mAcquireTime, FKmode, binX, binY, minY));
+        setIntegerParam(NDArraySizeX, maxSizeX/binX);
+        setIntegerParam(NDArraySizeY, maxSizeY/binY);
+        setIntegerParam(NDArraySize, maxSizeX/binX * maxSizeY/binY * sizeof(at_32));
         break;
     }
     // Read the actual times
@@ -881,9 +879,9 @@ asynStatus AndorCCD::setupAcquisition()
         "%s, GetAcquisitionTimings(exposure=%f, accumulate=%f, kinetic=%f\n",
         functionName, acquireTimeAct, accumulatePeriodAct, acquirePeriodAct);
     }
-    setDoubleParam(AndorAcquireTimeActual, acquireTimeAct);
-    setDoubleParam(AndorAcquirePeriodActual, acquirePeriodAct);
-    setDoubleParam(AndorAccumulatePeriodActual, accumulatePeriodAct);
+    setDoubleParam(ADAcquireTime, acquireTimeAct);
+    setDoubleParam(ADAcquirePeriod, acquirePeriodAct);
+    setDoubleParam(AndorAccumulatePeriod, accumulatePeriodAct);
 
     
   } catch (const std::string &e) {
@@ -992,8 +990,6 @@ void AndorCCD::dataTask(void)
           getIntegerParam(ADNumImagesCounter, &numImagesCounter);
           numImagesCounter++;
           setIntegerParam(ADNumImagesCounter, numImagesCounter);
-          // Save data if autosave is enabled
-          if (autoSave) this->saveDataFrame();
           // If array callbacks are enabled then read data into NDArray, do callbacks
           if (arrayCallbacks) {
             epicsTimeGetCurrent(&startTime);
@@ -1002,7 +998,14 @@ void AndorCCD::dataTask(void)
             dims[1] = sizeY;
             pArray = this->pNDArrayPool->alloc(nDims, dims, dataType, 0, NULL);
             // Read the oldest array
-            status = GetOldestImage((at_32*)pArray->pData, sizeX*sizeY);
+            // Is there still an image available?
+            status = GetNumberNewImages(&firstImage, &lastImage);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+              "%s, GetNumberNewImages, status=%d, firstImage=%d, lastImage=%d\n", 
+              functionName, status, firstImage, lastImage);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+              "%s, GetOldestImage(%p, %d)\n", functionName, pArray->pData, sizeX*sizeY);
+            checkStatus(GetOldestImage((at_32*)pArray->pData, sizeX*sizeY));
             /* Put the frame number and time stamp into the buffer */
             pArray->uniqueId = imageCounter;
             pArray->timeStamp = startTime.secPastEpoch + startTime.nsec / 1.e9;
@@ -1013,16 +1016,21 @@ void AndorCCD::dataTask(void)
              * block on the plugin lock, and the plugin can be calling us */
             this->unlock();
             asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+                 "%s:, first pixel value=%d\n", functionName, *(at_32*)pArray->pData);
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
                  "%s:, calling array callbacks\n", functionName);
             doCallbacksGenericPointer(pArray, NDArrayData, 0);
             this->lock();
             pArray->release();
           }
+          // Save data if autosave is enabled
+          if (autoSave) this->saveDataFrame();
           callParamCallbacks();
         }
       } catch (const std::string &e) {
         cout << e << endl;
         errorString = const_cast<char *>(e.c_str());
+        setStringParam(AndorMessage, errorString);
       }
     }
       
@@ -1044,8 +1052,6 @@ void AndorCCD::dataTask(void)
  */
 void AndorCCD::saveDataFrame() 
 {
-
-  at_32 *dP = NULL;
   char *errorString = NULL;
   int fileFormat;
   char fullFileName[MAX_FILENAME_LEN];
@@ -1056,65 +1062,32 @@ void AndorCCD::saveDataFrame()
   // Fetch the file format
   getIntegerParam(NDFileFormat, &fileFormat);
       
-  ////////////////////////////////////
-  //Put data into waveforms, or save to file
-  
-  if (fileFormat == AFFTIFF) {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in TIFF format.\n", functionName);
-  } else if (fileFormat == AFFBMP) {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in BMP format.\n", functionName);
-  } else if (fileFormat == AFFSIF) {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in SIF format.\n", functionName);
-  } else if (fileFormat == AFFEDF) {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in EDF format.\n", functionName);
-  } else if (fileFormat == AFFRAW) {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in RAW format.\n", functionName);
-  } else if (fileFormat == AFFTEXT) {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data in TEXT format.\n", functionName);
-  } 
-
   this->createFileName(255, fullFileName);
   setStringParam(NDFullFileName, fullFileName);
   asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, file name is %s.\n", functionName, fullFileName);
   getStringParam(AndorPalFileName, 255, palFilePath);
 
-  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data...\n", functionName);
-
   try {
     if (fileFormat == AFFTIFF) {
-      //checkStatus(SaveAsTiff(fullFileName, palFilePath, 1, 1)); //Didn't work
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s, SaveAsTiffEx(%s, %s, 1, 1, 1)\n", functionName, fullFileName, palFilePath);
       checkStatus(SaveAsTiffEx(fullFileName, palFilePath, 1, 1, 1));
     } else if (fileFormat == AFFBMP) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s, SaveAsBmp(%s, %s, 0, 0)\n", functionName, fullFileName, palFilePath);
       checkStatus(SaveAsBmp(fullFileName, palFilePath, 0, 0));
     } else if (fileFormat == AFFSIF) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s, SaveAsSif(%s)\n", functionName, fullFileName);
       checkStatus(SaveAsSif(fullFileName));
     } else if (fileFormat == AFFEDF) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s, SaveAsEDF(%s, 0)\n", functionName, fullFileName);
       checkStatus(SaveAsEDF(fullFileName, 0));
     } else if (fileFormat == AFFRAW) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s, SaveAsRaw(%s, 1)\n", functionName, fullFileName);
       checkStatus(SaveAsRaw(fullFileName, 1));
-    } else if (fileFormat == AFFTEXT) {
-      //Get data into buffer and dump to file
-      checkStatus(GetMostRecentImage(mData, mDataSize));
-
-      ofstream datafile;
-      datafile.open(fullFileName);
-
-      if (datafile.is_open()) {
-        datafile << fullFileName << endl;
-
-        dP = mData;
-        for (int d=0; d<mDataSize; ++d) {
-          datafile << *dP << endl;
-          //cout << "mData[" << d << "]: " << *dP << endl;
-          dP++;
-        }
-
-        datafile << flush;
-        datafile.close();
-      } else {
-        setStringParam(AndorMessage, "ERROR: Could not open file.");
-      }
-
     }
   } catch (const std::string &e) {
     cout << e << endl;
