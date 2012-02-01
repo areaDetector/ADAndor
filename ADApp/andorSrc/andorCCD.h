@@ -49,9 +49,6 @@
 #define AndorShutterExTTLString            "ANDOR_SHUTTER_EXTTL"
 #define AndorPalFileNameString             "ANDOR_PAL_FILE_PATH"
 #define AndorAccumulatePeriodString        "ANDOR_ACCUMULATE_PERIOD"
-#define AndorAcquireTimeActualString       "ANDOR_ACQUIRE_TIME_ACTUAL"
-#define AndorAcquirePeriodActualString     "ANDOR_ACQUIRE_PERIOD_ACTUAL"
-#define AndorAccumulatePeriodActualString  "ANDOR_ACCUMULATE_PERIOD_ACTUAL"
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
 
 
@@ -84,9 +81,6 @@ class AndorCCD : public ADDriver {
   int AndorShutterExTTL;
   int AndorPalFileName;
   int AndorAccumulatePeriod;
-  int AndorAcquireTimeActual;
-  int AndorAcquirePeriodActual;
-  int AndorAccumulatePeriodActual;
   int AndorAdcSpeed;
   #define LAST_ANDOR_PARAM AndorAdcSpeed
 
@@ -94,6 +88,7 @@ class AndorCCD : public ADDriver {
 
   unsigned int checkStatus(unsigned int returnStatus) throw(std::string);
   asynStatus setupAcquisition();
+  asynStatus setupShutter(int command);
   void saveDataFrame();
   /**
    * Additional image mode to those in ADImageMode_t
@@ -166,15 +161,9 @@ class AndorCCD : public ADDriver {
   char *mInstallPath;
 
   //Shutter control parameters
-  epicsInt32 mShutterExTTL;
-  epicsInt32 mShutterMode;
-  epicsInt32 mShutterCloseTime;
-  epicsInt32 mShutterOpenTime;
-
-  //Data array
-  int mDataSize;
-  at_32 *mData;
-  
+  float mAcquireTime;
+  float mAcquirePeriod;
+  float mAccumulatePeriod;
 
 };
 
