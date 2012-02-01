@@ -11,7 +11,7 @@ epicsEnvSet("XSIZE",  "2048")
 epicsEnvSet("YSIZE",  "2048")
 epicsEnvSet("NCHANS", "2048")
 
-andorCCDConfig("$(PORT)", -1, -1, 2048, 2048, 0, 100000)
+andorCCDConfig("$(PORT)", -1, -1, "", 0, 500000)
 dbLoadRecords("$(AREA_DETECTOR)/ADApp/Db/ADBase.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 dbLoadRecords("$(AREA_DETECTOR)/ADApp/Db/NDFile.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 dbLoadRecords("$(AREA_DETECTOR)/ADApp/Db/andorCCD.template",   "P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
@@ -32,3 +32,4 @@ iocInit()
 
 # save things every thirty seconds
 create_monitor_set("auto_settings.req", 30,"P=$(PREFIX),D=cam1:")
+#asynSetTraceMask($(PORT), 0, 255)
