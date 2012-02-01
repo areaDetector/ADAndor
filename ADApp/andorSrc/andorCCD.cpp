@@ -160,7 +160,8 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   status |= setIntegerParam(ADNumExposures, 1);
   status |= setIntegerParam(NDArraySizeX, sizeX);
   status |= setIntegerParam(NDArraySizeY, sizeY);
-  status |= setIntegerParam(NDArraySize, sizeX*sizeY*sizeof(at_32)); 
+  status |= setIntegerParam(NDDataType, NDUInt16);
+  status |= setIntegerParam(NDArraySize, sizeX*sizeY*sizeof(epicsUInt16)); 
   mAccumulatePeriod = 2.0;
   status |= setDoubleParam(AndorAccumulatePeriod, mAccumulatePeriod); 
   status |= setIntegerParam(AndorAdcSpeed, 0);
@@ -783,7 +784,6 @@ asynStatus AndorCCD::setupAcquisition()
   // for the actual size of the image, so we must compute it.
   setIntegerParam(NDArraySizeX, sizeX/binX);
   setIntegerParam(NDArraySizeY, sizeY/binY);
-  setIntegerParam(NDArraySize, sizeX/binX * sizeY/binY * sizeof(at_32));
   
   try {
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
@@ -867,7 +867,6 @@ asynStatus AndorCCD::setupAcquisition()
         checkStatus(SetFastKineticsEx(sizeY, numImages, mAcquireTime, FKmode, binX, binY, minY));
         setIntegerParam(NDArraySizeX, maxSizeX/binX);
         setIntegerParam(NDArraySizeY, maxSizeY/binY);
-        setIntegerParam(NDArraySize, maxSizeX/binX * maxSizeY/binY * sizeof(at_32));
         break;
     }
     // Read the actual times
@@ -901,16 +900,15 @@ void AndorCCD::dataTask(void)
   int acquireStatus;
   char *errorString = NULL;
   int acquiring = 0;
-  epicsInt32 numImages = 0;
   epicsInt32 numImagesCounter;
   epicsInt32 numExposuresCounter;
   epicsInt32 imageCounter;
   epicsInt32 arrayCallbacks;
   epicsInt32 sizeX, sizeY;
+  NDDataType_t dataType;
   long firstImage, lastImage;
   int dims[2];
   int nDims = 2;
-  NDDataType_t dataType = NDInt32;
   epicsTimeStamp startTime;
   NDArray *pArray;
   int autoSave;
@@ -946,7 +944,7 @@ void AndorCCD::dataTask(void)
         continue;
       }
       //Read some parameters
-      getIntegerParam(ADNumImages, &numImages);
+      getIntegerParam(NDDataType, (epicsInt32*)&dataType);
       getIntegerParam(NDAutoSave, &autoSave);
       getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
       getIntegerParam(NDArraySizeX, &sizeX);
@@ -1003,9 +1001,18 @@ void AndorCCD::dataTask(void)
             asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
               "%s, GetNumberNewImages, status=%d, firstImage=%d, lastImage=%d\n", 
               functionName, status, firstImage, lastImage);
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-              "%s, GetOldestImage(%p, %d)\n", functionName, pArray->pData, sizeX*sizeY);
-            checkStatus(GetOldestImage((at_32*)pArray->pData, sizeX*sizeY));
+            if (dataType == NDUInt32) {
+              asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+                "%s, GetOldestImage(%p, %d)\n", functionName, pArray->pData, sizeX*sizeY);
+              checkStatus(GetOldestImage((at_32*)pArray->pData, sizeX*sizeY));
+              setIntegerParam(NDArraySize, sizeX * sizeY * sizeof(epicsUInt32));
+            }
+            else if (dataType == NDUInt16) {
+              asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+                "%s, GetOldestImage16(%p, %d)\n", functionName, pArray->pData, sizeX*sizeY);
+              checkStatus(GetOldestImage16((epicsUInt16*)pArray->pData, sizeX*sizeY));
+              setIntegerParam(NDArraySize, sizeX * sizeY * sizeof(epicsUInt16));
+            }
             /* Put the frame number and time stamp into the buffer */
             pArray->uniqueId = imageCounter;
             pArray->timeStamp = startTime.secPastEpoch + startTime.nsec / 1.e9;
@@ -1015,8 +1022,6 @@ void AndorCCD::dataTask(void)
             /* Must release the lock here, or we can get into a deadlock, because we can
              * block on the plugin lock, and the plugin can be calling us */
             this->unlock();
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-                 "%s:, first pixel value=%d\n", functionName, *(at_32*)pArray->pData);
             asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
                  "%s:, calling array callbacks\n", functionName);
             doCallbacksGenericPointer(pArray, NDArrayData, 0);
