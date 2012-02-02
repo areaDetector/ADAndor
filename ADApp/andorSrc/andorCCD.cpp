@@ -78,8 +78,8 @@ static void exitHandler(void *drvPvt);
 AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
                    const char *installPath, int priority, int stackSize)
 
-  : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, priority, stackSize,
-             ASYN_CANBLOCK, 1, 0, 0)
+  : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 0, 0,
+             ASYN_CANBLOCK, 1, priority, stackSize)
 {
 
   int status = asynSuccess;
@@ -123,7 +123,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
 
   //Initialize camera
   try {
-    cout << "Initializing CCD...\n" << endl;
+    cout << "Initializing CCD..." << endl;
     checkStatus(Initialize(mInstallPath));
     setStringParam(AndorMessage, "Camera successfully initialized.");
     checkStatus(GetDetector(&sizeX, &sizeY));
@@ -136,9 +136,6 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
     return;
   }
   
-  // Read the model
-  
-
   /* Set some default values for parameters */
   status =  setStringParam(ADManufacturer, "Andor");
   status |= setStringParam(ADModel, model);
@@ -188,7 +185,6 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   mAcquiringData = 0;
   
   if (stackSize == 0) stackSize = epicsThreadGetStackSize(epicsThreadStackMedium);
-  printf("Stack size = %d\n", stackSize);
 
   /* Create the thread that updates the detector status */
   status = (epicsThreadCreate("AndorStatusTask",
@@ -214,6 +210,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
            driverName, functionName);
     return;
   }
+  cout << "CCD initialized OK!\n" << endl;
 }
 
 AndorCCD::~AndorCCD() 
@@ -284,17 +281,17 @@ void AndorCCD::report(FILE *fp, int details)
       capabilities.ulSize = sizeof(capabilities);
       checkStatus(GetCapabilities(&capabilities));
       fprintf(fp, "  Capabilities\n");
-      fprintf(fp, "        AcqModes=0x%lx\n", capabilities.ulAcqModes);
-      fprintf(fp, "       ReadModes=0x%lx\n", capabilities.ulReadModes);
-      fprintf(fp, "     FTReadModes=0x%lx\n", capabilities.ulFTReadModes);
-      fprintf(fp, "    TriggerModes=0x%lx\n", capabilities.ulTriggerModes);
-      fprintf(fp, "      CameraType=0x%lx\n", capabilities.ulCameraType);
-      fprintf(fp, "      PixelModes=0x%lx\n", capabilities.ulPixelMode);
-      fprintf(fp, "    SetFunctions=0x%lx\n", capabilities.ulSetFunctions);
-      fprintf(fp, "    GetFunctions=0x%lx\n", capabilities.ulGetFunctions);
-      fprintf(fp, "        Features=0x%lx\n", capabilities.ulFeatures);
-      fprintf(fp, "         PCI MHz=%ld\n",   capabilities.ulPCICard);
-      fprintf(fp, "          EMGain=0x%lx\n", capabilities.ulEMGainCapability);
+      fprintf(fp, "        AcqModes=0x%X\n", (int)capabilities.ulAcqModes);
+      fprintf(fp, "       ReadModes=0x%X\n", (int)capabilities.ulReadModes);
+      fprintf(fp, "     FTReadModes=0x%X\n", (int)capabilities.ulFTReadModes);
+      fprintf(fp, "    TriggerModes=0x%X\n", (int)capabilities.ulTriggerModes);
+      fprintf(fp, "      CameraType=%d\n",   (int)capabilities.ulCameraType);
+      fprintf(fp, "      PixelModes=0x%X\n", (int)capabilities.ulPixelMode);
+      fprintf(fp, "    SetFunctions=0x%X\n", (int)capabilities.ulSetFunctions);
+      fprintf(fp, "    GetFunctions=0x%X\n", (int)capabilities.ulGetFunctions);
+      fprintf(fp, "        Features=0x%X\n", (int)capabilities.ulFeatures);
+      fprintf(fp, "         PCI MHz=%d\n",   (int)capabilities.ulPCICard);
+      fprintf(fp, "          EMGain=0x%X\n", (int)capabilities.ulEMGainCapability);
 
     } catch (const std::string &e) {
       cout << e << endl;
@@ -545,7 +542,7 @@ asynStatus AndorCCD::setupShutter(int command)
  * @return 0=success. Does not return in case of failure.
  * @throw std::string An exception is thrown in case of failure.
  */
-unsigned int AndorCCD::checkStatus(unsigned int returnStatus) throw(std::string)
+unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
 {
   if (returnStatus == DRV_SUCCESS) {
     return 0;
@@ -906,7 +903,7 @@ void AndorCCD::dataTask(void)
   epicsInt32 arrayCallbacks;
   epicsInt32 sizeX, sizeY;
   NDDataType_t dataType;
-  long firstImage, lastImage;
+  at_32 firstImage, lastImage;
   int dims[2];
   int nDims = 2;
   epicsTimeStamp startTime;
