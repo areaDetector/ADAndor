@@ -6,6 +6,8 @@
  *
  * Updated Dec 2011 for Asyn 4-17 and areaDetector 1-7 
  *
+ * Major updates to get callbacks working, etc. by Mark Rivers Feb. 2011
+ *
  */
 
 #include <iostream>
@@ -774,6 +776,8 @@ asynStatus AndorCCD::setupAcquisition()
     setIntegerParam(ADSizeY, sizeY);
   }
   
+  // Note: we do triggerMode and adcChannel in this function because they change
+  // the computed actual AcquirePeriod and AccumulatePeriod
   getIntegerParam(ADTriggerMode, &triggerMode);
   getIntegerParam(AndorAdcSpeed, &adcChannel);
   
