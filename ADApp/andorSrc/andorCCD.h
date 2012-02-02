@@ -86,7 +86,7 @@ class AndorCCD : public ADDriver {
 
  private:
 
-  unsigned int checkStatus(unsigned int returnStatus) throw(std::string);
+  unsigned int checkStatus(unsigned int returnStatus);
   asynStatus setupAcquisition();
   asynStatus setupShutter(int command);
   void saveDataFrame();
