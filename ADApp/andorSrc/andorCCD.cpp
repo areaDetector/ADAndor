@@ -1135,8 +1135,9 @@ static void andorDataTaskC(void *drvPvt)
  * @param portName The ASYN port.
  * @param maxBuffers The maximum number of data frame buffers for the ADDriver class.
  * @param maxMemory The maximum memory size allowed in the ADDriver class.
- * @param maxSizeX The maximum X dimension of the detector.
- * @param maxSizeY The maximum Y dimension of the detector.
+ * @param installPath The path to the Andor installation directory.  Only required for older detectors.
+ * @param priority The priority of the asyn port driver
+ * @param stackSize The stack size for the asyn port driver and the other threads created by this driver
  */
 extern "C" {
 int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, 
