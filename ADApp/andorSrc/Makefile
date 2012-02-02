@@ -31,9 +31,12 @@ PROD_LIBS += atmcd64m
 
 else ifeq (linux-x86_64, $(findstring linux-x86_64, $(T_A)))
 PROD_LIBS += andor
+# Cannot do STATIC_BUILD on Linux because Andor only provides .so file
+STATIC_BUILD=NO
 
 else ifeq (linux-x86, $(findstring linux-x86, $(T_A)))
 PROD_LIBS += andor
+STATIC_BUILD=NO
 
 endif
 
