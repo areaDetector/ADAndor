@@ -6,6 +6,7 @@
  *
  * Updated Dec 2011 for Asyn 4-17 and areaDetector 1-7 
  *
+ * Major updates to get callbacks working, etc. by Mark Rivers Feb. 2011
  */
 
 #ifndef ANDORCCD_H
