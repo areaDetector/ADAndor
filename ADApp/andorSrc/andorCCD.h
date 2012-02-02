@@ -71,7 +71,6 @@ class AndorCCD : public ADDriver {
   // Should be private, but are called from C so must be public
   void statusTask(void);
   void dataTask(void);
-  void shutdownCCD(void);
 
  protected:
   int AndorCoolerParam;
