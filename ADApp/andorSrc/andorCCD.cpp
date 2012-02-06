@@ -247,6 +247,7 @@ void AndorCCD::report(FILE *fp, int details)
   float fParam1;
   int xsize, ysize;
   int i;
+  char sParam[256];
   unsigned int uIntParam1;
   unsigned int uIntParam2;
   unsigned int uIntParam3;
@@ -258,18 +259,24 @@ void AndorCCD::report(FILE *fp, int details)
   fprintf(fp, "Andor CCD port=%s\n", this->portName);
   if (details > 0) {
     try {
+      checkStatus(GetHeadModel(sParam));
+      fprintf(fp, "  Model: %s\n", sParam);
       checkStatus(GetCameraSerialNumber(&param1));
-      fprintf(fp, "  serial number: %d\n", param1); 
+      fprintf(fp, "  Serial number: %d\n", param1); 
       checkStatus(GetHardwareVersion(&uIntParam1, &uIntParam2, &uIntParam3, 
                                      &uIntParam4, &uIntParam5, &uIntParam6));
-      fprintf(fp, "  PCB Version: %d\n", uIntParam1);
-      fprintf(fp, "  Flex File Version: %d\n", uIntParam2);
-      fprintf(fp, "  Firmware Version: %d\n", uIntParam5);
-      fprintf(fp, "  Firmware Build: %d\n", uIntParam6);
+      fprintf(fp, "  PCB version: %d\n", uIntParam1);
+      fprintf(fp, "  Flex file version: %d\n", uIntParam2);
+      fprintf(fp, "  Firmware version: %d\n", uIntParam5);
+      fprintf(fp, "  Firmware build: %d\n", uIntParam6);
+      checkStatus(GetVersionInfo(AT_SDKVersion, sParam, sizeof(sParam)));
+      fprintf(fp, "  SDK version: %s\n", sParam);
+      checkStatus(GetVersionInfo(AT_DeviceDriverVersion, sParam, sizeof(sParam)));
+      fprintf(fp, "  Device driver version: %s\n", sParam);
       getIntegerParam(ADMaxSizeX, &xsize);
       getIntegerParam(ADMaxSizeY, &ysize);
-      fprintf(fp, "  xpixels: %d\n", xsize);
-      fprintf(fp, "  ypixels: %d\n", ysize);
+      fprintf(fp, "  X pixels: %d\n", xsize);
+      fprintf(fp, "  Y pixels: %d\n", ysize);
       checkStatus(GetNumberAmp(&param1));
       fprintf(fp, "  Number of amplifier channels: %d\n", param1);
       checkStatus(GetNumberADChannels(&param1));
