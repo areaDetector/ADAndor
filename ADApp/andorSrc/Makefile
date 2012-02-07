@@ -29,6 +29,9 @@ ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
 PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
 PROD_IOC  += andorCCDApp
 PROD_LIBS += ATMCD32M
+#PROD_IOC += accumTest
+#accumTest_SRCS += accumTest.c
+#accumTest_LIBS += ATMCD32M 
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
 PROD_SRCS += andorCCDAppWin64_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
