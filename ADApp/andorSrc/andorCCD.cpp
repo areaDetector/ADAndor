@@ -796,7 +796,7 @@ asynStatus AndorCCD::setupAcquisition()
   try {
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s, SetTriggerMode(%d)\n", functionName, triggerMode);
-    checkStatus(SetTriggerMode(ATInternal));
+    checkStatus(SetTriggerMode(triggerMode));
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s, SetADChannel(%d)\n", functionName, adcChannel);
     checkStatus(SetADChannel(adcChannel));
@@ -883,7 +883,7 @@ asynStatus AndorCCD::setupAcquisition()
     } else {
       checkStatus(GetAcquisitionTimings(&acquireTimeAct, &accumulatePeriodAct, &acquirePeriodAct));
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-        "%s, GetAcquisitionTimings(exposure=%f, accumulate=%f, kinetic=%f\n",
+        "%s, GetAcquisitionTimings(exposure=%f, accumulate=%f, kinetic=%f)\n",
         functionName, acquireTimeAct, accumulatePeriodAct, acquirePeriodAct);
     }
     setDoubleParam(ADAcquireTime, acquireTimeAct);
