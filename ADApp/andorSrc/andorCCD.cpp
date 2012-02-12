@@ -737,6 +737,7 @@ asynStatus AndorCCD::setupAcquisition()
   int binX, binY, minX, minY, sizeX, sizeY, maxSizeX, maxSizeY;
   float acquireTimeAct, acquirePeriodAct, accumulatePeriodAct;
   int FKmode = 4;
+  int FKOffset;
   static const char *functionName = "AndorCCD::setupAcquisition";
   
   getIntegerParam(ADImageMode, &imageMode);
@@ -869,12 +870,13 @@ asynStatus AndorCCD::setupAcquisition()
           "%s, SetImage(%d,%d,%d,%d,%d,%d)\n", 
           functionName, binX, binY, 1, maxSizeX, 1, maxSizeY);
         checkStatus(SetImage(binX, binY, 1, maxSizeX, 1, maxSizeY));
+        FKOffset = maxSizeY - sizeY - minY;
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
           "%s, SetFastKineticsEx(%d,%d,%f,%d,%d,%d,%d)\n", 
-          functionName, sizeY, numImages, mAcquireTime, FKmode, binX, binY, minY);
-        checkStatus(SetFastKineticsEx(sizeY, numImages, mAcquireTime, FKmode, binX, binY, minY));
+          functionName, sizeY, numImages, mAcquireTime, FKmode, binX, binY, FKOffset);
+        checkStatus(SetFastKineticsEx(sizeY, numImages, mAcquireTime, FKmode, binX, binY, FKOffset));
         setIntegerParam(NDArraySizeX, maxSizeX/binX);
-        setIntegerParam(NDArraySizeY, maxSizeY/binY);
+        setIntegerParam(NDArraySizeY, sizeY/binY);
         break;
     }
     // Read the actual times
@@ -917,6 +919,7 @@ void AndorCCD::dataTask(void)
   at_32 firstImage, lastImage;
   int dims[2];
   int nDims = 2;
+  int i;
   epicsTimeStamp startTime;
   NDArray *pArray;
   int autoSave;
@@ -986,9 +989,10 @@ void AndorCCD::dataTask(void)
         callParamCallbacks();
         // Is there an image available?
         status = GetNumberNewImages(&firstImage, &lastImage);
-        if (status == DRV_SUCCESS) {
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-            "%s, firstImage=%d, lastImage=%d\n", functionName, firstImage, lastImage);
+        if (status != DRV_SUCCESS) continue;
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+          "%s, firstImage=%d, lastImage=%d\n", functionName, firstImage, lastImage);
+        for (i=firstImage; i<=lastImage; i++) {
           // Update counters
           getIntegerParam(NDArrayCounter, &imageCounter);
           imageCounter++;
@@ -1037,7 +1041,7 @@ void AndorCCD::dataTask(void)
             pArray->release();
           }
           // Save data if autosave is enabled
-          if (autoSave) this->saveDataFrame();
+          if (autoSave) this->saveDataFrame(i);
           callParamCallbacks();
         }
       } catch (const std::string &e) {
@@ -1063,7 +1067,7 @@ void AndorCCD::dataTask(void)
  * Save a data frame using the Andor SDK file writing functions.
  * Also has the option to save data as plain text.
  */
-void AndorCCD::saveDataFrame() 
+void AndorCCD::saveDataFrame(int frameNumber) 
 {
   char *errorString = NULL;
   int fileFormat;
@@ -1083,8 +1087,8 @@ void AndorCCD::saveDataFrame()
   try {
     if (fileFormat == AFFTIFF) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, SaveAsTiffEx(%s, %s, 1, 1, 1)\n", functionName, fullFileName, palFilePath);
-      checkStatus(SaveAsTiffEx(fullFileName, palFilePath, 1, 1, 1));
+        "%s, SaveAsTiffEx(%s, %s, %d, 1, 1)\n", functionName, fullFileName, palFilePath, frameNumber);
+      checkStatus(SaveAsTiffEx(fullFileName, palFilePath, frameNumber, 1, 1));
     } else if (fileFormat == AFFBMP) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s, SaveAsBmp(%s, %s, 0, 0)\n", functionName, fullFileName, palFilePath);

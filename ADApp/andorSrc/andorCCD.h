@@ -89,7 +89,7 @@ class AndorCCD : public ADDriver {
   unsigned int checkStatus(unsigned int returnStatus);
   asynStatus setupAcquisition();
   asynStatus setupShutter(int command);
-  void saveDataFrame();
+  void saveDataFrame(int frameNumber);
   /**
    * Additional image mode to those in ADImageMode_t
    */
