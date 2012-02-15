@@ -32,6 +32,9 @@ PROD_LIBS += ATMCD32M
 #PROD_IOC += accumTest
 #accumTest_SRCS += accumTest.c
 #accumTest_LIBS += ATMCD32M 
+#PROD_IOC += FKTest
+#FKTest_SRCS += FKTest.c
+#FKTest_LIBS += ATMCD32M 
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
 PROD_SRCS += andorCCDAppWin64_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
