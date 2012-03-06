@@ -15,7 +15,7 @@ void checkStatus(int status)
 
 int main(int argc, char *argv[])
 {
-  int adcChannel=0, minX=0, minY=0, binX=1, binY=1, sizeX=1024, sizeY=1024;
+  int adcChannel=1, minX=0, minY=0, binX=1, binY=1, sizeX=1024, sizeY=1024;
   int triggerMode=0, numExposures=2, numImages=3;
   float mAcquireTime=0.1f, mAccumulatePeriod=1.0f, mAcquirePeriod=4.0f;
   float acquireTimeAct, accumulatePeriodAct, acquirePeriodAct;
