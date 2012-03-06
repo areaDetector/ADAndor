@@ -15,7 +15,7 @@ void checkStatus(int status)
 
 int main(int argc, char *argv[])
 {
-  int adcChannel=0, minX=0, minY=0, binX=1, binY=1, sizeX=1024, sizeY=1024;
+  int adcChannel=1, minX=0, minY=0, binX=1, binY=1, sizeX=1024, sizeY=1024;
   int triggerMode=0, numImages=5, FKOffset, FKRows=64, FKMode=4;
   float mAcquireTime=0.1f;
   float acquireTimeAct;
@@ -24,12 +24,13 @@ int main(int argc, char *argv[])
   time_t startTime, endTime;
   int i;
   int firstImage, lastImage;
+  long validFirst, validLast;
   char fileName[256];
   char *palFilePath = "./GREY.PAL";
   
   pArray = (at_32 *)malloc(sizeX * sizeY * sizeof(int));
 
-  printf("Intialize(\"\")\n");
+  printf("Initialize(\"\")\n");
   checkStatus(Initialize(""));
 
   printf("SetTriggerMode(%d)\n", triggerMode);
@@ -72,7 +73,7 @@ int main(int argc, char *argv[])
     sprintf(fileName, "tiff_test_%d.tif", i);
     printf("  SaveAsTiffEx(%s, %s, %d, 1, 1)\n", fileName, palFilePath, i);
     checkStatus(SaveAsTiffEx(fileName, palFilePath, i, 1, 1));
-    printf("  GetOldestImage(%p, %d)\n", pArray, sizeX*FKRows);
-    checkStatus(GetOldestImage((at_32*)pArray, sizeX*FKRows));
+    printf("  GetImages(%d, %d, %p, %d, %p, %p)\n", i, i, pArray, sizeX*FKRows, &validFirst, &validLast);
+    checkStatus(GetImages(i, i, (at_32*)pArray, sizeX*FKRows, &validFirst, &validLast));
   }
 }
