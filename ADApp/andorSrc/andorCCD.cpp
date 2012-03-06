@@ -553,6 +553,7 @@ asynStatus AndorCCD::setupShutter(int command)
  */
 unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
 {
+  char message[256];
   if (returnStatus == DRV_SUCCESS) {
     return 0;
   } else if (returnStatus == DRV_NOT_INITIALIZED) {
@@ -622,8 +623,11 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
     throw std::string("ERROR: No data to read, or CancelWait() called.");  
   } else if (returnStatus == DRV_ERROR_CODES) {
     throw std::string("ERROR: Problem communicating with camera.");  
+  } else if (returnStatus == DRV_LOAD_FIRMWARE_ERROR) {
+    throw std::string("ERROR: Error loading firmware.");  
   } else {
-    throw std::string("ERROR: Unknown error code returned from Andor SDK.");
+    sprintf(message, "ERROR: Unknown error code=%d returned from Andor SDK.", returnStatus);
+    throw std::string(message);
   }
 
   return 0;
@@ -917,6 +921,7 @@ void AndorCCD::dataTask(void)
   epicsInt32 sizeX, sizeY;
   NDDataType_t dataType;
   at_32 firstImage, lastImage;
+  at_32 validFirst, validLast;
   int dims[2];
   int nDims = 2;
   int i;
@@ -1015,14 +1020,18 @@ void AndorCCD::dataTask(void)
               functionName, status, firstImage, lastImage);
             if (dataType == NDUInt32) {
               asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-                "%s, GetOldestImage(%p, %d)\n", functionName, pArray->pData, sizeX*sizeY);
-              checkStatus(GetOldestImage((at_32*)pArray->pData, sizeX*sizeY));
+                "%s, GetImages(%d, %d, %p, %d, %p, %p)\n", 
+                functionName, i, i, pArray->pData, sizeX*sizeY, &validFirst, &validLast);
+              checkStatus(GetImages(i, i, (at_32*)pArray->pData, 
+                                    sizeX*sizeY, &validFirst, &validLast));
               setIntegerParam(NDArraySize, sizeX * sizeY * sizeof(epicsUInt32));
             }
             else if (dataType == NDUInt16) {
               asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-                "%s, GetOldestImage16(%p, %d)\n", functionName, pArray->pData, sizeX*sizeY);
-              checkStatus(GetOldestImage16((epicsUInt16*)pArray->pData, sizeX*sizeY));
+                "%s, GetImages16(%d, %d, %p, %d, &p, &p)\n", 
+                functionName, i, i, pArray->pData, sizeX*sizeY, &validFirst, &validLast);
+              checkStatus(GetImages16(i, i, (epicsUInt16*)pArray->pData, 
+                                      sizeX*sizeY, &validFirst, &validLast));
               setIntegerParam(NDArraySize, sizeX * sizeY * sizeof(epicsUInt16));
             }
             /* Put the frame number and time stamp into the buffer */
