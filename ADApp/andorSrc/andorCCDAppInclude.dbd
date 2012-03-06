@@ -1,6 +1,5 @@
 # We don't using commonDriverPlugins.dbd because we can't use GraphicsMagick, the SetImage
-# conflicts with a function of the same name in the Andor SDK.  This actually only is a
-# problem on windows-x64, but for now we disable the GraphicsMagick plugin on all platforms
+# conflicts with a function of the same name in the Andor SDK.
 include "andorCCDSupport.dbd"
 include "base.dbd"
 include "ADSupport.dbd"
