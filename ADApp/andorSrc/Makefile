@@ -37,9 +37,8 @@ PROD_LIBS += ATMCD32M
 #FKTest_LIBS += ATMCD32M 
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
-PROD_SRCS += andorCCDAppWin64_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
-DBD       += andorCCDAppWin64.dbd
-PROD_IOC  += andorCCDAppWin64
+PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
+PROD_IOC  += andorCCDApp
 PROD_LIBS += atmcd64m
 
 else ifeq (linux-x86_64, $(findstring linux-x86_64, $(T_A)))
@@ -47,6 +46,12 @@ PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
 PROD_IOC  += andorCCDApp
 PROD_LIBS += andor
 STATIC_BUILD=NO
+#PROD_IOC += accumTest
+#accumTest_SRCS += accumTest.c
+#PROD_IOC += FKTest
+#FKTest_SRCS += FKTest.c
+#PROD_IOC += linuxTest
+#linuxTest_SRCS += linuxTest.c
 
 else ifeq (linux-x86, $(findstring linux-x86, $(T_A)))
 PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
