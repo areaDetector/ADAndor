@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #ifdef _WIN32
 #include "ATMCD32D.h"
@@ -23,7 +24,7 @@ int main(int argc, char *argv[])
   time_t startTime, endTime;
   int acquireStatus;
 
-  checkStatus(Initialize(""));
+  checkStatus(Initialize("/usr/local/etc/andor"));
 
   printf("SetTriggerMode(%d)\n", triggerMode);
   checkStatus(SetTriggerMode(ATInternal));
@@ -66,4 +67,5 @@ int main(int argc, char *argv[])
     time(&endTime);
     printf("Time since start=%f\n", difftime(endTime, startTime));
   }
+  return 0;
 }
