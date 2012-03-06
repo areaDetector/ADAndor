@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #ifdef _WIN32
 #include "ATMCD32D.h"
@@ -24,14 +25,14 @@ int main(int argc, char *argv[])
   time_t startTime, endTime;
   int i;
   int firstImage, lastImage;
-  long validFirst, validLast;
+  at_32 validFirst, validLast;
   char fileName[256];
   char *palFilePath = "./GREY.PAL";
   
   pArray = (at_32 *)malloc(sizeX * sizeY * sizeof(int));
 
   printf("Initialize(\"\")\n");
-  checkStatus(Initialize(""));
+  checkStatus(Initialize("/usr/local/etc/andor"));
 
   printf("SetTriggerMode(%d)\n", triggerMode);
   checkStatus(SetTriggerMode(ATInternal));
@@ -76,4 +77,5 @@ int main(int argc, char *argv[])
     printf("  GetImages(%d, %d, %p, %d, %p, %p)\n", i, i, pArray, sizeX*FKRows, &validFirst, &validLast);
     checkStatus(GetImages(i, i, (at_32*)pArray, sizeX*FKRows, &validFirst, &validLast));
   }
+  return 0;
 }
