@@ -108,22 +108,22 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   createParam(AndorAccumulatePeriodString,      asynParamFloat64, &AndorAccumulatePeriod);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
 
-  //Create the epicsEvent for signaling to the status task when parameters should have changed.
-  //This will cause it to do a poll immediately, rather than wait for the poll time period.
+  // Create the epicsEvent for signaling to the status task when parameters should have changed.
+  // This will cause it to do a poll immediately, rather than wait for the poll time period.
   this->statusEvent = epicsEventMustCreate(epicsEventEmpty);
   if (!this->statusEvent) {
     printf("%s:%s epicsEventCreate failure for start event\n", driverName, functionName);
     return;
   }
 
-  //Use this to signal the data acquisition task that acquisition has started.
+  // Use this to signal the data acquisition task that acquisition has started.
   this->dataEvent = epicsEventMustCreate(epicsEventEmpty);
   if (!this->dataEvent) {
     printf("%s:%s epicsEventCreate failure for data event\n", driverName, functionName);
     return;
   }
 
-  //Initialize camera
+  // Initialize camera
   try {
     cout << "Initializing CCD..." << endl;
     checkStatus(Initialize(mInstallPath));
@@ -640,6 +640,7 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
 void AndorCCD::statusTask(void)
 {
   int value = 0;
+  float temperature;
   unsigned int uvalue = 0;
   unsigned int status = 0;
   double timeout = 0.0;
@@ -686,8 +687,8 @@ void AndorCCD::statusTask(void)
         checkStatus(IsCoolerOn(&value));
         status = setIntegerParam(AndorCoolerParam, value);
         //Read temperature of CCD
-        checkStatus(GetTemperature(&value));
-        status = setDoubleParam(ADTemperatureActual, static_cast<double>(value));
+        checkStatus(GetTemperatureF(&temperature));
+        status = setDoubleParam(ADTemperatureActual, temperature);
       }
 
       //Read detector status (idle, acquiring, error, etc.)
@@ -934,6 +935,8 @@ void AndorCCD::dataTask(void)
   const char *functionName = "AndorCCD::dataTask";
 
   cout << "Data thread started..." << endl;
+  
+  this->lock();
 
   while(1) {
     
@@ -1127,8 +1130,6 @@ void AndorCCD::saveDataFrame(int frameNumber)
     setIntegerParam(ADStatus, ADStatusError);
   }
 
-  this->unlock();
-  
 }
 
 
