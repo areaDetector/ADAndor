@@ -73,10 +73,20 @@ static void andorStatusTaskC(void *drvPvt);
 static void andorDataTaskC(void *drvPvt);
 static void exitHandler(void *drvPvt);
 
-/**
- * Constructor for AndorCCD::AndorCCD.
- *
- */
+/** Constructor for Andor driver; most parameters are simply passed to ADDriver::ADDriver.
+  * After calling the base class constructor this method creates a thread to collect the detector data, 
+  * and sets reasonable default values the parameters defined in this class, asynNDArrayDriver, and ADDriver.
+  * \param[in] portName The name of the asyn port driver to be created.
+  * \param[in] maxBuffers The maximum number of NDArray buffers that the NDArrayPool for this driver is 
+  *            allowed to allocate. Set this to -1 to allow an unlimited number of buffers.
+  * \param[in] maxMemory The maximum amount of memory that the NDArrayPool for this driver is 
+  *            allowed to allocate. Set this to -1 to allow an unlimited amount of memory.
+  * \param[in] installPath The path to the Andor directory containing the detector INI files, etc.
+  *            This can be specified as an empty string ("") for new detectors that don't use the INI
+  *            files on Windows, but must be a valid path on Linux.
+  * \param[in] priority The thread priority for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
+  * \param[in] stackSize The stack size for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
+  */
 AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
                    const char *installPath, int priority, int stackSize)
 
@@ -215,6 +225,9 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   cout << "CCD initialized OK!\n" << endl;
 }
 
+/**
+ * Destructor.  Free resources and closes the Andor library
+ */
 AndorCCD::~AndorCCD() 
 {
   try {
@@ -241,6 +254,11 @@ static void exitHandler(void *drvPvt)
 }
 
 
+/** Report status of the driver.
+  * Prints details about the detector in us if details>0.
+  * It then calls the ADDriver::report() method.
+  * \param[in] fp File pointed passed by caller where the output is written to.
+  * \param[in] details Controls the level of detail in the report. */
 void AndorCCD::report(FILE *fp, int details)
 {
   int param1;
@@ -311,6 +329,11 @@ void AndorCCD::report(FILE *fp, int details)
 }
 
 
+/** Called when asyn clients call pasynInt32->write().
+  * This function performs actions for some parameters, including ADAcquire, ADBinX, etc.
+  * For all parameters it sets the value in the parameter library and calls any registered callbacks..
+  * \param[in] pasynUser pasynUser structure that encodes the reason and address.
+  * \param[in] value Value to write. */
 asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
@@ -419,6 +442,11 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     return status;
 }
 
+/** Called when asyn clients call pasynFloat64->write().
+  * This function performs actions for some parameters.
+  * For all parameters it sets the value in the parameter library and calls any registered callbacks.
+  * \param[in] pasynUser pasynUser structure that encodes the reason and address.
+  * \param[in] value Value to write. */
 asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 {
     int function = pasynUser->reason;
@@ -500,7 +528,8 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 }
 
 
-// command: 0=close, 1=open, -1=no change, only set other parameters
+/** Controls shutter
+ * @param[in] command 0=close, 1=open, -1=no change, only set other parameters */
 asynStatus AndorCCD::setupShutter(int command)
 {
   double dTemp;
@@ -732,6 +761,7 @@ void AndorCCD::statusTask(void)
 
 }
 
+/** Set up acquisition parameters */
 asynStatus AndorCCD::setupAcquisition()
 {
   int numExposures;
@@ -1077,7 +1107,6 @@ void AndorCCD::dataTask(void)
 
 /**
  * Save a data frame using the Andor SDK file writing functions.
- * Also has the option to save data as plain text.
  */
 void AndorCCD::saveDataFrame(int frameNumber) 
 {
@@ -1150,16 +1179,18 @@ static void andorDataTaskC(void *drvPvt)
   pPvt->dataTask();
 }
 
-/**
- * Config function for IOC shell.
- *
- * @param portName The ASYN port.
- * @param maxBuffers The maximum number of data frame buffers for the ADDriver class.
- * @param maxMemory The maximum memory size allowed in the ADDriver class.
- * @param installPath The path to the Andor installation directory.  Only required for older detectors.
- * @param priority The priority of the asyn port driver
- * @param stackSize The stack size for the asyn port driver and the other threads created by this driver
- */
+/** IOC shell configuration command for Andor driver
+  * \param[in] portName The name of the asyn port driver to be created.
+  * \param[in] maxBuffers The maximum number of NDArray buffers that the NDArrayPool for this driver is 
+  *            allowed to allocate. Set this to -1 to allow an unlimited number of buffers.
+  * \param[in] maxMemory The maximum amount of memory that the NDArrayPool for this driver is 
+  *            allowed to allocate. Set this to -1 to allow an unlimited amount of memory.
+  * \param[in] installPath The path to the Andor directory containing the detector INI files, etc.
+  *            This can be specified as an empty string ("") for new detectors that don't use the INI
+  *            files on Windows, but must be a valid path on Linux.
+  * \param[in] priority The thread priority for the asyn port driver thread
+  * \param[in] stackSize The stack size for the asyn port driver thread
+  */
 extern "C" {
 int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, 
                    const char *installPath, int priority, int stackSize)
