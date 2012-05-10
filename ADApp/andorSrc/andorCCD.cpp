@@ -90,11 +90,13 @@ static void exitHandler(void *drvPvt);
 AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
                    const char *installPath, int priority, int stackSize)
 
-  : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 0, 0,
+  : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
+             asynEnumMask, asynEnumMask,
              ASYN_CANBLOCK, 1, priority, stackSize)
 {
 
   int status = asynSuccess;
+  int i;
   int binX=1, binY=1, minX=0, minY=0, sizeX, sizeY;
   char model[256];
   const char *functionName = "AndorCCD::AndorCCD";
@@ -116,6 +118,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   createParam(AndorShutterExTTLString,            asynParamInt32, &AndorShutterExTTL);
   createParam(AndorPalFileNameString,             asynParamOctet, &AndorPalFileName);
   createParam(AndorAccumulatePeriodString,      asynParamFloat64, &AndorAccumulatePeriod);
+  createParam(AndorPreAmpGainString,              asynParamInt32, &AndorPreAmpGain);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
 
   // Create the epicsEvent for signaling to the status task when parameters should have changed.
@@ -148,6 +151,19 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
     return;
   }
   
+  // Initialize ADC enums
+  for (i=0; i<MAX_ADC_SPEEDS; i++) {
+    mADCSpeeds[i].EnumValue = i;
+    mADCSpeeds[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  } 
+
+  // Initialize Pre-Amp enums
+  for (i=0; i<MAX_PREAMP_GAINS; i++) {
+    mPreAmpGains[i].EnumValue = i;
+    mPreAmpGains[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  } 
+  
+
   /* Set some default values for parameters */
   status =  setStringParam(ADManufacturer, "Andor");
   status |= setStringParam(ADModel, model);
@@ -178,6 +194,9 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   status |= setIntegerParam(AndorShutterMode, AShutterAuto);
   status |= setDoubleParam(ADShutterOpenDelay, 0.);
   status |= setDoubleParam(ADShutterCloseDelay, 0.);
+
+  setupADCSpeeds();
+  setupPreAmpGains();
   status |= setupShutter(-1);
 
   callParamCallbacks();
@@ -254,6 +273,107 @@ static void exitHandler(void *drvPvt)
 }
 
 
+void AndorCCD::setupPreAmpGains()
+{
+  int i;
+  AndorADCSpeed_t *pSpeed;
+  AndorPreAmpGain_t *pGain = mPreAmpGains;
+  int isAvailable;
+  int adcSpeed;
+  float gain;
+  char *enumStrings[MAX_PREAMP_GAINS];
+  int enumValues[MAX_PREAMP_GAINS];
+  int enumSeverities[MAX_PREAMP_GAINS];
+  
+  mNumPreAmpGains = 0;
+  getIntegerParam(AndorAdcSpeed, &adcSpeed);
+  pSpeed = &mADCSpeeds[adcSpeed];
+
+  for (i=0; i<mTotalPreAmpGains; i++) {
+    checkStatus(IsPreAmpGainAvailable(pSpeed->ADCIndex, pSpeed->AmpIndex, pSpeed->HSSpeedIndex, 
+                i, &isAvailable));
+    if (isAvailable) {
+      checkStatus(GetPreAmpGain(i, &gain));
+      epicsSnprintf(pGain->EnumString, MAX_ENUM_STRING_SIZE, "%.2f", gain);
+      pGain->EnumValue = i;
+      pGain->Gain = gain;
+      mNumPreAmpGains++;
+      if (mNumPreAmpGains >= MAX_PREAMP_GAINS) break;
+      pGain++;
+    }
+  }
+  for (i=0; i<mNumPreAmpGains; i++) {
+    enumStrings[i] = mPreAmpGains[i].EnumString;
+    enumValues[i] = mPreAmpGains[i].EnumValue;
+    enumSeverities[i] = 0;
+  }
+  doCallbacksEnum(enumStrings, enumValues, enumSeverities, 
+                  mNumPreAmpGains, AndorPreAmpGain, 0);
+}
+
+asynStatus AndorCCD::readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[], 
+                              size_t nElements, size_t *nIn)
+{
+  int function = pasynUser->reason;
+  int i;
+
+  if (function == AndorAdcSpeed) {
+    for (i=0; ((i<mNumADCSpeeds) && (i<(int)nElements)); i++) {
+      if (strings[i]) free(strings[i]);
+      strings[i] = epicsStrDup(mADCSpeeds[i].EnumString);
+      values[i] = mADCSpeeds[i].EnumValue;
+      severities[i] = 0;
+    }
+  }
+  else if (function == AndorPreAmpGain) {
+    for (i=0; ((i<mNumPreAmpGains) && (i<(int)nElements)); i++) {
+      if (strings[i]) free(strings[i]);
+      strings[i] = epicsStrDup(mPreAmpGains[i].EnumString);
+      values[i] = mPreAmpGains[i].EnumValue;
+      severities[i] = 0;
+    }
+  }
+  else {
+    *nIn = 0;
+    return asynError;
+  }
+  *nIn = i;
+  return asynSuccess;   
+}
+
+void AndorCCD::setupADCSpeeds()
+{
+  int i, j, k, numHSSpeeds, bitDepth;
+  float HSSpeed;
+  AndorADCSpeed_t *pSpeed = mADCSpeeds;
+
+  mNumADCSpeeds = 0;
+  checkStatus(GetNumberAmp(&mNumAmps));
+  checkStatus(GetNumberADChannels(&mNumADCs));
+  checkStatus(GetNumberPreAmpGains(&mTotalPreAmpGains));
+  for (i=0; i<mNumADCs; i++) {
+    checkStatus(GetBitDepth(i, &bitDepth));
+    for (j=0; j<mNumAmps; j++) {
+      checkStatus(GetNumberHSSpeeds(i, j, &numHSSpeeds));
+      for (k=0; k<numHSSpeeds; k++ ) {
+        checkStatus(GetHSSpeed(i, j, k, &HSSpeed));
+        pSpeed->ADCIndex = i;
+        pSpeed->AmpIndex = j;
+        pSpeed->HSSpeedIndex = k;
+        pSpeed->BitDepth = bitDepth;
+        pSpeed->HSSpeed = HSSpeed;
+        epicsSnprintf(pSpeed->EnumString, MAX_ENUM_STRING_SIZE, 
+                      "%.2f MHz", HSSpeed);
+        mNumADCSpeeds++;
+        if (mNumADCSpeeds >= MAX_ADC_SPEEDS) return;
+        pSpeed++;
+      }
+    }
+  }
+}
+
+
+
 /** Report status of the driver.
   * Prints details about the detector in us if details>0.
   * It then calls the ADDriver::report() method.
@@ -273,6 +393,7 @@ void AndorCCD::report(FILE *fp, int details)
   unsigned int uIntParam5;
   unsigned int uIntParam6;
   AndorCapabilities capabilities;
+  AndorADCSpeed_t *pSpeed;
 
   fprintf(fp, "Andor CCD port=%s\n", this->portName);
   if (details > 0) {
@@ -295,15 +416,23 @@ void AndorCCD::report(FILE *fp, int details)
       getIntegerParam(ADMaxSizeY, &ysize);
       fprintf(fp, "  X pixels: %d\n", xsize);
       fprintf(fp, "  Y pixels: %d\n", ysize);
-      checkStatus(GetNumberAmp(&param1));
-      fprintf(fp, "  Number of amplifier channels: %d\n", param1);
-      checkStatus(GetNumberADChannels(&param1));
-      fprintf(fp, "  Number of ADC channels: %d\n", param1);
-      checkStatus(GetNumberPreAmpGains(&param1));
-      fprintf(fp, "  Number of pre-amp gains: %d\n", param1);
-      for (i=0; i<param1; i++) {
+      fprintf(fp, "  Number of amplifier channels: %d\n", mNumAmps);
+      fprintf(fp, "  Number of ADC channels: %d\n", mNumADCs);
+      fprintf(fp, "  Number of pre-amp gains (total): %d\n", mTotalPreAmpGains);
+      for (i=0; i<mTotalPreAmpGains; i++) {
         checkStatus(GetPreAmpGain(i, &fParam1));
         fprintf(fp, "    Gain[%d]: %f\n", i, fParam1);
+      }
+      fprintf(fp, "  Total ADC speeds: %d\n", mNumADCSpeeds);
+      for (i=0; i<mNumADCSpeeds; i++) {
+        pSpeed = &mADCSpeeds[i];
+        fprintf(fp, "    Amp=%d, ADC=%d, bitDepth=%d, HSSpeedIndex=%d, HSSpeed=%f\n",
+                pSpeed->AmpIndex, pSpeed->ADCIndex, pSpeed->BitDepth, pSpeed->HSSpeedIndex, pSpeed->HSSpeed);
+      }
+      fprintf(fp, "  Pre-amp gains available: %d\n", mNumPreAmpGains);
+      for (i=0; i<mNumPreAmpGains; i++) {
+        fprintf(fp, "    Index=%d, Gain=%f\n",
+                mPreAmpGains[i].EnumValue, mPreAmpGains[i].Gain);
       }
       capabilities.ulSize = sizeof(capabilities);
       checkStatus(GetCapabilities(&capabilities));
@@ -387,6 +516,7 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
              (function == ADTriggerMode)                               || 
              (function == AndorAdcSpeed)) {
       status = setupAcquisition();
+      if (function == AndorAdcSpeed) setupPreAmpGains();
       if (status != asynSuccess) setIntegerParam(function, oldValue);
     }
     else if (function == AndorCoolerParam) {
@@ -767,12 +897,13 @@ asynStatus AndorCCD::setupAcquisition()
   int numExposures;
   int numImages;
   int imageMode;
-  int adcChannel;
+  int adcSpeed;
   int triggerMode;
   int binX, binY, minX, minY, sizeX, sizeY, maxSizeX, maxSizeY;
   float acquireTimeAct, acquirePeriodAct, accumulatePeriodAct;
   int FKmode = 4;
   int FKOffset;
+  AndorADCSpeed_t *pSpeed;
   static const char *functionName = "AndorCCD::setupAcquisition";
   
   getIntegerParam(ADImageMode, &imageMode);
@@ -822,7 +953,8 @@ asynStatus AndorCCD::setupAcquisition()
   // Note: we do triggerMode and adcChannel in this function because they change
   // the computed actual AcquirePeriod and AccumulatePeriod
   getIntegerParam(ADTriggerMode, &triggerMode);
-  getIntegerParam(AndorAdcSpeed, &adcChannel);
+  getIntegerParam(AndorAdcSpeed, &adcSpeed);
+  pSpeed = &mADCSpeeds[adcSpeed];
   
   // Unfortunately there does not seem to be a way to query the Andor SDK 
   // for the actual size of the image, so we must compute it.
@@ -833,13 +965,19 @@ asynStatus AndorCCD::setupAcquisition()
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s, SetTriggerMode(%d)\n", functionName, triggerMode);
     checkStatus(SetTriggerMode(triggerMode));
+
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetADChannel(%d)\n", functionName, adcChannel);
-    checkStatus(SetADChannel(adcChannel));
-    //Set fastest HS speed.
+      "%s, SetADChannel(%d)\n", functionName, pSpeed->ADCIndex);
+    checkStatus(SetADChannel(pSpeed->ADCIndex));
+
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetHSSpeed(0, 0)\n", functionName);
-    checkStatus(SetHSSpeed(0, 0));
+      "%s, SetOutputAmplifier(%d)\n", functionName, pSpeed->AmpIndex);
+    checkStatus(SetOutputAmplifier(pSpeed->AmpIndex));
+
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+      "%s, SetHSSpeed(%d, %d)\n", functionName, pSpeed->AmpIndex, pSpeed->HSSpeedIndex);
+    checkStatus(SetHSSpeed(pSpeed->AmpIndex, pSpeed->HSSpeedIndex));
+
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s, SetImage(%d,%d,%d,%d,%d,%d)\n", 
       functionName, binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY);
