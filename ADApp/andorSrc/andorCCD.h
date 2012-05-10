@@ -43,6 +43,10 @@
 #include "atmcdLXd.h"
 #endif
 
+#define MAX_ENUM_STRING_SIZE 26
+#define MAX_ADC_SPEEDS 16
+#define MAX_PREAMP_GAINS 16
+
 #define AndorCoolerParamString             "ANDOR_COOLER"
 #define AndorTempStatusMessageString       "ANDOR_TEMP_STAT"
 #define AndorMessageString                 "ANDOR_MESSAGE"
@@ -50,8 +54,24 @@
 #define AndorShutterExTTLString            "ANDOR_SHUTTER_EXTTL"
 #define AndorPalFileNameString             "ANDOR_PAL_FILE_PATH"
 #define AndorAccumulatePeriodString        "ANDOR_ACCUMULATE_PERIOD"
+#define AndorPreAmpGainString              "ANDOR_PREAMP_GAIN"
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
 
+typedef struct {
+  int ADCIndex;
+  int AmpIndex;
+  int HSSpeedIndex;
+  float HSSpeed;
+  int BitDepth;
+  char *EnumString;
+  int EnumValue;
+} AndorADCSpeed_t;
+
+typedef struct {
+  float Gain;
+  char *EnumString;
+  int EnumValue;
+} AndorPreAmpGain_t;
 
 /**
  * Driver class for Andor CCD. This inherits from ADDriver class in areaDetector.
@@ -67,6 +87,8 @@ class AndorCCD : public ADDriver {
   virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
   virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
   virtual void report(FILE *fp, int details);
+  virtual asynStatus readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[], 
+                              size_t nElements, size_t *nIn);
 
   // Should be private, but are called from C so must be public
   void statusTask(void);
@@ -81,6 +103,7 @@ class AndorCCD : public ADDriver {
   int AndorShutterExTTL;
   int AndorPalFileName;
   int AndorAccumulatePeriod;
+  int AndorPreAmpGain;
   int AndorAdcSpeed;
   #define LAST_ANDOR_PARAM AndorAdcSpeed
 
@@ -90,6 +113,8 @@ class AndorCCD : public ADDriver {
   asynStatus setupAcquisition();
   asynStatus setupShutter(int command);
   void saveDataFrame(int frameNumber);
+  void setupADCSpeeds();
+  void setupPreAmpGains();
   /**
    * Additional image mode to those in ADImageMode_t
    */
@@ -159,6 +184,17 @@ class AndorCCD : public ADDriver {
   double mFastPollingPeriod;
   unsigned int mAcquiringData;
   char *mInstallPath;
+  
+  /**
+   * ADC speed parameters
+   */
+  int mNumAmps;
+  int mNumADCs;
+  int mNumADCSpeeds;
+  AndorADCSpeed_t mADCSpeeds[MAX_ADC_SPEEDS];
+  int mTotalPreAmpGains;
+  int mNumPreAmpGains;
+  AndorPreAmpGain_t mPreAmpGains[MAX_PREAMP_GAINS];
 
   //Shutter control parameters
   float mAcquireTime;
