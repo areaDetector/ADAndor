@@ -62,11 +62,11 @@ const epicsInt32 AndorCCD::AShutterOpen = 1;
 const epicsInt32 AndorCCD::AShutterClose = 2;
 
 const epicsInt32 AndorCCD::AFFTIFF = 0;
-const epicsInt32 AndorCCD::AFFBMP = 1;
-const epicsInt32 AndorCCD::AFFSIF = 2;
-const epicsInt32 AndorCCD::AFFEDF = 3;
-const epicsInt32 AndorCCD::AFFRAW = 4;
-const epicsInt32 AndorCCD::AFFTEXT = 5;
+const epicsInt32 AndorCCD::AFFBMP  = 1;
+const epicsInt32 AndorCCD::AFFSIF  = 2;
+const epicsInt32 AndorCCD::AFFEDF  = 3;
+const epicsInt32 AndorCCD::AFFRAW  = 4;
+const epicsInt32 AndorCCD::AFFFITS = 5;
 
 //C Function prototypes to tie in with EPICS
 static void andorStatusTaskC(void *drvPvt);
@@ -1250,6 +1250,8 @@ void AndorCCD::saveDataFrame(int frameNumber)
 {
   char *errorString = NULL;
   int fileFormat;
+  NDDataType_t dataType;
+  int FITSType=0;
   char fullFileName[MAX_FILENAME_LEN];
   char palFilePath[MAX_FILENAME_LEN];
 
@@ -1284,6 +1286,13 @@ void AndorCCD::saveDataFrame(int frameNumber)
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s, SaveAsRaw(%s, 1)\n", functionName, fullFileName);
       checkStatus(SaveAsRaw(fullFileName, 1));
+    } else if (fileFormat == AFFFITS) {
+      getIntegerParam(NDDataType, (epicsInt32*)&dataType);
+      if (dataType == NDUInt16) FITSType=0;
+      else if (dataType== NDUInt32) FITSType=1;
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s, SaveAsFITS(%s, %d)\n", functionName, fullFileName, FITSType);
+      checkStatus(SaveAsFITS(fullFileName, FITSType));
     }
   } catch (const std::string &e) {
     cout << e << endl;

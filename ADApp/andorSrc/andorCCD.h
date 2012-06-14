@@ -176,7 +176,7 @@ class AndorCCD : public ADDriver {
   static const epicsInt32 AFFSIF;
   static const epicsInt32 AFFEDF;
   static const epicsInt32 AFFRAW;
-  static const epicsInt32 AFFTEXT;
+  static const epicsInt32 AFFFITS;
 
   epicsEventId statusEvent;
   epicsEventId dataEvent;
