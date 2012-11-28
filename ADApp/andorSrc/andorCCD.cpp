@@ -1091,7 +1091,7 @@ void AndorCCD::dataTask(void)
   NDDataType_t dataType;
   at_32 firstImage, lastImage;
   at_32 validFirst, validLast;
-  int dims[2];
+  size_t dims[2];
   int nDims = 2;
   int i;
   epicsTimeStamp startTime;

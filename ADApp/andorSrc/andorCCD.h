@@ -203,7 +203,7 @@ class AndorCCD : public ADDriver {
 
 };
 
-#define NUM_ANDOR_DET_PARAMS (&LAST_ANDOR_PARAM - &FIRST_ANDOR_PARAM + 1)
+#define NUM_ANDOR_DET_PARAMS ((int)(&LAST_ANDOR_PARAM - &FIRST_ANDOR_PARAM + 1))
 
 static const char *driverName = "andorCCDDetector";
 
