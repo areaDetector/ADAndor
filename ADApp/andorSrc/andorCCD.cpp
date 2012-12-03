@@ -1089,6 +1089,7 @@ void AndorCCD::dataTask(void)
   epicsInt32 arrayCallbacks;
   epicsInt32 sizeX, sizeY;
   NDDataType_t dataType;
+  int itemp;
   at_32 firstImage, lastImage;
   at_32 validFirst, validLast;
   size_t dims[2];
@@ -1131,7 +1132,7 @@ void AndorCCD::dataTask(void)
         continue;
       }
       //Read some parameters
-      getIntegerParam(NDDataType, (epicsInt32*)&dataType);
+      getIntegerParam(NDDataType, &itemp); dataType = (NDDataType_t)itemp;
       getIntegerParam(NDAutoSave, &autoSave);
       getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
       getIntegerParam(NDArraySizeX, &sizeX);
@@ -1251,6 +1252,7 @@ void AndorCCD::saveDataFrame(int frameNumber)
   char *errorString = NULL;
   int fileFormat;
   NDDataType_t dataType;
+  int itemp;
   int FITSType=0;
   char fullFileName[MAX_FILENAME_LEN];
   char palFilePath[MAX_FILENAME_LEN];
@@ -1287,7 +1289,7 @@ void AndorCCD::saveDataFrame(int frameNumber)
         "%s, SaveAsRaw(%s, 1)\n", functionName, fullFileName);
       checkStatus(SaveAsRaw(fullFileName, 1));
     } else if (fileFormat == AFFFITS) {
-      getIntegerParam(NDDataType, (epicsInt32*)&dataType);
+      getIntegerParam(NDDataType, &itemp); dataType = (NDDataType_t)itemp;
       if (dataType == NDUInt16) FITSType=0;
       else if (dataType== NDUInt32) FITSType=1;
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
