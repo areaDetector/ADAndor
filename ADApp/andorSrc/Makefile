@@ -10,11 +10,12 @@ LIB_SRCS += andorCCD.cpp
 
 DATA+=GREY.PAL
 
-# We also do default STATIC_BUILD=YES on Windows but dynamic on Linux because Andor only 
-# provides a .so file on Linux.
-
-# Add locally compiled object code
-PROD_LIBS += andorCCD
+ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
+# Note: we must built the application without GraphicsMagick for windows-x64.  
+# This is because of a conflict with the Andor library (SetImage function) 
+# that only occurs on windows-x64.
+USE_GRAPHICSMAGICK=NO
+endif
 
 PROD_NAME = andorCCDApp
 PROD_IOC_WIN32  += $(PROD_NAME)
@@ -26,6 +27,9 @@ $(PROD_NAME)_DBD += andorCCDSupport.dbd
 DBD += andorCCDSupport.dbd
 
 PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
+
+# Add locally compiled object code
+PROD_LIBS += andorCCD
 
 ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
 PROD_LIBS += ATMCD32M
