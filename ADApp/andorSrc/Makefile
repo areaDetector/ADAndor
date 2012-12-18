@@ -10,11 +10,6 @@ LIB_SRCS += andorCCD.cpp
 
 DATA+=GREY.PAL
 
-# Note: we do things below in an arch-dependent way because we must built the application
-# without GraphicsMagick for windows-x64.  This is because of a conflict with the Andor
-# library (SetImage function) that only occurs on windows-x64.  So we build all
-# other archs with commonDriverSupport.dbd, but windows-x64 does not use that.
-# We have a separate dbd file for windows-x64, and the application has a different name.
 # We also do default STATIC_BUILD=YES on Windows but dynamic on Linux because Andor only 
 # provides a .so file on Linux.
 
@@ -22,48 +17,30 @@ DATA+=GREY.PAL
 PROD_LIBS += andorCCD
 
 PROD_NAME = andorCCDApp
+PROD_IOC_WIN32  += $(PROD_NAME)
+PROD_IOC_Linux  += $(PROD_NAME)
 
 # <name>.dbd will be created from <name>Include.dbd
 DBD += $(PROD_NAME).dbd
 $(PROD_NAME)_DBD += andorCCDSupport.dbd
 DBD += andorCCDSupport.dbd
 
+PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
 
 ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
-PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
-PROD_IOC  += $(PROD_NAME)
 PROD_LIBS += ATMCD32M
-#PROD_IOC += accumTest
-#accumTest_SRCS += accumTest.c
-#accumTest_LIBS += ATMCD32M 
-#PROD_IOC += FKTest
-#FKTest_SRCS += FKTest.c
-#FKTest_LIBS += ATMCD32M 
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
-PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
-PROD_IOC  += $(PROD_NAME)
+# Note: we must built the application without GraphicsMagick for windows-x64.  
+# This is because of a conflict with the Andor library (SetImage function) 
+# that only occurs on windows-x64.
+USE_GRAPHICSMAGICK=NO
 PROD_LIBS += atmcd64m
-
-else ifeq (linux-x86_64, $(findstring linux-x86_64, $(T_A)))
-PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
-PROD_IOC  += $(PROD_NAME)
-PROD_LIBS += andor
-STATIC_BUILD=NO
-#PROD_IOC += accumTest
-#accumTest_SRCS += accumTest.c
-#PROD_IOC += FKTest
-#FKTest_SRCS += FKTest.c
-#PROD_IOC += linuxTest
-#linuxTest_SRCS += linuxTest.c
-
-else ifeq (linux-x86, $(findstring linux-x86, $(T_A)))
-PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
-PROD_IOC  += $(PROD_NAME)
-PROD_LIBS += andor
-STATIC_BUILD=NO
-
 endif
+
+# Note: we use PROD_SYS_LIBS because we are building statically but this library is only provided in dynamic
+# format (.so)
+PROD_SYS_LIBS_Linux += andor
 
 include $(TOP)/ADApp/commonDriverMakefile
 
