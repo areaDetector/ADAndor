@@ -10,12 +10,10 @@ LIB_SRCS += andorCCD.cpp
 
 DATA+=GREY.PAL
 
-ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
-# Note: we must built the application without GraphicsMagick for windows-x64.  
+# Note: we must built the application without GraphicsMagick.
 # This is because of a conflict with the Andor library (SetImage function) 
-# that only occurs on windows-x64.
+# It leads to a build error on windows-x64, but to a run-time error on Linux.
 USE_GRAPHICSMAGICK=NO
-endif
 
 PROD_NAME = andorCCDApp
 PROD_IOC_WIN32  += $(PROD_NAME)
