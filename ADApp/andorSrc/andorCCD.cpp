@@ -10,19 +10,27 @@
  *
  */
 
-#include <iostream>
-#include <fstream>
+#include <stdio.h>
+#include <string.h>
+#include <string>
 
-#include "andorCCD.h"
-
+#include <epicsTime.h>
+#include <epicsThread.h>
+#include <epicsEvent.h>
+#include <epicsString.h>
 #include <iocsh.h>
 #include <epicsExport.h>
 #include <epicsExit.h>
 
-using std::cout;
-using std::endl;
-using std::flush;
-using std::ofstream;
+#ifdef _WIN32
+#include "ATMCD32D.h"
+#else
+#include "atmcdLXd.h"
+#endif
+
+#include "andorCCD.h"
+
+static const char *driverName = "andorCCD";
 
 //Definitions of static class data members
 
@@ -99,10 +107,8 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   int i;
   int binX=1, binY=1, minX=0, minY=0, sizeX, sizeY;
   char model[256];
-  const char *functionName = "AndorCCD::AndorCCD";
+  static const char *functionName = "AndorCCD";
 
-  cout << "Constructing AndorCCD driver..." << endl;
-  
   if (installPath == NULL)
     strcpy(mInstallPath, "");
   else 
@@ -138,7 +144,8 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
 
   // Initialize camera
   try {
-    cout << "Initializing CCD..." << endl;
+    printf("%s:%s: initializing camera\n",
+      driverName, functionName);
     checkStatus(Initialize(mInstallPath));
     setStringParam(AndorMessage, "Camera successfully initialized.");
     checkStatus(GetDetector(&sizeX, &sizeY));
@@ -147,7 +154,9 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
     callParamCallbacks();
   } catch (const std::string &e) {
-    cout << e << endl;
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s:%s: %s\n",
+      driverName, functionName, e.c_str());
     return;
   }
   
@@ -205,7 +214,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   epicsEventSignal(statusEvent);
 
   if (status) {
-    printf("%s: unable to set camera parameters\n", functionName);
+    printf("%s:%s: unable to set camera parameters\n", driverName, functionName);
     return;
   }
 
@@ -224,7 +233,7 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
                               (EPICSTHREADFUNC)andorStatusTaskC,
                               this) == NULL);
   if (status) {
-    printf("%s:%s epicsThreadCreate failure for status task\n",
+    printf("%s:%s: epicsThreadCreate failure for status task\n",
            driverName, functionName);
     return;
   }
@@ -237,11 +246,11 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
                               (EPICSTHREADFUNC)andorDataTaskC,
                               this) == NULL);
   if (status) {
-    printf("%s:%s epicsThreadCreate failure for data task\n",
+    printf("%s:%s: epicsThreadCreate failure for data task\n",
            driverName, functionName);
     return;
   }
-  cout << "CCD initialized OK!\n" << endl;
+  printf("CCD initialized OK!\n");
 }
 
 /**
@@ -249,15 +258,19 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
  */
 AndorCCD::~AndorCCD() 
 {
+  static const char *functionName = "~AndorCCD";
+
   try {
-    cout << "Shutdown and freeing up memory..." << endl;
+    printf("Shutdown and freeing up memory...\n");
     this->lock();
     checkStatus(FreeInternalMemory());
     checkStatus(ShutDown());
-    cout << "Camera shutting down as part of IOC exit." << endl;
+    printf("Camera shutting down as part of IOC exit.\n");
     this->unlock();
   } catch (const std::string &e) {
-    cout << e << endl;
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s:%s: %s\n",
+      driverName, functionName, e.c_str());
   }
 }
 
@@ -394,6 +407,7 @@ void AndorCCD::report(FILE *fp, int details)
   unsigned int uIntParam6;
   AndorCapabilities capabilities;
   AndorADCSpeed_t *pSpeed;
+  static const char *functionName = "report";
 
   fprintf(fp, "Andor CCD port=%s\n", this->portName);
   if (details > 0) {
@@ -450,7 +464,9 @@ void AndorCCD::report(FILE *fp, int details)
       fprintf(fp, "          EMGain=0x%X\n", (int)capabilities.ulEMGainCapability);
 
     } catch (const std::string &e) {
-      cout << e << endl;
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+        "%s:%s: %s\n",
+        driverName, functionName, e.c_str());
     }
   }
   // Call the base class method
@@ -470,7 +486,7 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     epicsInt32 oldValue;
 
     asynStatus status = asynSuccess;
-    const char *functionName = "AndorCCD::writeInt32";
+    static const char *functionName = "writeInt32";
 
     //Set in param lib so the user sees a readback straight away. Save a backup in case of errors.
     getIntegerParam(function, &oldValue);
@@ -483,27 +499,31 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
           mAcquiringData = 1;
           //We send an event at the bottom of this function.
         } catch (const std::string &e) {
-          cout << e << endl;
+          asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s:%s: %s\n",
+            driverName, functionName, e.c_str());
           status = asynError;
         }
       }
       if (!value && (adstatus != ADStatusIdle)) {
         try {
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, AbortAcquisition()\n", 
-            functionName);
+            "%s:%s:, AbortAcquisition()\n", 
+            driverName, functionName);
           checkStatus(AbortAcquisition());
           mAcquiringData = 0;
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, FreeInternalMemory()\n", 
-            functionName);
+            "%s:%s:, FreeInternalMemory()\n", 
+            driverName, functionName);
           checkStatus(FreeInternalMemory());
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, CancelWait()\n", 
-            functionName);
+            "%s:%s:, CancelWait()\n", 
+            driverName, functionName);
           checkStatus(CancelWait());
         } catch (const std::string &e) {
-          cout << e << endl;
+          asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s:%s: %s\n",
+            driverName, functionName, e.c_str());
           status = asynError;
         } 
       }
@@ -522,14 +542,20 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if (function == AndorCoolerParam) {
       try {
         if (value == 0) {
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerOFF()\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s:%s:, CoolerOFF()\n", 
+            driverName, functionName);
           checkStatus(CoolerOFF());
         } else if (value == 1) {
-          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, CoolerON()\n", functionName);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s:%s:, CoolerON()\n", 
+            driverName, functionName);
           checkStatus(CoolerON());
         }
       } catch (const std::string &e) {
-        cout << e << endl;
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
         status = asynError;
       }
     }
@@ -555,8 +581,8 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
     if (mAcquiringData) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, Sending dataEvent to dataTask ...\n", 
-        functionName);
+        "%s:%s:, Sending dataEvent to dataTask ...\n", 
+        driverName, functionName);
       //Also signal the data readout thread
       epicsEventSignal(dataEvent);
     }
@@ -581,7 +607,7 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 {
     int function = pasynUser->reason;
     asynStatus status = asynSuccess;
-    const char *functionName = "AndorCCD::writeFloat64";
+    static const char *functionName = "writeFloat64";
 
     int minTemp = 0;
     int maxTemp = 0;
@@ -600,10 +626,13 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     else if (function == ADGain) {
       try {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetPreAmpGain(%d)\n", functionName, (int)value);
+          "%s:%s:, SetPreAmpGain(%d)\n", 
+          driverName, functionName, (int)value);
         checkStatus(SetPreAmpGain((int)value));
       } catch (const std::string &e) {
-        cout << e << endl;
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
         status = asynError;
       }
     }
@@ -613,14 +642,17 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     }
     else if (function == ADTemperature) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, Setting temperature value %f\n", functionName, value);
+        "%s:%s:, Setting temperature value %f\n", 
+        driverName, functionName, value);
       try {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, CCD Min Temp: %d, Max Temp %d\n", functionName, minTemp, maxTemp);
+          "%s:%s:, CCD Min Temp: %d, Max Temp %d\n", 
+          driverName, functionName, minTemp, maxTemp);
         checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
         if ((static_cast<int>(value) > minTemp) & (static_cast<int>(value) < maxTemp)) {
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, SetTemperature(%d)\n", functionName, static_cast<int>(value));
+            "%s:%s:, SetTemperature(%d)\n", 
+            driverName, functionName, static_cast<int>(value));
           checkStatus(SetTemperature(static_cast<int>(value)));
         } else {
           setStringParam(AndorMessage, "Temperature is out of range.");
@@ -628,7 +660,9 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
           status = asynError;
         }
       } catch (const std::string &e) {
-        cout << e << endl;
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
         status = asynError;
       }
     }
@@ -648,7 +682,7 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     callParamCallbacks();
     if (status)
         asynPrint(pasynUser, ASYN_TRACE_ERROR,
-              "%s:%s error, status=%d function=%d, value=%f\n",
+              "%s:%s: error, status=%d function=%d, value=%f\n",
               driverName, functionName, status, function, value);
     else
         asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
@@ -667,7 +701,7 @@ asynStatus AndorCCD::setupShutter(int command)
   int shutterExTTL;
   int shutterMode;
   asynStatus status=asynSuccess;
-  static const char *functionName = "AndorCCD::setupShutter";
+  static const char *functionName = "setupShutter";
   
   getDoubleParam(ADShutterOpenDelay, &dTemp);
   // Convert to ms
@@ -691,12 +725,14 @@ asynStatus AndorCCD::setupShutter(int command)
 
   try {
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetShutter(%d,%d,%d,%d)\n", 
-      functionName, shutterExTTL, shutterMode, closeTime, openTime);
+      "%s:%s:, SetShutter(%d,%d,%d,%d)\n", 
+      driverName, functionName, shutterExTTL, shutterMode, closeTime, openTime);
     checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime)); 
 
   } catch (const std::string &e) {
-    cout << e << endl;
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s:%s: %s\n",
+      driverName, functionName, e.c_str());
     status = asynError;
   }
   return status;
@@ -803,13 +839,10 @@ void AndorCCD::statusTask(void)
   unsigned int uvalue = 0;
   unsigned int status = 0;
   double timeout = 0.0;
-
   unsigned int forcedFastPolls = 0;
+  static const char *functionName = "statusTask";
 
-  //const char *functionName = "AndorCCD::statusTask";
-
-  cout << "Status thread started..." << endl;
-
+  printf("%s:%s: Status thread started...\n", driverName, functionName);
   while(1) {
 
     //Read timeout for polling freq.
@@ -828,7 +861,9 @@ void AndorCCD::statusTask(void)
       status = epicsEventWait(statusEvent);
     }              
     if (status == epicsEventWaitOK) {
-      //cout << "Got status event" << endl;
+      asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s: Got status event\n",
+        driverName, functionName);
       //We got an event, rather than a timeout.  This is because other software
       //knows that data has arrived, or device should have changed state (parameters changed, etc.).
       //Force a minimum number of fast polls, because the device status
@@ -837,7 +872,6 @@ void AndorCCD::statusTask(void)
     }
 
     this->lock();
-    //cout << " Status poll." << endl;
 
     try {
       //Only read these if we are not acquiring data
@@ -879,7 +913,9 @@ void AndorCCD::statusTask(void)
         setStringParam(ADStatusMessage, "Overflow of the spool buffer.");
       }
     } catch (const std::string &e) {
-      cout << e << endl;
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+        "%s:%s: %s\n",
+        driverName, functionName, e.c_str());
       setStringParam(AndorMessage, e.c_str());
     }
 
@@ -904,7 +940,7 @@ asynStatus AndorCCD::setupAcquisition()
   int FKmode = 4;
   int FKOffset;
   AndorADCSpeed_t *pSpeed;
-  static const char *functionName = "AndorCCD::setupAcquisition";
+  static const char *functionName = "setupAcquisition";
   
   getIntegerParam(ADImageMode, &imageMode);
   getIntegerParam(ADNumExposures, &numExposures);
@@ -963,90 +999,105 @@ asynStatus AndorCCD::setupAcquisition()
   
   try {
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetTriggerMode(%d)\n", functionName, triggerMode);
+      "%s:%s:, SetTriggerMode(%d)\n", 
+      driverName, functionName, triggerMode);
     checkStatus(SetTriggerMode(triggerMode));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetADChannel(%d)\n", functionName, pSpeed->ADCIndex);
+      "%s:%s:, SetADChannel(%d)\n", 
+      driverName, functionName, pSpeed->ADCIndex);
     checkStatus(SetADChannel(pSpeed->ADCIndex));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetOutputAmplifier(%d)\n", functionName, pSpeed->AmpIndex);
+      "%s:%s:, SetOutputAmplifier(%d)\n", 
+      driverName, functionName, pSpeed->AmpIndex);
     checkStatus(SetOutputAmplifier(pSpeed->AmpIndex));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetHSSpeed(%d, %d)\n", functionName, pSpeed->AmpIndex, pSpeed->HSSpeedIndex);
+      "%s:%s:, SetHSSpeed(%d, %d)\n", 
+      driverName, functionName, pSpeed->AmpIndex, pSpeed->HSSpeedIndex);
     checkStatus(SetHSSpeed(pSpeed->AmpIndex, pSpeed->HSSpeedIndex));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetImage(%d,%d,%d,%d,%d,%d)\n", 
-      functionName, binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY);
+      "%s:%s:, SetImage(%d,%d,%d,%d,%d,%d)\n", 
+      driverName, functionName, binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY);
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s, SetExposureTime(%f)\n", functionName, mAcquireTime);
+      "%s:%s:, SetExposureTime(%f)\n", 
+      driverName, functionName, mAcquireTime);
     checkStatus(SetExposureTime(mAcquireTime));
     
     switch (imageMode) {
       case ADImageSingle:
         if (numExposures == 1) {
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, SetAcquisitionMode(AASingle)\n", functionName);
+            "%s:%s:, SetAcquisitionMode(AASingle)\n", 
+            driverName, functionName);
           checkStatus(SetAcquisitionMode(AASingle));
         } else {
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, SetAcquisitionMode(AAAccumulate)\n", functionName);
+            "%s:%s:, SetAcquisitionMode(AAAccumulate)\n", 
+            driverName, functionName);
           checkStatus(SetAcquisitionMode(AAAccumulate));
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, SetNumberAccumulations(%d)\n", 
-            functionName, numExposures);
+            "%s:%s:, SetNumberAccumulations(%d)\n", 
+            driverName, functionName, numExposures);
           checkStatus(SetNumberAccumulations(numExposures));
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-            "%s, SetAccumulationCycleTime(%f)\n", functionName, mAccumulatePeriod);
+            "%s:%s:, SetAccumulationCycleTime(%f)\n", 
+            driverName, functionName, mAccumulatePeriod);
           checkStatus(SetAccumulationCycleTime(mAccumulatePeriod));
         }
         break;
 
       case ADImageMultiple:
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetAcquisitionMode(AAKinetics)\n", functionName);
+          "%s:%s:, SetAcquisitionMode(AAKinetics)\n", 
+          driverName, functionName);
         checkStatus(SetAcquisitionMode(AAKinetics));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetNumberAccumulations(%d)\n", 
-          functionName, numExposures);
+          "%s:%s:, SetNumberAccumulations(%d)\n", 
+          driverName, functionName, numExposures);
         checkStatus(SetNumberAccumulations(numExposures));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetAccumulationCycleTime(%f)\n", functionName, mAccumulatePeriod);
+          "%s:%s:, SetAccumulationCycleTime(%f)\n", 
+          driverName, functionName, mAccumulatePeriod);
         checkStatus(SetAccumulationCycleTime(mAccumulatePeriod));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetNumberKinetics(%d)\n", functionName, numImages);
+          "%s:%s:, SetNumberKinetics(%d)\n", 
+          driverName, functionName, numImages);
         checkStatus(SetNumberKinetics(numImages));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetKineticCycleTime(%f)\n", functionName, mAcquirePeriod);
+          "%s:%s:, SetKineticCycleTime(%f)\n", 
+          driverName, functionName, mAcquirePeriod);
         checkStatus(SetKineticCycleTime(mAcquirePeriod));
         break;
 
       case ADImageContinuous:
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetAcquisitionMode(AARunTillAbort)\n", functionName);
+          "%s:%s:, SetAcquisitionMode(AARunTillAbort)\n", 
+          driverName, functionName);
         checkStatus(SetAcquisitionMode(AARunTillAbort));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetKineticCycleTime(%f)\n", functionName, mAcquirePeriod);
+          "%s:%s:, SetKineticCycleTime(%f)\n", 
+          driverName, functionName, mAcquirePeriod);
         checkStatus(SetKineticCycleTime(mAcquirePeriod));
         break;
 
       case AImageFastKinetics:
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetAcquisitionMode(AAFastKinetics)\n", functionName);
+          "%s:%s:, SetAcquisitionMode(AAFastKinetics)\n", 
+          driverName, functionName);
         checkStatus(SetAcquisitionMode(AAFastKinetics));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetImage(%d,%d,%d,%d,%d,%d)\n", 
-          functionName, binX, binY, 1, maxSizeX, 1, maxSizeY);
+          "%s:%s:, SetImage(%d,%d,%d,%d,%d,%d)\n", 
+          driverName, functionName, binX, binY, 1, maxSizeX, 1, maxSizeY);
         checkStatus(SetImage(binX, binY, 1, maxSizeX, 1, maxSizeY));
         FKOffset = maxSizeY - sizeY - minY;
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, SetFastKineticsEx(%d,%d,%f,%d,%d,%d,%d)\n", 
-          functionName, sizeY, numImages, mAcquireTime, FKmode, binX, binY, FKOffset);
+          "%s:%s:, SetFastKineticsEx(%d,%d,%f,%d,%d,%d,%d)\n", 
+          driverName, functionName, sizeY, numImages, mAcquireTime, FKmode, binX, binY, FKOffset);
         checkStatus(SetFastKineticsEx(sizeY, numImages, mAcquireTime, FKmode, binX, binY, FKOffset));
         setIntegerParam(NDArraySizeX, maxSizeX/binX);
         setIntegerParam(NDArraySizeY, sizeY/binY);
@@ -1058,8 +1109,8 @@ asynStatus AndorCCD::setupAcquisition()
     } else {
       checkStatus(GetAcquisitionTimings(&acquireTimeAct, &accumulatePeriodAct, &acquirePeriodAct));
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-        "%s, GetAcquisitionTimings(exposure=%f, accumulate=%f, kinetic=%f)\n",
-        functionName, acquireTimeAct, accumulatePeriodAct, acquirePeriodAct);
+        "%s:%s:, GetAcquisitionTimings(exposure=%f, accumulate=%f, kinetic=%f)\n",
+        driverName, functionName, acquireTimeAct, accumulatePeriodAct, acquirePeriodAct);
     }
     setDoubleParam(ADAcquireTime, acquireTimeAct);
     setDoubleParam(ADAcquirePeriod, acquirePeriodAct);
@@ -1067,7 +1118,9 @@ asynStatus AndorCCD::setupAcquisition()
 
     
   } catch (const std::string &e) {
-    cout << e << endl;
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s:%s: %s\n",
+      driverName, functionName, e.c_str());
     return asynError;
   }
   return asynSuccess;
@@ -1098,12 +1151,9 @@ void AndorCCD::dataTask(void)
   epicsTimeStamp startTime;
   NDArray *pArray;
   int autoSave;
-  
-  //long *dP = NULL;
+  static const char *functionName = "dataTask";
 
-  const char *functionName = "AndorCCD::dataTask";
-
-  cout << "Data thread started..." << endl;
+  printf("%s:%s: Data thread started...\n", driverName, functionName);
   
   this->lock();
 
@@ -1115,7 +1165,8 @@ void AndorCCD::dataTask(void)
     this->unlock();
     status = epicsEventWait(dataEvent);
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-      "%s, got data event\n", functionName);
+      "%s:%s:, got data event\n", 
+      driverName, functionName);
     this->lock();
 
     //Sanity check that main thread thinks we are acquiring data
@@ -1124,11 +1175,14 @@ void AndorCCD::dataTask(void)
         status = setupAcquisition();
         if (status != asynSuccess) continue;
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, StartAcquisition()\n", functionName);
+          "%s:%s:, StartAcquisition()\n", 
+          driverName, functionName);
         checkStatus(StartAcquisition());
         acquiring = 1;
       } catch (const std::string &e) {
-        cout << e << endl;
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
         continue;
       }
       //Read some parameters
@@ -1143,7 +1197,8 @@ void AndorCCD::dataTask(void)
       callParamCallbacks();
     } else {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, 
-        "%s, Data thread is running but main thread thinks we are not acquiring.\n", functionName);
+        "%s:%s:, Data thread is running but main thread thinks we are not acquiring.\n", 
+        driverName, functionName);
       acquiring = 0;
     }
 
@@ -1151,15 +1206,18 @@ void AndorCCD::dataTask(void)
       try {
         checkStatus(GetStatus(&acquireStatus));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, GetStatus returned %d\n", functionName, acquireStatus);
+          "%s:%s:, GetStatus returned %d\n",
+          driverName, functionName, acquireStatus);
         if (acquireStatus != DRV_ACQUIRING) break;
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, WaitForAcquisition().\n", functionName);
+          "%s:%s:, WaitForAcquisition().\n",
+          driverName, functionName);
         this->unlock();
         checkStatus(WaitForAcquisition());
         this->lock();
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s, WaitForAcquisition has returned.\n", functionName);
+          "%s:%s:, WaitForAcquisition has returned.\n",
+          driverName, functionName);
         getIntegerParam(ADNumExposuresCounter, &numExposuresCounter);
         numExposuresCounter++;
         setIntegerParam(ADNumExposuresCounter, numExposuresCounter);
@@ -1168,7 +1226,8 @@ void AndorCCD::dataTask(void)
         status = GetNumberNewImages(&firstImage, &lastImage);
         if (status != DRV_SUCCESS) continue;
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-          "%s, firstImage=%d, lastImage=%d\n", functionName, firstImage, lastImage);
+          "%s:%s:, firstImage=%d, lastImage=%d\n",
+          driverName, functionName, firstImage, lastImage);
         for (i=firstImage; i<=lastImage; i++) {
           // Update counters
           getIntegerParam(NDArrayCounter, &imageCounter);
@@ -1188,20 +1247,20 @@ void AndorCCD::dataTask(void)
             // Is there still an image available?
             status = GetNumberNewImages(&firstImage, &lastImage);
             asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-              "%s, GetNumberNewImages, status=%d, firstImage=%d, lastImage=%d\n", 
-              functionName, status, firstImage, lastImage);
+              "%s:%s:, GetNumberNewImages, status=%d, firstImage=%d, lastImage=%d\n", 
+              driverName, functionName, status, firstImage, lastImage);
             if (dataType == NDUInt32) {
               asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-                "%s, GetImages(%d, %d, %p, %d, %p, %p)\n", 
-                functionName, i, i, pArray->pData, sizeX*sizeY, &validFirst, &validLast);
+                "%s:%s:, GetImages(%d, %d, %p, %d, %p, %p)\n", 
+                driverName, functionName, i, i, pArray->pData, sizeX*sizeY, &validFirst, &validLast);
               checkStatus(GetImages(i, i, (at_32*)pArray->pData, 
                                     sizeX*sizeY, &validFirst, &validLast));
               setIntegerParam(NDArraySize, sizeX * sizeY * sizeof(epicsUInt32));
             }
             else if (dataType == NDUInt16) {
               asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-                "%s, GetImages16(%d, %d, %p, %d, &p, &p)\n", 
-                functionName, i, i, pArray->pData, sizeX*sizeY, &validFirst, &validLast);
+                "%s:%s:, GetImages16(%d, %d, %p, %d, &p, &p)\n", 
+                driverName, functionName, i, i, pArray->pData, sizeX*sizeY, &validFirst, &validLast);
               checkStatus(GetImages16(i, i, (epicsUInt16*)pArray->pData, 
                                       sizeX*sizeY, &validFirst, &validLast));
               setIntegerParam(NDArraySize, sizeX * sizeY * sizeof(epicsUInt16));
@@ -1216,7 +1275,8 @@ void AndorCCD::dataTask(void)
              * block on the plugin lock, and the plugin can be calling us */
             this->unlock();
             asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-                 "%s:, calling array callbacks\n", functionName);
+                 "%s:%s:, calling array callbacks\n", 
+                 driverName, functionName);
             doCallbacksGenericPointer(pArray, NDArrayData, 0);
             this->lock();
             pArray->release();
@@ -1226,7 +1286,9 @@ void AndorCCD::dataTask(void)
           callParamCallbacks();
         }
       } catch (const std::string &e) {
-        cout << e << endl;
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
         errorString = const_cast<char *>(e.c_str());
         setStringParam(AndorMessage, errorString);
       }
@@ -1256,52 +1318,63 @@ void AndorCCD::saveDataFrame(int frameNumber)
   int FITSType=0;
   char fullFileName[MAX_FILENAME_LEN];
   char palFilePath[MAX_FILENAME_LEN];
-
-  const char *functionName = "AndorCCD::saveDataFrame";
+  static const char *functionName = "saveDataFrame";
 
   // Fetch the file format
   getIntegerParam(NDFileFormat, &fileFormat);
       
   this->createFileName(255, fullFileName);
   setStringParam(NDFullFileName, fullFileName);
-  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, file name is %s.\n", functionName, fullFileName);
+  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+    "%s:%s:, file name is %s.\n",
+    driverName, functionName, fullFileName);
   getStringParam(AndorPalFileName, 255, palFilePath);
 
   try {
     if (fileFormat == AFFTIFF) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, SaveAsTiffEx(%s, %s, %d, 1, 1)\n", functionName, fullFileName, palFilePath, frameNumber);
+        "%s:%s:, SaveAsTiffEx(%s, %s, %d, 1, 1)\n", 
+        driverName, functionName, fullFileName, palFilePath, frameNumber);
       checkStatus(SaveAsTiffEx(fullFileName, palFilePath, frameNumber, 1, 1));
     } else if (fileFormat == AFFBMP) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, SaveAsBmp(%s, %s, 0, 0)\n", functionName, fullFileName, palFilePath);
+        "%s:%s:, SaveAsBmp(%s, %s, 0, 0)\n", 
+        driverName, functionName, fullFileName, palFilePath);
       checkStatus(SaveAsBmp(fullFileName, palFilePath, 0, 0));
     } else if (fileFormat == AFFSIF) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, SaveAsSif(%s)\n", functionName, fullFileName);
+        "%s:%s:, SaveAsSif(%s)\n", 
+        driverName, functionName, fullFileName);
       checkStatus(SaveAsSif(fullFileName));
     } else if (fileFormat == AFFEDF) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, SaveAsEDF(%s, 0)\n", functionName, fullFileName);
+        "%s:%s:, SaveAsEDF(%s, 0)\n", 
+        driverName, functionName, fullFileName);
       checkStatus(SaveAsEDF(fullFileName, 0));
     } else if (fileFormat == AFFRAW) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, SaveAsRaw(%s, 1)\n", functionName, fullFileName);
+        "%s:%s:, SaveAsRaw(%s, 1)\n", 
+        driverName, functionName, fullFileName);
       checkStatus(SaveAsRaw(fullFileName, 1));
     } else if (fileFormat == AFFFITS) {
       getIntegerParam(NDDataType, &itemp); dataType = (NDDataType_t)itemp;
       if (dataType == NDUInt16) FITSType=0;
       else if (dataType== NDUInt32) FITSType=1;
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s, SaveAsFITS(%s, %d)\n", functionName, fullFileName, FITSType);
+        "%s:%s:, SaveAsFITS(%s, %d)\n", 
+        driverName, functionName, fullFileName, FITSType);
       checkStatus(SaveAsFITS(fullFileName, FITSType));
     }
   } catch (const std::string &e) {
-    cout << e << endl;
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s:%s: %s\n",
+      driverName, functionName, e.c_str());
     errorString = const_cast<char *>(e.c_str());
   }
 
-  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, "%s, Saving data.. Done!\n", functionName);
+  asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+    "%s:%s:, Saving data.. Done!\n", 
+    driverName, functionName);
 
   if (errorString != NULL) {
     setStringParam(AndorMessage, errorString);
