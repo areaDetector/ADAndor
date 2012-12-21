@@ -1226,8 +1226,8 @@ void AndorCCD::dataTask(void)
         status = GetNumberNewImages(&firstImage, &lastImage);
         if (status != DRV_SUCCESS) continue;
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-          "%s:%s:, firstImage=%d, lastImage=%d\n",
-          driverName, functionName, firstImage, lastImage);
+          "%s:%s:, firstImage=%ld, lastImage=%ld\n",
+          driverName, functionName, (long)firstImage, (long)lastImage);
         for (i=firstImage; i<=lastImage; i++) {
           // Update counters
           getIntegerParam(NDArrayCounter, &imageCounter);
@@ -1247,8 +1247,8 @@ void AndorCCD::dataTask(void)
             // Is there still an image available?
             status = GetNumberNewImages(&firstImage, &lastImage);
             asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-              "%s:%s:, GetNumberNewImages, status=%d, firstImage=%d, lastImage=%d\n", 
-              driverName, functionName, status, firstImage, lastImage);
+              "%s:%s:, GetNumberNewImages, status=%d, firstImage=%ld, lastImage=%ld\n", 
+              driverName, functionName, status, (long)firstImage, (long)lastImage);
             if (dataType == NDUInt32) {
               asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
                 "%s:%s:, GetImages(%d, %d, %p, %d, %p, %p)\n", 
@@ -1259,7 +1259,7 @@ void AndorCCD::dataTask(void)
             }
             else if (dataType == NDUInt16) {
               asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-                "%s:%s:, GetImages16(%d, %d, %p, %d, &p, &p)\n", 
+                "%s:%s:, GetImages16(%d, %d, %p, %d, %p, %p)\n", 
                 driverName, functionName, i, i, pArray->pData, sizeX*sizeY, &validFirst, &validLast);
               checkStatus(GetImages16(i, i, (epicsUInt16*)pArray->pData, 
                                       sizeX*sizeY, &validFirst, &validLast));
