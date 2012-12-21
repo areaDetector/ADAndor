@@ -12,36 +12,7 @@
 #ifndef ANDORCCD_H
 #define ANDORCCD_H
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <math.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-
-#include <string>
-
-#include <epicsTime.h>
-#include <epicsThread.h>
-#include <epicsEvent.h>
-#include <epicsMutex.h>
-#include <epicsString.h>
-#include <epicsStdio.h>
-#include <cantProceed.h>
-
-#include <asynOctetSyncIO.h>
-
 #include "ADDriver.h"
-
-#ifdef _WIN32
-#include "ATMCD32D.h"
-#else
-#include "atmcdLXd.h"
-#endif
 
 #define MAX_ENUM_STRING_SIZE 26
 #define MAX_ADC_SPEEDS 16
@@ -204,8 +175,6 @@ class AndorCCD : public ADDriver {
 };
 
 #define NUM_ANDOR_DET_PARAMS ((int)(&LAST_ANDOR_PARAM - &FIRST_ANDOR_PARAM + 1))
-
-static const char *driverName = "andorCCDDetector";
 
 #endif //ANDORCCD_H
 
