@@ -2,7 +2,8 @@ TOP=../..
 include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
-#=============================
+
+#======== DETECTOR LIBRARY ==============
 
 LIBRARY_IOC_WIN32 += andorCCD
 LIBRARY_IOC_Linux += andorCCD
@@ -10,6 +11,11 @@ LIB_SRCS += andorCCD.cpp
 
 DATA+=GREY.PAL
 
+DBD += andorCCDSupport.dbd
+
+#====== DETECTOR APPLICATION ============
+
+ifeq ($(BUILD_APPS), YES)
 # Note: we must built the application without GraphicsMagick.
 # This is because of a conflict with the Andor library (SetImage function) 
 # It leads to a build error on windows-x64, but to a run-time error on Linux.
@@ -22,9 +28,8 @@ PROD_IOC_Linux  += $(PROD_NAME)
 # <name>.dbd will be created from <name>Include.dbd
 DBD += $(PROD_NAME).dbd
 $(PROD_NAME)_DBD += andorCCDSupport.dbd
-DBD += andorCCDSupport.dbd
 
-PROD_SRCS += andorCCDApp_registerRecordDeviceDriver.cpp andorCCDAppMain.cpp
+PROD_SRCS += $(PROD_NAME)_registerRecordDeviceDriver.cpp $(PROD_NAME)Main.cpp
 
 # Add locally compiled object code
 PROD_LIBS += andorCCD
@@ -45,6 +50,7 @@ endif
 PROD_SYS_LIBS_Linux += andor
 
 include $(TOP)/ADApp/commonDriverMakefile
+endif
 
 #=============================
 
