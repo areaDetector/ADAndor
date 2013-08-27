@@ -19,7 +19,6 @@
 #include <epicsEvent.h>
 #include <epicsString.h>
 #include <iocsh.h>
-#include <epicsExport.h>
 #include <epicsExit.h>
 
 #ifdef _WIN32
@@ -29,6 +28,8 @@
 #endif
 
 #include "andorCCD.h"
+
+#include <epicsExport.h>
 
 static const char *driverName = "andorCCD";
 
