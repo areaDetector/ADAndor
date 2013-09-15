@@ -1269,6 +1269,7 @@ void AndorCCD::dataTask(void)
             /* Put the frame number and time stamp into the buffer */
             pArray->uniqueId = imageCounter;
             pArray->timeStamp = startTime.secPastEpoch + startTime.nsec / 1.e9;
+            updateTimeStamp(&pArray->epicsTS);
             /* Get any attributes that have been defined for this driver */        
             this->getAttributes(pArray->pAttributeList);
             /* Call the NDArray callback */
