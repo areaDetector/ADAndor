@@ -1,0 +1,7 @@
+# There is a problem when building dynamically on our linux-x86 system, due to functions called in PvAPI.a.
+
+# These can be fixed either by building statically with this line:
+#STATIC_BUILD=YES
+# Or by building dynamically with this line:
+PROD_SYS_LIBS += pthread rt
+
