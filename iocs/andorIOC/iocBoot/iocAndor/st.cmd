@@ -13,7 +13,7 @@ epicsEnvSet("NCHANS", "2048")
 
 # andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, 
 #                const char *installPath, int priority, int stackSize)
-andorCCDConfig("$(PORT)", 0, 0, "/usr/local/etc/andor/", 0, 100000)
+andorCCDConfig("$(PORT)", 0, 0, "/usr/local/etc/andor/", 0, 0)
 dbLoadRecords("$(ADCORE)/db/ADBase.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 dbLoadRecords("$(ADCORE)/db/NDFile.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 dbLoadRecords("$(ADANDOR)/db/andorCCD.template",   "P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
