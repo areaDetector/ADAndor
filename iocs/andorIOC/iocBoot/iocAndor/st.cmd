@@ -37,5 +37,5 @@ set_requestfile_path("$(ADANDOR)/andorApp/Db")
 iocInit()
 
 # save things every thirty seconds
-create_monitor_set("auto_settings.req", 30,"P=$(PREFIX),D=cam1:")
+create_monitor_set("auto_settings.req", 30,"P=$(PREFIX)")
 #asynSetTraceMask($(PORT), 0, 255)
