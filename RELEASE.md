@@ -32,3 +32,8 @@ R1-9-1 and earlier
 ------------------
 Release notes are part of the
 [areaDetector Release Notes](http://cars.uchicago.edu/software/epics/areaDetectorReleaseNotes.html).
+
+
+Future Releases
+===============
+* Add exiting_ flag; statusTask and dataTask should both do while (!exiting_)
