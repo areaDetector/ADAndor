@@ -25,7 +25,8 @@ Release Notes
 
 R2-0
 ----
-* No changes from R1-9-1.
+* Moved the repository to [Github](https://github.com/areaDetector/ADmarCCD).
+* Re-organized the directory structure to separate the driver library from the example IOC application.
 
 
 R1-9-1 and earlier
