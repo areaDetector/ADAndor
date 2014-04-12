@@ -15,14 +15,16 @@ PROD_IOC_Linux  += $(PROD_NAME)
 # <name>.dbd will be created from <name>Include.dbd
 DBD += $(PROD_NAME).dbd
 $(PROD_NAME)_DBD += andorCCDSupport.dbd
+$(PROD_NAME)_DBD_WIN32 += shamrockSupport.dbd
 
 PROD_SRCS += $(PROD_NAME)_registerRecordDeviceDriver.cpp $(PROD_NAME)Main.cpp
 
 # Add locally compiled object code
-PROD_LIBS += andorCCD
+PROD_LIBS       += andorCCD
 
 ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
-PROD_LIBS += ATMCD32M
+PROD_LIBS       += ATMCD32M
+PROD_LIBS_WIN32 += ShamrockCIFm
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
 # Note: we must built the application without GraphicsMagick for windows-x64.  
