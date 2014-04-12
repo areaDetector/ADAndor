@@ -258,36 +258,3 @@ record(waveform, "$(P)$(R)Calibration")
    field(NELM, "$(PIXELS)")
    field(SCAN, "I/O Intr")
 }
-
-record(ai, "$(P)$(R)CalibCoeff1")
-{
-   field(DTYP, "asynFloat64")
-   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_CALIBRATION_COEFF")
-   field(PREC, "4")
-   field(SCAN, "I/O Intr")
-}
-
-record(ai, "$(P)$(R)CalibCoeff2")
-{
-   field(DTYP, "asynFloat64")
-   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_CALIBRATION_COEFF")
-   field(PREC, "4")
-   field(SCAN, "I/O Intr")
-}
-
-record(ai, "$(P)$(R)CalibCoeff3")
-{
-   field(DTYP, "asynFloat64")
-   field(INP,  "@asyn($(PORT),2,$(TIMEOUT))SR_CALIBRATION_COEFF")
-   field(PREC, "4")
-   field(SCAN, "I/O Intr")
-}
-
-record(ai, "$(P)$(R)CalibCoeff4")
-{
-   field(DTYP, "asynFloat64")
-   field(INP,  "@asyn($(PORT),3,$(TIMEOUT))SR_CALIBRATION_COEFF")
-   field(PREC, "4")
-   field(SCAN, "I/O Intr")
-}
-
