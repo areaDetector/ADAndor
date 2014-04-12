@@ -13,6 +13,7 @@
 #define ANDORCCD_H
 
 #include "ADDriver.h"
+#include "SPEHeader.h"
 
 #define MAX_ENUM_STRING_SIZE 26
 #define MAX_ADC_SPEEDS 16
@@ -86,7 +87,7 @@ class AndorCCD : public ADDriver {
   void saveDataFrame(int frameNumber);
   void setupADCSpeeds();
   void setupPreAmpGains();
-  asynStatus SaveAsSPE(char *fullFileName);
+  unsigned int SaveAsSPE(char *fullFileName);
   /**
    * Additional image mode to those in ADImageMode_t
    */
@@ -149,6 +150,7 @@ class AndorCCD : public ADDriver {
   static const epicsInt32 AFFEDF;
   static const epicsInt32 AFFRAW;
   static const epicsInt32 AFFFITS;
+  static const epicsInt32 AFFSPE;
 
   epicsEventId statusEvent;
   epicsEventId dataEvent;
@@ -172,6 +174,12 @@ class AndorCCD : public ADDriver {
   float mAcquireTime;
   float mAcquirePeriod;
   float mAccumulatePeriod;
+  
+  // Shamrock spectrometer ID
+  int mShamrockId;
+
+  // SPE file header
+  tagCSMAHEAD *mSPEHeader;
 
 };
 
