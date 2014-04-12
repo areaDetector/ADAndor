@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include <errno.h>
 
 #include <epicsTime.h>
 #include <epicsThread.h>
@@ -23,6 +24,7 @@
 
 #ifdef _WIN32
 #include "ATMCD32D.h"
+#include "ShamrockCIF.h"
 #else
 #include "atmcdLXd.h"
 #endif
@@ -97,12 +99,13 @@ static void exitHandler(void *drvPvt);
   * \param[in] priority The thread priority for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
   * \param[in] stackSize The stack size for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
   */
-AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
-                   const char *installPath, int priority, int stackSize)
+AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID,
+                   int maxBuffers, size_t maxMemory, int priority, int stackSize)
 
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
              asynEnumMask, asynEnumMask,
-             ASYN_CANBLOCK, 1, priority, stackSize)
+             ASYN_CANBLOCK, 1, priority, stackSize),
+    mShamrockId(shamrockID)
 {
 
   int status = asynSuccess;
@@ -225,6 +228,8 @@ AndorCCD::AndorCCD(const char *portName, int maxBuffers, size_t maxMemory,
   mFastPollingPeriod = 0.05; //seconds
 
   mAcquiringData = 0;
+  
+  mSPEHeader = (tagCSMAHEAD *) calloc(1, sizeof(tagCSMAHEAD));
   
   if (stackSize == 0) stackSize = epicsThreadGetStackSize(epicsThreadStackMedium);
 
@@ -1393,6 +1398,96 @@ void AndorCCD::saveDataFrame(int frameNumber)
 
 }
 
+unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
+{
+  NDArray *pArray = this->pArrays[0];
+  NDArrayInfo arrayInfo;
+  int nx, ny;
+  int dataType;
+  FILE *fp;
+  size_t numWrite;
+  float *calibration;
+  int i;
+  static const char *functionName="SaveAsSPE";
+  
+  if (!pArray) return DRV_NO_NEW_DATA;
+  pArray->getInfo(&arrayInfo);
+  nx = arrayInfo.xSize;
+  ny = arrayInfo.ySize;  
+  
+  // Fill in the SPE file header
+  mSPEHeader->xdim = nx;
+  mSPEHeader->ydim = ny;
+  if (pArray->dataType == NDUInt16) dataType = 3;
+  else dataType = 1;
+  
+  mSPEHeader->datatype = dataType;
+  mSPEHeader->scramble = 1;
+  mSPEHeader->lnoscan  = -1;
+  mSPEHeader->NumExpAccums  = 1;
+  mSPEHeader->NumFrames  = 1;
+  mSPEHeader->file_header_ver  = 3.0;
+  mSPEHeader->WinView_id = 0x01234567;
+  mSPEHeader->lastvalue = 0x5555;
+
+  // Open the file
+  fp = fopen(fullFileName, "wb");
+  if (!fp) {
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s::%s error opening file %s error=%s\n",
+      driverName, functionName, fullFileName, strerror(errno));
+    return DRV_GENERAL_ERRORS;
+  }
+  
+  // Write the header to the file
+  numWrite = fwrite(mSPEHeader, sizeof(*mSPEHeader), 1, fp);
+  if (numWrite != 1) {
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s::%s error writing SPE file header\n",
+      driverName, functionName);
+    fclose(fp);
+    return DRV_GENERAL_ERRORS;
+  }
+  
+  // Write the data to the file
+  numWrite = fwrite(pArray->pData, arrayInfo.totalBytes, 1, fp);
+  if (numWrite != 1) {
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s::%s error writing SPE data\n",
+      driverName, functionName);
+    fclose(fp);
+    return DRV_GENERAL_ERRORS;
+  }
+    
+  // Create the default calibration
+  calibration = (float *) calloc(nx, sizeof(float));
+  for (i=0; i<nx; i++) calibration[i] = (float) i; 
+  
+  // If we are on Windows and there is a valid Shamrock spectrometer get the calibration
+#ifdef _WIN32
+  int error;
+  int numSpectrometers;
+  error = ShamrockGetNumberDevices(&numSpectrometers);
+  if (error != SHAMROCK_SUCCESS) goto noSpectrometers;
+  if (numSpectrometers < 1) goto noSpectrometers;
+  if ((mShamrockId < 0) || (mShamrockId > numSpectrometers-1)) goto noSpectrometers;
+  error = ShamrockGetCalibration(mShamrockId, calibration, nx);
+  if (error != SHAMROCK_SUCCESS) {
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s::%s error reading Shamrock spectrometer calibration\n",
+      driverName, functionName);
+  }
+  noSpectrometers:  
+#endif 
+  
+  // Write the calibration as XML
+  
+  // Close the file
+  fclose(fp);
+  
+  return DRV_SUCCESS;
+}
+
 
 //C utility functions to tie in with EPICS
 
@@ -1424,11 +1519,11 @@ static void andorDataTaskC(void *drvPvt)
   * \param[in] stackSize The stack size for the asyn port driver thread
   */
 extern "C" {
-int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, 
-                   const char *installPath, int priority, int stackSize)
+int andorCCDConfig(const char *portName, const char *installPath, int shamrockID,
+                   int maxBuffers, size_t maxMemory, int priority, int stackSize)
 {
   /*Instantiate class.*/
-  new AndorCCD(portName, maxBuffers, maxMemory, installPath, priority, stackSize);
+  new AndorCCD(portName, installPath, shamrockID, maxBuffers, maxMemory, priority, stackSize);
   return(asynSuccess);
 }
 
@@ -1437,23 +1532,25 @@ int andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory,
 
 /* andorCCDConfig */
 static const iocshArg andorCCDConfigArg0 = {"Port name", iocshArgString};
-static const iocshArg andorCCDConfigArg1 = {"maxBuffers", iocshArgInt};
-static const iocshArg andorCCDConfigArg2 = {"maxMemory", iocshArgInt};
-static const iocshArg andorCCDConfigArg3 = {"installPath", iocshArgString};
-static const iocshArg andorCCDConfigArg4 = {"priority", iocshArgInt};
-static const iocshArg andorCCDConfigArg5 = {"stackSize", iocshArgInt};
+static const iocshArg andorCCDConfigArg1 = {"installPath", iocshArgString};
+static const iocshArg andorCCDConfigArg2 = {"shamrockID", iocshArgInt};
+static const iocshArg andorCCDConfigArg3 = {"maxBuffers", iocshArgInt};
+static const iocshArg andorCCDConfigArg4 = {"maxMemory", iocshArgInt};
+static const iocshArg andorCCDConfigArg5 = {"priority", iocshArgInt};
+static const iocshArg andorCCDConfigArg6 = {"stackSize", iocshArgInt};
 static const iocshArg * const andorCCDConfigArgs[] =  {&andorCCDConfigArg0,
                                                        &andorCCDConfigArg1,
                                                        &andorCCDConfigArg2,
                                                        &andorCCDConfigArg3,
                                                        &andorCCDConfigArg4,
-                                                       &andorCCDConfigArg5};
+                                                       &andorCCDConfigArg5,
+                                                       &andorCCDConfigArg6};
 
-static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 6, andorCCDConfigArgs};
+static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 7, andorCCDConfigArgs};
 static void configAndorCCDCallFunc(const iocshArgBuf *args)
 {
-    andorCCDConfig(args[0].sval, args[1].ival, args[2].ival, args[3].sval, 
-                   args[4].ival, args[5].ival);
+    andorCCDConfig(args[0].sval, args[1].sval, args[2].ival, args[3].ival, 
+                   args[4].ival, args[5].ival, args[6].ival);
 }
 
 static void andorCCDRegister(void)
