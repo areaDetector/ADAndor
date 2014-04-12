@@ -86,7 +86,7 @@ class AndorCCD : public ADDriver {
   void saveDataFrame(int frameNumber);
   void setupADCSpeeds();
   void setupPreAmpGains();
-  asynStatus saveAsSPE();
+  asynStatus SaveAsSPE(char *fullFileName);
   /**
    * Additional image mode to those in ADImageMode_t
    */
