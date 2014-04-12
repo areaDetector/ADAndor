@@ -50,8 +50,8 @@ typedef struct {
  */
 class AndorCCD : public ADDriver {
  public:
-  AndorCCD(const char *portName, int maxBuffers, size_t maxMemory, 
-           const char *installPath, int priority, int stackSize);
+  AndorCCD(const char *portName, const char *installPath, int shamrockID, 
+           int maxBuffers, size_t maxMemory, int priority, int stackSize);
   virtual ~AndorCCD();
 
   /* These are the methods that we override from ADDriver */
@@ -86,6 +86,7 @@ class AndorCCD : public ADDriver {
   void saveDataFrame(int frameNumber);
   void setupADCSpeeds();
   void setupPreAmpGains();
+  asynStatus saveAsSPE();
   /**
    * Additional image mode to those in ADImageMode_t
    */
