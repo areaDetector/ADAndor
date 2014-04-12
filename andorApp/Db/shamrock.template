@@ -1,0 +1,293 @@
+# Database for the Andor Shamrock spectrography
+# Mark Rivers
+# April 9, 2014
+
+record(mbbo, "$(P)$(R)Grating")
+{
+   field(PINI, "1")
+   field(DTYP, "asynInt32")
+   field(OUT,  "@asyn($(PORT),0,$(TIMEOUT))SR_GRATING")
+   field(ZRVL, "1")
+   field(ZRST, "Grating 1")
+   field(ONVL, "2")
+   field(ONST, "Grating 2")
+   field(TWVL, "3")
+   field(TWST, "Grating 3")
+}
+
+record(mbbi, "$(P)$(R)Grating_RBV")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_GRATING")
+   field(SCAN, "I/O Intr")
+   field(ZRVL, "1")
+   field(ZRST, "Grating 1")
+   field(ONVL, "2")
+   field(ONST, "Grating 2")
+   field(TWVL, "3")
+   field(TWST, "Grating 3")
+}
+
+record(bi, "$(P)$(R)GratingExists1")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_GRATING_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)GratingExists2")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),2,$(TIMEOUT))SR_GRATING_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)GratingExists3")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),3,$(TIMEOUT))SR_GRATING_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+# Wavelength
+record(ao, "$(P)$(R)Wavelength")
+{
+   field(PINI, "1")
+   field(DTYP, "asynFloat64")
+   field(OUT,  "@asyn($(PORT),0,$(TIMEOUT))SR_WAVELENGTH")
+   field(PREC, "2")
+}
+
+record(ai, "$(P)$(R)Wavelength_RBV")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinWavelength")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_MIN_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxWavelength")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_MAX_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinWavelength1")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_MIN_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxWavelength1")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_MAX_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinWavelength2")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),2,$(TIMEOUT))SR_MIN_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxWavelength2")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),2,$(TIMEOUT))SR_MAX_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinWavelength3")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),3,$(TIMEOUT))SR_MIN_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxWavelength3")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),3,$(TIMEOUT))SR_MAX_WAVELENGTH")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)SlitSize1")
+{
+   field(PINI, "1")
+   field(DTYP, "asynFloat64")
+   field(OUT,  "@asyn($(PORT),0,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+}
+
+record(ai, "$(P)$(R)SlitSize1_RBV")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)SlitExists1")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_SLIT_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)SlitSize2")
+{
+   field(PINI, "1")
+   field(DTYP, "asynFloat64")
+   field(OUT,  "@asyn($(PORT),1,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+}
+
+record(ai, "$(P)$(R)SlitSize2_RBV")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)SlitExists2")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_SLIT_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)SlitSize3")
+{
+   field(PINI, "1")
+   field(DTYP, "asynFloat64")
+   field(OUT,  "@asyn($(PORT),2,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+}
+
+record(ai, "$(P)$(R)SlitSize3_RBV")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),2,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)SlitExists3")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),2,$(TIMEOUT))SR_SLIT_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)SlitSize4")
+{
+   field(PINI, "1")
+   field(DTYP, "asynFloat64")
+   field(OUT,  "@asyn($(PORT),3,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+}
+
+record(ai, "$(P)$(R)SlitSize4_RBV")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),3,$(TIMEOUT))SR_SLIT_SIZE")
+   field(PREC, "2")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)SlitExists4")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),3,$(TIMEOUT))SR_SLIT_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)Calibration")
+{
+   field(DTYP, "asynFloat32ArrayIn")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_CALIBRATION")
+   field(FTVL, "FLOAT")
+   field(NELM, "$(PIXELS)")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)CalibCoeff1")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_CALIBRATION_COEFF")
+   field(PREC, "4")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)CalibCoeff2")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_CALIBRATION_COEFF")
+   field(PREC, "4")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)CalibCoeff3")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),2,$(TIMEOUT))SR_CALIBRATION_COEFF")
+   field(PREC, "4")
+   field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)CalibCoeff4")
+{
+   field(DTYP, "asynFloat64")
+   field(INP,  "@asyn($(PORT),3,$(TIMEOUT))SR_CALIBRATION_COEFF")
+   field(PREC, "4")
+   field(SCAN, "I/O Intr")
+}
+
