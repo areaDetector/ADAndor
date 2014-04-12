@@ -76,6 +76,7 @@ const epicsInt32 AndorCCD::AFFSIF  = 2;
 const epicsInt32 AndorCCD::AFFEDF  = 3;
 const epicsInt32 AndorCCD::AFFRAW  = 4;
 const epicsInt32 AndorCCD::AFFFITS = 5;
+const epicsInt32 AndorCCD::AFFSPE  = 6;
 
 //C Function prototypes to tie in with EPICS
 static void andorStatusTaskC(void *drvPvt);
@@ -1281,7 +1282,9 @@ void AndorCCD::dataTask(void)
                  driverName, functionName);
             doCallbacksGenericPointer(pArray, NDArrayData, 0);
             this->lock();
-            pArray->release();
+            // Save the current frame for use with the SPE file writer which needs the data
+            if (this->pArrays[0]) this->pArrays[0]->release();
+            this->pArrays[0] = pArray;
           }
           // Save data if autosave is enabled
           if (autoSave) this->saveDataFrame(i);
@@ -1366,6 +1369,11 @@ void AndorCCD::saveDataFrame(int frameNumber)
         "%s:%s:, SaveAsFITS(%s, %d)\n", 
         driverName, functionName, fullFileName, FITSType);
       checkStatus(SaveAsFITS(fullFileName, FITSType));
+    } else if (fileFormat == AFFSPE) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s:%s:, SaveAsSPE(%s)\n", 
+        driverName, functionName, fullFileName);
+      checkStatus(SaveAsSPE(fullFileName));
     }
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
