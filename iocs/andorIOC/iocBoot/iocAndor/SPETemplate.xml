@@ -1,0 +1,300 @@
+<SpeFormat version="3.0" xmlns="http://www.princetoninstruments.com/spe/2009">
+    <DataFormat>
+        <DataBlock type="Frame" count="1" pixelFormat="MonochromeFloating32" size="536000" stride="536000" calibrations="1">
+            <DataBlock type="Region" calibrations="2,3" count="1" width="1340" height="100" size="536000" stride="536000" />
+        </DataBlock>
+    </DataFormat>
+    <Calibrations>
+        <WavelengthMapping id="1" date="2013-05-29T14:30:47.7138903-05:00" orientation="Normal">
+            <Wavelength xml:space="preserve">610.94476874085808,611.15377257042337,</Wavelength>
+        </WavelengthMapping>
+        <SensorInformation id="2" orientation="Normal" width="1340" height="100" />
+        <SensorMapping id="3" x="0" y="0" height="100" width="1340" xBinning="1" yBinning="1" />
+    </Calibrations>
+    <DataHistories>
+        <DataHistory id="1">
+            <Origin creator="DAC_User" created="2014-02-04T15:16:31.0440768-06:00" software="LightField" softwareVersion="4.6.1.1309" softwareCompany="Princeton Instruments">
+                <Experiment xmlns="http://www.princetoninstruments.com/experiment/2009" version="6" xmlns:r="http://www.princetoninstruments.com/experiment/restore/2009" r:version="1">
+                    <System>
+                        <Spectrometers count="1">
+                            <Spectrometer deviceID="1" model="SP-2-300i" serialNumber="23581071" computerInterface="USB">
+                                <Turrets count="1">
+                                    <Turret id="1">
+                                        <Gratings count="3">
+                                            <Grating id="1" type="String">500nm,1800</Grating>
+                                            <Grating id="2" type="String">860nm,300</Grating>
+                                            <Grating id="3" type="String">1.2um,150</Grating>
+                                        </Gratings>
+                                    </Turret>
+                                </Turrets>
+                                <OpticalPorts count="3">
+                                    <Entrance>
+                                        <Side>
+                                            <Type id="1" type="OpticalPortType">ContinuouslyMotorizedSlit</Type>
+                                        </Side>
+                                    </Entrance>
+                                    <Exit>
+                                        <Front>
+                                            <Type id="2" type="OpticalPortType">FocalPlane</Type>
+                                        </Front>
+                                        <Side>
+                                            <Type id="3" type="OpticalPortType">FocalPlane</Type>
+                                        </Side>
+                                    </Exit>
+                                </OpticalPorts>
+                            </Spectrometer>
+                        </Spectrometers>
+                        <Cameras count="1">
+                            <Camera deviceID="2" model="PIXIS: 100BR" serialNumber="0805080005" computerInterface="USB 2.0" demo="False" />
+                        </Cameras>
+                        <LightSources count="1">
+                            <LightSource deviceID="3" model="LightSource" />
+                        </LightSources>
+                        <DeviceLinks count="2">
+                            <DeviceLink firstDeviceID="1" firstDeviceLinkNode="FrontOutput" secondDeviceID="2" secondDeviceLinkNode="Input" />
+                            <DeviceLink firstDeviceID="1" firstDeviceLinkNode="SideInput" secondDeviceID="3" secondDeviceLinkNode="Output" />
+                        </DeviceLinks>
+                    </System>
+                    <Devices>
+                        <Cameras count="1">
+                            <Camera deviceID="2">
+                                <Sensor>
+                                    <Layout>
+                                        <ActiveArea>
+                                            <Width r:priority="1" type="Int32">1340</Width>
+                                            <Height r:priority="1" type="Int32">100</Height>
+                                            <TopMargin type="Int32">0</TopMargin>
+                                            <LeftMargin type="Int32">8</LeftMargin>
+                                            <BottomMargin type="Int32">0</BottomMargin>
+                                            <RightMargin type="Int32">8</RightMargin>
+                                        </ActiveArea>
+                                    </Layout>
+                                    <Information>
+                                        <SensorName r:readOnly="True" type="String">E2V 1340 x 100 (CCD 36)(B)(R)</SensorName>
+                                        <CcdCharacteristics r:readOnly="True" type="CcdCharacteristics">BackIlluminated, DeepDepleted</CcdCharacteristics>
+                                        <Type r:readOnly="True" type="SensorType">Ccd</Type>
+                                        <ActiveArea>
+                                            <Height r:readOnly="True" type="Int32">100</Height>
+                                            <Width r:readOnly="True" type="Int32">1340</Width>
+                                            <BottomMargin r:readOnly="True" type="Int32">0</BottomMargin>
+                                            <LeftMargin r:readOnly="True" type="Int32">8</LeftMargin>
+                                            <RightMargin r:readOnly="True" type="Int32">8</RightMargin>
+                                            <TopMargin r:readOnly="True" type="Int32">0</TopMargin>
+                                        </ActiveArea>
+                                        <MaskedArea>
+                                            <BottomMargin r:readOnly="True" type="Int32">0</BottomMargin>
+                                            <Height r:readOnly="True" type="Int32">0</Height>
+                                            <TopMargin r:readOnly="True" type="Int32">0</TopMargin>
+                                        </MaskedArea>
+                                        <Pixel>
+                                            <Width r:readOnly="True" type="Double">20</Width>
+                                            <Height r:readOnly="True" type="Double">20</Height>
+                                            <GapWidth r:readOnly="True" type="Double">0</GapWidth>
+                                            <GapHeight r:readOnly="True" type="Double">0</GapHeight>
+                                        </Pixel>
+                                        <Secondary>
+                                            <ActiveArea>
+                                                <Height r:readOnly="True" type="Int32">0</Height>
+                                            </ActiveArea>
+                                            <MaskedArea>
+                                                <Height r:readOnly="True" type="Int32">0</Height>
+                                            </MaskedArea>
+                                        </Secondary>
+                                    </Information>
+                                    <Temperature>
+                                        <SetPoint type="Double">-75</SetPoint>
+                                        <Reading r:readOnly="True" type="Double">-75</Reading>
+                                        <Status r:readOnly="True" type="SensorTemperatureStatus">Locked</Status>
+                                    </Temperature>
+                                    <Cleaning>
+                                        <FinalSectionHeight type="Int32">2</FinalSectionHeight>
+                                        <FinalSectionCount type="Int32">5</FinalSectionCount>
+                                        <CleanSerialRegister type="Boolean">True</CleanSerialRegister>
+                                        <CleanUntilTrigger relevance="False" type="Boolean">True</CleanUntilTrigger>
+                                        <CycleCount type="Int32">1</CycleCount>
+                                        <CycleHeight type="Int32">100</CycleHeight>
+                                    </Cleaning>
+                                </Sensor>
+                                <ShutterTiming>
+                                    <ExposureTime type="Double">1000</ExposureTime>
+                                    <DelayResolution r:readOnly="True" type="Double">1000</DelayResolution>
+                                    <Mode type="ShutterTimingMode">Normal</Mode>
+                                    <ClosingDelay type="Double">8</ClosingDelay>
+                                </ShutterTiming>
+                                <ReadoutControl>
+                                    <Mode r:priority="2" type="ReadoutControlMode">FullFrame</Mode>
+                                    <Time r:readOnly="True" type="Double">70.0545</Time>
+                                    <Orientation r:readOnly="True" type="ReadoutOrientation">Normal</Orientation>
+                                    <StorageShiftRate relevance="False" r:priority="5" type="Double">15.2</StorageShiftRate>
+                                    <VerticalShiftRate r:priority="5" type="Double">15.2</VerticalShiftRate>
+                                    <RegionsOfInterest>
+                                        <Selection r:priority="2" type="RegionsOfInterestSelection">FullSensor</Selection>
+                                        <BinningProvider r:priority="2" type="FeatureProvider">Hardware</BinningProvider>
+                                        <CustomRegions r:priority="5" count="2" relevance="False" type="RegionOfInterestCollection">
+                                            <RegionOfInterest id="0" x="0" width="1340" xBinning="1" y="78" height="10" yBinning="1" />
+                                            <RegionOfInterest id="1" x="0" width="1340" xBinning="1" y="13" height="10" yBinning="1" />
+                                        </CustomRegions>
+                                        <BinnedSensor>
+                                            <XBinning relevance="False" r:priority="3" type="Int32">1</XBinning>
+                                            <YBinning relevance="False" r:priority="3" type="Int32">1</YBinning>
+                                        </BinnedSensor>
+                                        <LineSensor>
+                                            <RowBinning relevance="False" r:priority="3" type="Int32">1</RowBinning>
+                                        </LineSensor>
+                                        <Result r:readOnly="True" type="RegionOfInterestCollection" count="1">
+                                            <RegionOfInterest id="0" x="0" width="1340" xBinning="1" y="0" height="100" yBinning="1" />
+                                        </Result>
+                                    </RegionsOfInterest>
+                                    <Kinetics>
+                                        <WindowHeight relevance="False" r:priority="1" type="Int32">10</WindowHeight>
+                                    </Kinetics>
+                                </ReadoutControl>
+                                <HardwareIO>
+                                    <OutputSignal type="OutputSignal">ShutterOpen</OutputSignal>
+                                    <TriggerDetermination relevance="False" type="TriggerDetermination">NegativePolarity</TriggerDetermination>
+                                    <TriggerResponse type="TriggerResponse">NoResponse</TriggerResponse>
+                                </HardwareIO>
+                                <Adc>
+                                    <Speed type="Double">2</Speed>
+                                    <BitDepth r:readOnly="True" type="Int32">16</BitDepth>
+                                    <AnalogGain type="AdcGain">High</AnalogGain>
+                                    <Quality r:priority="2" type="AdcQuality">LowNoise</Quality>
+                                </Adc>
+                                <Acquisition>
+                                    <Orientation r:readOnly="True" type="ReadoutOrientation">Normal</Orientation>
+                                    <NormalizeOrientation relevance="False" r:priority="3" type="Boolean">True</NormalizeOrientation>
+                                    <PixelFormat r:readOnly="True" type="PixelFormat">MonochromeUnsigned16</PixelFormat>
+                                    <FrameSize r:readOnly="True" type="Int32">268000</FrameSize>
+                                    <FrameStride r:readOnly="True" type="Int32">268000</FrameStride>
+                                    <FramesPerReadout r:readOnly="True" type="Int32">1</FramesPerReadout>
+                                    <ReadoutStride r:readOnly="True" type="Int32">268000</ReadoutStride>
+                                    <PixelDepth r:readOnly="True" type="Int32">16</PixelDepth>
+                                    <ReadoutRate r:readOnly="True" type="Double">0.92759688865451606</ReadoutRate>
+                                    <FrameRate r:readOnly="True" type="Double">0.92759688865451606</FrameRate>
+                                    <FrameTracking>
+                                        <Enabled type="Boolean">False</Enabled>
+                                    </FrameTracking>
+                                    <TimeStamping>
+                                        <Stamps type="TimeStamps">None</Stamps>
+                                    </TimeStamping>
+                                </Acquisition>
+                                <Experiment>
+                                    <Acquisition>
+                                        <FramesToStore type="Int64">1</FramesToStore>
+                                        <FrameSize r:readOnly="True" type="Int32">536000</FrameSize>
+                                        <FrameStride r:readOnly="True" type="Int32">536000</FrameStride>
+                                        <PixelDepth r:readOnly="True" type="Int32">32</PixelDepth>
+                                        <PixelFormat r:readOnly="True" type="PixelDataFormat">MonochromeFloating32</PixelFormat>
+                                        <Orientation>
+                                            <LightPathOrientation r:readOnly="True" type="ReadoutOrientation">Normal</LightPathOrientation>
+                                            <LightPathOrientationUncorrected r:readOnly="True" type="ReadoutOrientation">Normal</LightPathOrientationUncorrected>
+                                            <Result r:readOnly="True" type="ImageOrientation">Normal</Result>
+                                        </Orientation>
+                                        <OutputFiles>
+                                            <Result r:readOnly="True" type="String">t:\dac_user\2014\IDD_2014-1\CARS\T\Pt_001.spe</Result>
+                                        </OutputFiles>
+                                    </Acquisition>
+                                    <FileNameGeneration>
+                                        <Directory r:priority="4" type="String">t:\dac_user\2014\IDD_2014-1\CARS\T</Directory>
+                                        <BaseFileName r:priority="4" type="String">Pt_001</BaseFileName>
+                                        <AttachTime r:priority="4" type="Boolean">False</AttachTime>
+                                        <AttachDate r:priority="4" type="Boolean">False</AttachDate>
+                                        <FileFormatLocation relevance="False" r:priority="3" type="FileFormatLocation">Suffix</FileFormatLocation>
+                                        <AttachIncrement r:priority="4" type="Boolean">False</AttachIncrement>
+                                        <TimeFormat relevance="False" r:priority="5" type="TimeFormat">hh_mm_ss_24hr</TimeFormat>
+                                        <DateFormat relevance="False" r:priority="5" type="DateFormat">yyyy_Month_dd</DateFormat>
+                                        <IncrementNumber relevance="False" r:priority="5" type="Int32">1</IncrementNumber>
+                                        <IncrementMinimumDigits relevance="False" r:priority="5" type="Int32">1</IncrementMinimumDigits>
+                                        <SaveRawData r:priority="1" type="Boolean">False</SaveRawData>
+                                    </FileNameGeneration>
+                                    <OnlineProcessing>
+                                        <FrameCombination>
+                                            <FramesCombined r:priority="2" type="Int64">1</FramesCombined>
+                                            <Method relevance="False" r:priority="3" type="FrameCombinationMethod">Average</Method>
+                                        </FrameCombination>
+                                    </OnlineProcessing>
+                                    <OnlineCorrections>
+                                        <OrientationCorrection>
+                                            <Enabled r:priority="1" type="Boolean">True</Enabled>
+                                            <FlipHorizontally r:priority="2" type="Boolean">False</FlipHorizontally>
+                                            <FlipVertically r:priority="2" type="Boolean">False</FlipVertically>
+                                            <RotateClockwise r:priority="2" type="Int32">0</RotateClockwise>
+                                        </OrientationCorrection>
+                                        <BlemishCorrection>
+                                            <Enabled r:priority="3" type="Boolean">False</Enabled>
+                                            <DefinitionFile relevance="False" r:priority="4" type="String">C:\Users\dac_user\Documents\LightField\Correction Files\BlemishCorrection.CSV</DefinitionFile>
+                                        </BlemishCorrection>
+                                        <BackgroundCorrection>
+                                            <Enabled r:priority="3" type="Boolean">True</Enabled>
+                                            <ReferenceFile r:priority="4" type="String">t:\dac_user\2014\IDD_2014-1\Setup\lamp_calibration\2014-01-30\PIXIS\b_pixis_50ms.spe</ReferenceFile>
+                                            <ReferenceFileDate r:readOnly="True" type="DateTimeOffset">2014-01-30T20:46:45.026998-06:00</ReferenceFileDate>
+                                        </BackgroundCorrection>
+                                        <FlatfieldCorrection>
+                                            <Enabled r:priority="3" type="Boolean">False</Enabled>
+                                            <ReferenceFile relevance="False" r:priority="4" type="String">C:\Users\dac_user\Documents\LightField\Correction Files\FlatfieldReference.spe</ReferenceFile>
+                                        </FlatfieldCorrection>
+                                        <CosmicRayCorrection>
+                                            <Enabled r:priority="3" type="Boolean">False</Enabled>
+                                            <Method relevance="False" r:priority="4" type="CosmicRayCorrectionMethod">MedianFilter</Method>
+                                            <KernelSize relevance="False" r:priority="5" type="Int32">5</KernelSize>
+                                        </CosmicRayCorrection>
+                                    </OnlineCorrections>
+                                </Experiment>
+                            </Camera>
+                        </Cameras>
+                        <Spectrometers count="1">
+                            <Spectrometer deviceID="1">
+                                <Grating>
+                                    <Selected r:priority="1" type="String">[860nm,300][1][0]</Selected>
+                                    <CenterWavelength r:priority="2" type="Double">750</CenterWavelength>
+                                </Grating>
+                                <OpticalPort>
+                                    <Entrance>
+                                        <Selected r:readOnly="True" type="OpticalPortLocation">SideEntrance</Selected>
+                                        <Side>
+                                            <Width r:priority="2" type="Int32">100</Width>
+                                        </Side>
+                                    </Entrance>
+                                    <Exit>
+                                        <Selected r:priority="1" type="OpticalPortLocation">FrontExit</Selected>
+                                    </Exit>
+                                </OpticalPort>
+                                <CalibrationInformation>
+                                    <DetectorAngle r:readOnly="True" type="Double">1.3800000000000909</DetectorAngle>
+                                    <FocalLength r:readOnly="True" type="Double">300</FocalLength>
+                                    <InclusionAngle r:readOnly="True" type="Double">30.400000000002002</InclusionAngle>
+                                </CalibrationInformation>
+                                <Experiment>
+                                    <WavelengthCalibration>
+                                        <Mode r:readOnly="True" type="CalibrationMode">Broadband</Mode>
+                                        <Error r:readOnly="True" type="Double">0.10450597116116257</Error>
+                                        <LightSource type="CalibrationLightSource">PIMercury</LightSource>
+                                        <Date r:readOnly="True" type="DateTimeOffset">2013-05-29T14:30:47.7138903-05:00</Date>
+                                        <Orientation r:readOnly="True" type="ImageOrientation">Normal</Orientation>
+                                    </WavelengthCalibration>
+                                    <IntensityCalibration>
+                                        <Enabled type="Boolean">False</Enabled>
+                                        <Date r:readOnly="True" />
+                                    </IntensityCalibration>
+                                    <StepAndGlue>
+                                        <Enabled r:priority="5" type="Boolean">False</Enabled>
+                                        <StartingCenterWavelength relevance="False" r:priority="5" type="Double">200</StartingCenterWavelength>
+                                        <EndingCenterWavelength relevance="False" r:priority="5" type="Double">300</EndingCenterWavelength>
+                                        <CenterWavelengths relevance="False" r:priority="5" type="DoubleCollection" />
+                                    </StepAndGlue>
+                                </Experiment>
+                            </Spectrometer>
+                        </Spectrometers>
+                    </Devices>
+                    <Environment>
+                        <WorkingDirectory type="String">C:\Users\dac_user\Documents\LightField</WorkingDirectory>
+                        <ScratchDirectory type="String">C:\Users\dac_user\AppData\Local\Temp</ScratchDirectory>
+                    </Environment>
+                </Experiment>
+            </Origin>
+        </DataHistory>
+    </DataHistories>
+    <GeneralInformation>
+        <FileInformation creator="CARS_NT_DOMAIN\DAC_User" created="2014-02-04T15:16:33.6420768-06:00" lastModified="2014-02-04T15:16:33.6420768-06:00" />
+    </GeneralInformation>
+</SpeFormat>
