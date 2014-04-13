@@ -12,6 +12,7 @@
 #ifndef ANDORCCD_H
 #define ANDORCCD_H
 
+#include "tinyxml.h"
 #include "ADDriver.h"
 #include "SPEHeader.h"
 
@@ -180,6 +181,7 @@ class AndorCCD : public ADDriver {
 
   // SPE file header
   tagCSMAHEAD *mSPEHeader;
+  TiXmlDocument *mSPEDoc;
 
 };
 
