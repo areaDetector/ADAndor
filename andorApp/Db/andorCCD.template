@@ -17,6 +17,8 @@ record(mbbo, "$(P)$(R)FileFormat")
    field(FRVL, "4")
    field(FVST, "FITS")
    field(FVVL, "5")
+   field(SXST, "SPE")
+   field(SXVL, "6")
 }
 
 # These are the records that we modify from NDFile.template
@@ -34,6 +36,8 @@ record(mbbi, "$(P)$(R)FileFormat_RBV")
    field(FRVL, "4")
    field(FVST, "FITS")
    field(FVVL, "5")
+   field(SXST, "SPE")
+   field(SXVL, "6")
 }
 
 record(mbbo, "$(P)$(R)ImageMode")
