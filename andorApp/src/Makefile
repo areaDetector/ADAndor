@@ -16,6 +16,7 @@ endif
 DATA+=GREY.PAL
 
 DBD += andorCCDSupport.dbd
+DBD += shamrockSupport.dbd
 
 include $(ADCORE)/ADApp/commonLibraryMakefile
 
