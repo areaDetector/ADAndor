@@ -15,9 +15,7 @@ PROD_IOC_Linux  += $(PROD_NAME)
 # <name>.dbd will be created from <name>Include.dbd
 DBD += $(PROD_NAME).dbd
 $(PROD_NAME)_DBD += andorCCDSupport.dbd
-ifeq (WIN32, $(OS_CLASS))
-  $(PROD_NAME)_DBD += shamrockSupport.dbd
-endif
+$(PROD_NAME)_DBD += shamrockSupport.dbd
 
 $(PROD_NAME)_SRCS += $(PROD_NAME)_registerRecordDeviceDriver.cpp $(PROD_NAME)Main.cpp
 
