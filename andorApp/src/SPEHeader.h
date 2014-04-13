@@ -198,7 +198,8 @@ typedef struct tagCSMAHEAD {
   epicsInt32    lavgexp;                //  668  Number of Accumulations
   epicsFloat32  ReadoutTime;            //  672  Experiment readout time
   epicsInt16    TriggeredModeFlag;      //  676  T/F Triggered Timing Option
-  char          Spare_2[10];            //  678  
+  unsigned long long XML_Offset;        //  678  XML Offset
+  char          Spare_2[2];             //  686  
   char          sw_version[FILEVERMAX]; //  688  Version of SW creating this file
   epicsInt16    type;                   //  704  0=1000,1=new120,2=old120,3=130,
                                         //       st121=4,st138=5,dc131(PentaMax)=6,
