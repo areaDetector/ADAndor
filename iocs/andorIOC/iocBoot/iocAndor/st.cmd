@@ -13,10 +13,15 @@ epicsEnvSet("NCHANS", "2048")
 
 # andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, 
 #                const char *installPath, int priority, int stackSize)
-andorCCDConfig("$(PORT)", 0, 0, "/usr/local/etc/andor/", 0, 0)
+#andorCCDConfig("$(PORT)", 0, 0, "/usr/local/etc/andor/", 0, 0)
+andorCCDConfig("$(PORT)", 0, 0, "", 0, 0)
+
+shamrockConfig("SR1", 0, "")
+
 dbLoadRecords("$(ADCORE)/db/ADBase.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 dbLoadRecords("$(ADCORE)/db/NDFile.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 dbLoadRecords("$(ADANDOR)/db/andorCCD.template",   "P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
+dbLoadRecords("$(ADANDOR)/db/shamrock.template",   "P=$(PREFIX),R=sham1:,PORT=SR1,TIMEOUT=1,PIXELS=1024")
 
 # Create a standard arrays plugin
 NDStdArraysConfigure("Image1", 5, 0, "$(PORT)", 0, 0)
