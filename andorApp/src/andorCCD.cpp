@@ -105,7 +105,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
              asynEnumMask, asynEnumMask,
              ASYN_CANBLOCK, 1, priority, stackSize),
-    mShamrockId(shamrockID)
+    mShamrockId(shamrockID), mSPEDoc(0)
 {
 
   int status = asynSuccess;
@@ -1407,7 +1407,15 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   FILE *fp;
   size_t numWrite;
   float *calibration;
+  char *calibrationString;
+  char tempString[20];
+  const char *dataTypeString;
   int i;
+  TiXmlNode *speFormatNode, *dataFormatNode, *calibrationsNode;
+  TiXmlNode *wavelengthMappingNode, *wavelengthNode;
+  TiXmlElement *dataBlockElement, *dataBlockElement2;
+  TiXmlElement *sensorInformationElement, *sensorMappingElement;
+  TiXmlText *wavelengthText;
   static const char *functionName="SaveAsSPE";
   
   if (!pArray) return DRV_NO_NEW_DATA;
@@ -1418,8 +1426,18 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   // Fill in the SPE file header
   mSPEHeader->xdim = nx;
   mSPEHeader->ydim = ny;
-  if (pArray->dataType == NDUInt16) dataType = 3;
-  else dataType = 1;
+  if (pArray->dataType == NDUInt16) {
+    dataTypeString = "MonochromeUnsigned16";
+    dataType = 3;
+  } else if (pArray->dataType == NDUInt32) {
+    dataTypeString = "MonochromeUnsigned32";
+    dataType = 1;
+  } else {
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+      "%s::%s error unknown data type %d\n",
+      driverName, functionName, pArray->dataType);
+    return DRV_GENERAL_ERRORS;
+  }
   
   mSPEHeader->datatype = dataType;
   mSPEHeader->scramble = 1;
@@ -1429,7 +1447,8 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   mSPEHeader->file_header_ver  = 3.0;
   mSPEHeader->WinView_id = 0x01234567;
   mSPEHeader->lastvalue = 0x5555;
-
+  mSPEHeader->XML_Offset = sizeof(*mSPEHeader) + arrayInfo.totalBytes;
+  
   // Open the file
   fp = fopen(fullFileName, "wb");
   if (!fp) {
@@ -1458,9 +1477,10 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
     fclose(fp);
     return DRV_GENERAL_ERRORS;
   }
-    
+
   // Create the default calibration
   calibration = (float *) calloc(nx, sizeof(float));
+  calibrationString = (char *) calloc(nx*20, sizeof(char));
   for (i=0; i<nx; i++) calibration[i] = (float) i; 
   
   // If we are on Windows and there is a valid Shamrock spectrometer get the calibration
@@ -1480,10 +1500,63 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   noSpectrometers:  
 #endif 
   
-  // Write the calibration as XML
+  // Create the calibration string
+  for (i=0; i<nx; i++) {
+    if (i > 0) strcat(calibrationString, ",");
+    sprintf(tempString, "%.6f", calibration[i]);
+    strcat(calibrationString, tempString);
+  }
+
+  // Create the XML data using SPETemplate.xml in the current directory as a template    
+  if (mSPEDoc == 0) {
+    mSPEDoc = new TiXmlDocument("SPETemplate.xml");
+    if (mSPEDoc == 0) {
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+        "%s::%s error opening SPETemplate.xml\n",
+        driverName, functionName);
+      return DRV_GENERAL_ERRORS;
+    }
+  }
+  mSPEDoc->LoadFile();
+        
+  // Set the required values in the DataFormat element
+  speFormatNode = mSPEDoc->FirstChild("SpeFormat");
+  dataFormatNode = speFormatNode->FirstChild("DataFormat");
+  dataBlockElement = dataFormatNode->FirstChildElement("DataBlock");
+  dataBlockElement->SetAttribute("pixelFormat", dataTypeString);
+  sprintf(tempString, "%u", arrayInfo.totalBytes);
+  dataBlockElement->SetAttribute("size", tempString);
+  dataBlockElement->SetAttribute("stride", tempString);
+  dataBlockElement2 = dataBlockElement->FirstChildElement("DataBlock");
+  dataBlockElement2->SetAttribute("size", tempString);
+  sprintf(tempString, "%d", nx);
+  dataBlockElement2->SetAttribute("width", tempString);
+  sprintf(tempString, "%d", ny);
+  dataBlockElement2->SetAttribute("height", tempString);
+
+  // Set the required values in the Calibrations element
+  calibrationsNode = speFormatNode->FirstChild("Calibrations");
+  wavelengthMappingNode = calibrationsNode->FirstChild("WavelengthMapping");
+  wavelengthNode = wavelengthMappingNode->FirstChildElement("Wavelength");
+  wavelengthText = (wavelengthNode->FirstChild())->ToText();
+  wavelengthText->SetValue(calibrationString);
+  sensorInformationElement = calibrationsNode->FirstChildElement("SensorInformation");
+  sprintf(tempString, "%d", nx);
+  sensorInformationElement->SetAttribute("width", tempString);
+  sprintf(tempString, "%d", ny);
+  sensorInformationElement->SetAttribute("height", tempString);
+  sensorMappingElement = calibrationsNode->FirstChildElement("SensorMapping");
+  sprintf(tempString, "%d", nx);
+  sensorMappingElement->SetAttribute("width", tempString);
+  sprintf(tempString, "%d", ny);
+  sensorMappingElement->SetAttribute("height", tempString);
+
+  mSPEDoc->SaveFile(fp);
   
   // Close the file
   fclose(fp);
+  free(calibration);
+  free(calibrationString);
   
   return DRV_SUCCESS;
 }
