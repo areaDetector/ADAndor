@@ -23,15 +23,15 @@ $(PROD_NAME)_SRCS += $(PROD_NAME)_registerRecordDeviceDriver.cpp $(PROD_NAME)Mai
 PROD_LIBS       += andorCCD
 
 ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
-PROD_LIBS       += ATMCD32M
-PROD_LIBS_WIN32 += ShamrockCIFm
+  PROD_LIBS  += ATMCD32M
+  PROD_LIBS  += ShamrockCIFm
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
-# Note: we must built the application without GraphicsMagick for windows-x64.  
-# This is because of a conflict with the Andor library (SetImage function) 
-# that only occurs on windows-x64.
-USE_GRAPHICSMAGICK=NO
-PROD_LIBS += atmcd64m
+  # Note: we must built the application without GraphicsMagick for windows-x64.  
+  # This is because of a conflict with the Andor library (SetImage function) 
+  # that only occurs on windows-x64.
+  USE_GRAPHICSMAGICK=NO
+  PROD_LIBS  += atmcd64m
 endif
 
 # Test application
