@@ -37,8 +37,6 @@ R2-1
 * Added support for saving data in Princeton Instruments V3.0 SPE file format with XML footer.
   This is used to save calibration information from the Shamrock spectrometer.
   None of the other formats will save calibration information from the SDK, although they do from Solis.
-TODO BEFORE R2-1 RELEASE:
-* Fix problem of crashing when exiting the IOC.
 
 R1-9-1 and earlier
 ------------------
