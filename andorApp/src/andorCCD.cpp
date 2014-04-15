@@ -89,13 +89,15 @@ static void exitHandler(void *drvPvt);
   * After calling the base class constructor this method creates a thread to collect the detector data, 
   * and sets reasonable default values the parameters defined in this class, asynNDArrayDriver, and ADDriver.
   * \param[in] portName The name of the asyn port driver to be created.
+  * \param[in] installPath The path to the Andor directory containing the detector INI files, etc.
+  *            This can be specified as an empty string ("") for new detectors that don't use the INI
+  *            files on Windows, but must be a valid path on Linux.
+  * \param[in] shamrockID The index number of the Shamrock spectrograph, if installed.
+  *            0 is the first Shamrock in the system.  Ignored if there are no Shamrocks.  
   * \param[in] maxBuffers The maximum number of NDArray buffers that the NDArrayPool for this driver is 
   *            allowed to allocate. Set this to -1 to allow an unlimited number of buffers.
   * \param[in] maxMemory The maximum amount of memory that the NDArrayPool for this driver is 
   *            allowed to allocate. Set this to -1 to allow an unlimited amount of memory.
-  * \param[in] installPath The path to the Andor directory containing the detector INI files, etc.
-  *            This can be specified as an empty string ("") for new detectors that don't use the INI
-  *            files on Windows, but must be a valid path on Linux.
   * \param[in] priority The thread priority for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
   * \param[in] stackSize The stack size for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
   */
@@ -1422,8 +1424,8 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   
   if (!pArray) return DRV_NO_NEW_DATA;
   pArray->getInfo(&arrayInfo);
-  nx = arrayInfo.xSize;
-  ny = arrayInfo.ySize;  
+  nx = (int) arrayInfo.xSize;
+  ny = (int) arrayInfo.ySize;  
   
   // Fill in the SPE file header
   mSPEHeader->xdim = nx;
@@ -1485,8 +1487,8 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   calibrationString = (char *) calloc(nx*20, sizeof(char));
   for (i=0; i<nx; i++) calibration[i] = (float) i; 
   
-  // If we are on Windows and there is a valid Shamrock spectrometer get the calibration
-#ifdef _WIN32
+  // If we are on Windows 32-bit and there is a valid Shamrock spectrometer get the calibration
+#if defined(_WIN32) && !defined(_WIN64)
   int error;
   int numSpectrometers;
   error = ShamrockGetNumberDevices(&numSpectrometers);
@@ -1526,7 +1528,7 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   dataFormatNode = speFormatNode->FirstChild("DataFormat");
   dataBlockElement = dataFormatNode->FirstChildElement("DataBlock");
   dataBlockElement->SetAttribute("pixelFormat", dataTypeString);
-  sprintf(tempString, "%u", arrayInfo.totalBytes);
+  sprintf(tempString, "%lu", (unsigned long)arrayInfo.totalBytes);
   dataBlockElement->SetAttribute("size", tempString);
   dataBlockElement->SetAttribute("stride", tempString);
   dataBlockElement2 = dataBlockElement->FirstChildElement("DataBlock");
@@ -1583,12 +1585,14 @@ static void andorDataTaskC(void *drvPvt)
 
 /** IOC shell configuration command for Andor driver
   * \param[in] portName The name of the asyn port driver to be created.
+  * \param[in] installPath The path to the Andor directory containing the detector INI files, etc.
+  *            This can be specified as an empty string ("") for new detectors that don't use the INI
+  * \param[in] shamrockID The index number of the Shamrock spectrograph, if installed.
+  *            0 is the first Shamrock in the system.  Ignored if there are no Shamrocks.  
   * \param[in] maxBuffers The maximum number of NDArray buffers that the NDArrayPool for this driver is 
   *            allowed to allocate. Set this to -1 to allow an unlimited number of buffers.
   * \param[in] maxMemory The maximum amount of memory that the NDArrayPool for this driver is 
   *            allowed to allocate. Set this to -1 to allow an unlimited amount of memory.
-  * \param[in] installPath The path to the Andor directory containing the detector INI files, etc.
-  *            This can be specified as an empty string ("") for new detectors that don't use the INI
   *            files on Windows, but must be a valid path on Linux.
   * \param[in] priority The thread priority for the asyn port driver thread
   * \param[in] stackSize The stack size for the asyn port driver thread
