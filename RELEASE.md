@@ -32,8 +32,8 @@ R2-1
 ----
 * Added support for the Shamrock spectrographs.  
   This supports control of grating selection, center wavelength, and slit sizes.
-  It is a separate driver, and is only supported on Windows because Andor does not provide a 
-  Shamrock SDK on Linux.
+  It is a separate driver, and is only supported on 32-bit Windows because Andor does not provide a 
+  Shamrock SDK for 64-bit Windows or Linux.
 * Added support for saving data in Princeton Instruments V3.0 SPE file format with XML footer.
   This is used to save calibration information from the Shamrock spectrometer.
   None of the other formats will save calibration information from the SDK, although they do from Solis.
