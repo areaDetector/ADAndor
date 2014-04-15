@@ -159,6 +159,7 @@ class AndorCCD : public ADDriver {
   double mFastPollingPeriod;
   unsigned int mAcquiringData;
   char *mInstallPath;
+  bool mExiting;
   
   /**
    * ADC speed parameters
