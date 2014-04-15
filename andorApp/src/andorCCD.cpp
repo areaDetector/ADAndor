@@ -105,7 +105,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
              asynEnumMask, asynEnumMask,
              ASYN_CANBLOCK, 1, priority, stackSize),
-    mShamrockId(shamrockID), mSPEDoc(0)
+    mExiting(false), mShamrockId(shamrockID), mSPEDoc(0)
 {
 
   int status = asynSuccess;
@@ -267,18 +267,18 @@ AndorCCD::~AndorCCD()
 {
   static const char *functionName = "~AndorCCD";
 
+  this->lock();
+  mExiting = true;
+  printf("%s::%s Shutdown and freeing up memory...\n", driverName, functionName);
   try {
-    printf("Shutdown and freeing up memory...\n");
-    this->lock();
     checkStatus(FreeInternalMemory());
     checkStatus(ShutDown());
-    printf("Camera shutting down as part of IOC exit.\n");
-    this->unlock();
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
       "%s:%s: %s\n",
       driverName, functionName, e.c_str());
   }
+  this->unlock();
 }
 
 
@@ -850,7 +850,7 @@ void AndorCCD::statusTask(void)
   static const char *functionName = "statusTask";
 
   printf("%s:%s: Status thread started...\n", driverName, functionName);
-  while(1) {
+  while(!mExiting) {
 
     //Read timeout for polling freq.
     this->lock();
@@ -866,7 +866,7 @@ void AndorCCD::statusTask(void)
       status = epicsEventWaitWithTimeout(statusEvent, timeout);
     } else {
       status = epicsEventWait(statusEvent);
-    }              
+    }
     if (status == epicsEventWaitOK) {
       asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
         "%s:%s: Got status event\n",
@@ -879,6 +879,7 @@ void AndorCCD::statusTask(void)
     }
 
     this->lock();
+    if (mExiting) break;              
 
     try {
       //Only read these if we are not acquiring data
@@ -931,6 +932,7 @@ void AndorCCD::statusTask(void)
     this->unlock();
         
   } //End of loop
+  printf("%s:%s: Status thread exiting ...\n", driverName, functionName);
 
 }
 
