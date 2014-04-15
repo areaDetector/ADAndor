@@ -6,12 +6,13 @@ include $(TOP)/configure/CONFIG
 LIBRARY_IOC_WIN32 += andorCCD
 LIBRARY_IOC_Linux += andorCCD
 LIB_SRCS += andorCCD.cpp
-LIB_SRCS_WIN32 += shamrock.cpp
 LIB_SRCS_Linux += shamrockDummy.cpp
 ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
-LIB_LIBS += ATMCD32M
+  LIB_SRCS_WIN32 += shamrock.cpp
+  LIB_LIBS += ATMCD32M
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
-LIB_LIBS += atmcd64m
+  LIB_LIBS += atmcd64m
+  LIB_SRCS += shamrockDummy.cpp
 endif
 
 DATA+=GREY.PAL
