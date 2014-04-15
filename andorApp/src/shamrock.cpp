@@ -104,7 +104,7 @@ extern "C" int shamrockConfig(const char *portName, int shamrockId, const char *
 
 /** Constructor for the shamrock class
  * \param[in] portName asyn port name to assign to the camera.
- * \param[in] shamrockId The spectrograph index.
+ * \param[in] shamrockID The spectrograph index.
  * \param[in] iniPath The path to the camera ini file
  * \param[in] priority The EPICS thread priority for this driver.  0=use asyn default.
  * \param[in] stackSize The size of the stack for the EPICS port thread. 0=use asyn default.
@@ -327,9 +327,9 @@ asynStatus shamrock::writeFloat64( asynUser *pasynUser, epicsFloat64 value)
 
 /** Reads float32 array.
   * \param[in] pasynUser asynUser structure that contains the function code in pasynUser->reason. 
-  * \param[in] value The array
+  * \param[in] pValue The array
   * \param[in] nElements The size of the array
-  * \param[out] Nin The number of elements copied to the array
+  * \param[out] nIn The number of elements copied to the array
   * Takes action if the function code requires it. */
 asynStatus shamrock::readFloat32Array(asynUser *pasynUser, epicsFloat32 *pValue, size_t nElements, size_t *nIn)
 {
