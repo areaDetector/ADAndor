@@ -12,7 +12,6 @@
 
 #include <iocsh.h>
 #include <epicsString.h>
-#include <epicsExit.h>
 
 #include <asynPortDriver.h>
 
@@ -56,8 +55,6 @@ public:
     virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
     virtual asynStatus readFloat32Array(asynUser *pasynUser, epicsFloat32 *pValue, size_t nElements, size_t *nIn);
     void report(FILE *fp, int details);
-    /**< These should be private but are called from C callback functions, must be public. */
-    void shutdown();
 
 protected:
     int SRWavelength_;          /** Wavelength                   (float64 read/write) */
@@ -78,7 +75,6 @@ private:
     asynStatus getStatus();
 
     /* Data */
-    bool exiting_;
     int shamrockId_;
     bool slitIsPresent_[MAX_SLITS];
     int numPixels_;
@@ -106,12 +102,6 @@ extern "C" int shamrockConfig(const char *portName, int shamrockId, const char *
     return asynSuccess;
 }
 
-static void c_shutdown(void *arg)
-{
-  shamrock *p = (shamrock *)arg;
-  p->shutdown();
-}
-
 /** Constructor for the shamrock class
  * \param[in] portName asyn port name to assign to the camera.
  * \param[in] shamrockId The spectrograph index.
@@ -124,7 +114,7 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
             asynInt32Mask | asynFloat64Mask | asynFloat32ArrayMask | asynDrvUserMask, 
             asynInt32Mask | asynFloat64Mask | asynFloat32ArrayMask,
             ASYN_CANBLOCK | ASYN_MULTIDEVICE, 1, priority, stackSize),
-    exiting_(0), shamrockId_(shamrockID)
+    shamrockId_(shamrockID)
 {
     static const char *functionName = "shamrock";
     int status;
@@ -198,8 +188,6 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
         callParamCallbacks(i);
     }
     
-    /* shutdown on exit */
-    epicsAtExit(c_shutdown, this);
     return;
 }
 
@@ -261,12 +249,6 @@ asynStatus shamrock::getStatus()
     return asynSuccess;
 }
   
-
-void shamrock::shutdown(void)
-{
-    exiting_ = 1;
-    ShamrockClose();
-}
 
 /** Sets an int32 parameter.
   * \param[in] pasynUser asynUser structure that contains the function code in pasynUser->reason. 
