@@ -23,11 +23,6 @@ files respectively, in the configure/ directory of the appropriate release of th
 Release Notes
 =============
 
-R2-0
-----
-* Moved the repository to [Github](https://github.com/areaDetector/ADAndor).
-* Re-organized the directory structure to separate the driver library from the example IOC application.
-
 R2-1
 ----
 * Added support for the Shamrock spectrographs.  
@@ -38,12 +33,16 @@ R2-1
   This is used to save calibration information from the Shamrock spectrometer.
   None of the other formats will save calibration information from the SDK, although they do from Solis.
 
+R2-0
+----
+* Moved the repository to [Github](https://github.com/areaDetector/ADAndor).
+* Re-organized the directory structure to separate the driver library from the example IOC application.
+
 R1-9-1 and earlier
 ------------------
 Release notes are part of the
 [areaDetector Release Notes](http://cars.uchicago.edu/software/epics/areaDetectorReleaseNotes.html).
 
-
 Future Releases
 ===============
-* Add exiting_ flag; statusTask and dataTask should both do while (!exiting_)
+* dataTask should check while (!mExiting)
