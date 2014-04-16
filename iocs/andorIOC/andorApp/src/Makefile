@@ -24,7 +24,6 @@ PROD_LIBS       += andorCCD
 
 ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
   PROD_LIBS  += ATMCD32M
-  PROD_LIBS  += ShamrockCIFm
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
   # Note: we must built the application without GraphicsMagick for windows-x64.  
@@ -33,6 +32,7 @@ else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
   USE_GRAPHICSMAGICK=NO
   PROD_LIBS  += atmcd64m
 endif
+PROD_LIBS_WIN32 += ShamrockCIFm
 
 # Test application
 #PROD_IOC_WIN32 += test_xml
