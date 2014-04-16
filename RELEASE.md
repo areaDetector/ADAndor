@@ -23,6 +23,12 @@ files respectively, in the configure/ directory of the appropriate release of th
 Release Notes
 =============
 
+R2-1-1
+----
+* Added support for the Shamrock spectrographs on 64-bit Windows. 
+  The notes for R2-1 are incorrect, there is 64-bit support for the Shamrock, 
+  it is just a little hard to find.
+
 R2-1
 ----
 * Added support for the Shamrock spectrographs.  
