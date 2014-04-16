@@ -10,7 +10,7 @@
     <h1>
       areaDetector Andor driver</h1>
     <h2>
-      April 15, 2014</h2>
+      April 16, 2014</h2>
     <h2>
       Matthew Pearson, Oak Ridge National Laboratory</h2>
     <h2>
@@ -859,9 +859,8 @@
       errors because the Andor SDK functions won't save files if acquisition is in progress.
       Saving files in Single mode and Fast Kinetics mode works fine.</li>
     <li>Trigger modes have not been tested.</li>
-    <li>The Shamrock spectrometers are only supported on 32-bit Windows. They are not
-      supported on 64-bit Windows or Linux because the Andor Shamrock SDK is not available
-      on those platforms.</li>
+    <li>The Shamrock spectrometers are only supported on Windows. They are not supported
+      on Linux because the Andor Shamrock SDK is not yet available for Linux.</li>
     <li>The Shamrock wavelength calibration is only saved in SPE files. The Andor SDK
       file writers do not save the calibration, and it is not possible to pass the calibration
       to other file plugins as an attribute because array attributes are not currently
