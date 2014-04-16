@@ -1487,8 +1487,8 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   calibrationString = (char *) calloc(nx*20, sizeof(char));
   for (i=0; i<nx; i++) calibration[i] = (float) i; 
   
-  // If we are on Windows 32-bit and there is a valid Shamrock spectrometer get the calibration
-#if defined(_WIN32) && !defined(_WIN64)
+  // If we are on Windows and there is a valid Shamrock spectrometer get the calibration
+#ifdef _WIN32
   int error;
   int numSpectrometers;
   error = ShamrockGetNumberDevices(&numSpectrometers);
