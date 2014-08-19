@@ -23,13 +23,13 @@ files respectively, in the configure/ directory of the appropriate release of th
 Release Notes
 =============
 
-R2-1-1
+R2-1-1 (13-Jul-2014)
 ----
 * Added support for the Shamrock spectrographs on 64-bit Windows. 
   The notes for R2-1 are incorrect, there is 64-bit support for the Shamrock, 
   it is just a little hard to find.
 
-R2-1
+R2-1 (15-Apr-2014)
 ----
 * Added support for the Shamrock spectrographs.  
   This supports control of grating selection, center wavelength, and slit sizes.
@@ -39,7 +39,7 @@ R2-1
   This is used to save calibration information from the Shamrock spectrometer.
   None of the other formats will save calibration information from the SDK, although they do from Solis.
 
-R2-0
+R2-0 (24-Mar-2014)
 ----
 * Moved the repository to [Github](https://github.com/areaDetector/ADAndor).
 * Re-organized the directory structure to separate the driver library from the example IOC application.
