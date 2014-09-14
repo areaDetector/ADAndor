@@ -42,8 +42,8 @@ static const char *driverName = "shamrock";
 // Maximum number of address.
 #define MAX_ADDR 4
 
-/** Main driver class inherited from asyn asynPortDriver class.
- * One instance of this class will control one spectrography.
+/** Driver for Andor Shamrock spectrographs.
+ * One instance of this class will control one spectrograph.
  */
 class shamrock : public asynPortDriver
 {

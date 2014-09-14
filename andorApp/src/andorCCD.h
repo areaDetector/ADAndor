@@ -30,6 +30,10 @@
 #define AndorPreAmpGainString              "ANDOR_PREAMP_GAIN"
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
 
+/**
+ * Structure defining an ADC speed for the ADAndor driver.
+ *
+ */
 typedef struct {
   int ADCIndex;
   int AmpIndex;
@@ -40,6 +44,10 @@ typedef struct {
   int EnumValue;
 } AndorADCSpeed_t;
 
+/**
+ * Structure defining a pre-amp gain for the ADAndor driver.
+ *
+ */
 typedef struct {
   float Gain;
   char *EnumString;
@@ -47,7 +55,7 @@ typedef struct {
 } AndorPreAmpGain_t;
 
 /**
- * Driver class for Andor CCD. This inherits from ADDriver class in areaDetector.
+ * Driver for Andor CCD cameras using version 2 of their SDK; inherits from ADDriver class in ADCore.
  *
  */
 class AndorCCD : public ADDriver {
