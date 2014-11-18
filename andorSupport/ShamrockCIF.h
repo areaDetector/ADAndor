@@ -1,4 +1,4 @@
-#pragma hdrstop
+/* #pragma hdrstop */
 
 #define SHAMROCK_COMMUNICATION_ERROR 20201
 #define SHAMROCK_SUCCESS 20202
