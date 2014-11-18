@@ -23,7 +23,7 @@ $(PROD_NAME)_SRCS += $(PROD_NAME)_registerRecordDeviceDriver.cpp $(PROD_NAME)Mai
 PROD_LIBS       += andorCCD
 
 ifeq (win32-x86, $(findstring win32-x86, $(T_A)))
-  PROD_LIBS  += ATMCD32M
+  PROD_LIBS  += atmcd32m
 
 else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
   # Note: we must built the application without GraphicsMagick for windows-x64.  
@@ -42,6 +42,7 @@ PROD_LIBS_WIN32 += ShamrockCIFm
 # Note: we use PROD_SYS_LIBS because we are building statically but this library is only provided in dynamic
 # format (.so)
 PROD_SYS_LIBS_Linux += andor
+PROD_SYS_LIBS_Linux += shamrock
 
 include $(ADCORE)/ADApp/commonDriverMakefile
 
