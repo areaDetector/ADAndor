@@ -18,6 +18,19 @@ extern "C" {
 
 #define at_64 long long
 #define at_u64 unsigned long long 
+
+#ifndef IS_DRIVER
+typedef struct {
+  unsigned short wYear;
+  unsigned short wMonth;
+  unsigned short wDayOfWeek;
+  unsigned short wDay;
+  unsigned short wHour;
+  unsigned short wMinute;
+  unsigned short wSecond;
+  unsigned short wMilliseconds;
+} SYSTEMTIME;
+#endif
 		
 // ===================================
 // Version Information Definitions
@@ -136,6 +149,8 @@ unsigned int CoolerOFF();
 unsigned int CoolerON();
 unsigned int DemosaicImage(unsigned short * grey, unsigned short * red, unsigned short * green, unsigned short * blue, ColorDemosaicInfo * info);
 unsigned int EnableKeepCleans(int iMode);
+unsigned int EnableSensorCompensation(int iMode);
+unsigned int SetIRIGModulation(char mode);
 unsigned int FreeInternalMemory();
 unsigned int GetAcquiredData(at_32 * arr, at_u32 size);
 unsigned int GetAcquiredData16(unsigned short * arr, at_u32 size);
@@ -148,6 +163,7 @@ unsigned int GetAmpDesc(int index, char * name, int length);
 unsigned int GetAmpMaxSpeed(int index, float * speed);
 unsigned int GetAvailableCameras(at_32 * totalCameras);
 unsigned int GetBackground(at_32 * arr, at_u32 size);
+unsigned int GetBaselineClamp(int * state);
 unsigned int GetBitDepth(int channel, int * depth);
 unsigned int GetCameraEventStatus(at_u32 * camStatus);
 unsigned int GetCameraHandle(at_32 cameraIndex, at_32 * cameraHandle);
@@ -155,11 +171,14 @@ unsigned int GetCameraInformation(int index, at_32 * information);
 unsigned int GetCameraSerialNumber(int * number);
 unsigned int GetCapabilities(AndorCapabilities * caps);
 unsigned int GetControllerCardModel(char * controllerCardModel);
+unsigned int GetCountConvertWavelengthRange(float * minval, float * maxval);
 unsigned int GetCurrentCamera(at_32 * cameraHandle);
 unsigned int GetCYMGShift(int * iXshift, int * iYShift);
 unsigned int GetDDGExternalOutputEnabled(at_u32 uiIndex, at_u32 * puiEnabled);
 unsigned int GetDDGExternalOutputPolarity(at_u32 uiIndex, at_u32 * puiPolarity);
+unsigned int GetDDGExternalOutputStepEnabled(at_u32 uiIndex, at_u32 * puiEnabled);
 unsigned int GetDDGExternalOutputTime(at_u32 uiIndex, at_u64 * puiDelay, at_u64 * puiWidth);
+unsigned int GetDDGTTLGateWidth(at_u64 opticalWidth, at_u64 * ttlWidth);
 unsigned int GetDDGGateTime(at_u64 * puiDelay, at_u64 * puiWidth);
 unsigned int GetDDGInsertionDelay(int * piState);
 unsigned int GetDDGIntelligate(int * piState);
@@ -169,6 +188,8 @@ unsigned int GetDDGIOCNumber(unsigned long * numberPulses);
 unsigned int GetDDGIOCNumberRequested(at_u32 * pulses);
 unsigned int GetDDGIOCPeriod(at_u64 * period);
 unsigned int GetDDGIOCPulses(int * pulses);
+unsigned int GetDDGIOCTrigger(at_u32 * trigger);
+unsigned int GetDDGOpticalWidthEnabled(at_u32 * puiEnabled);
 
 // DDG Lite functions
 unsigned int GetDDGLiteGlobalControlByte(unsigned char * control);
@@ -180,9 +201,12 @@ unsigned int GetDDGLitePulsesPerExposure(AT_DDGLiteChannelId channel, at_u32 * u
 
 unsigned int GetDDGPulse(double wid, double resolution, double * Delay, double * Width);
 unsigned int GetDDGStepCoefficients(at_u32 mode, double * p1, double * p2);
+unsigned int GetDDGWidthStepCoefficients(at_u32 mode, double * p1, double * p2);
 unsigned int GetDDGStepMode(at_u32 * mode);
+unsigned int GetDDGWidthStepMode(at_u32 * mode);
 unsigned int GetDetector(int * xpixels, int * ypixels);
 unsigned int GetDICameraInfo(void * info);
+unsigned int GetEMAdvanced(int * state);
 unsigned int GetEMCCDGain(int * gain);
 unsigned int GetEMGainRange(int * low, int * high);
 unsigned int GetExternalTriggerTermination(at_u32 * puiTermination);
@@ -192,6 +216,7 @@ unsigned int GetFilterMode(int * mode);
 unsigned int GetFKExposureTime(float * time);
 unsigned int GetFKVShiftSpeed(int index, int * speed);
 unsigned int GetFKVShiftSpeedF(int index, float * speed);
+unsigned int GetFrontEndStatus(int * piFlag);
 unsigned int GetGateMode(int * piGatemode);
 unsigned int GetHardwareVersion(unsigned int * PCB, unsigned int * Decode, unsigned int * dummy1, unsigned int * dummy2, unsigned int * CameraFirmwareVersion, unsigned int * CameraFirmwareBuild);
 unsigned int GetHeadModel(char * name);
@@ -208,6 +233,7 @@ unsigned int GetIRQ(int * IRQ);
 unsigned int GetKeepCleanTime(float * KeepCleanTime);
 unsigned int GetMaximumBinning(int ReadMode, int HorzVert, int * MaxBinning);
 unsigned int GetMaximumExposure(float * MaxExp);
+unsigned int GetMaximumNumberRingExposureTimes(int * number);
 unsigned int GetMCPGain(int * piGain);
 unsigned int GetMCPGainRange(int * iLow, int * iHigh);
 unsigned int GetMCPGainTable(int iNum, int * piGain, float * pfPhotoepc);
@@ -217,9 +243,9 @@ unsigned int GetMinimumNumberInSeries(int * number);
 unsigned int GetMostRecentColorImage16(at_u32 size, int algorithm, unsigned short * red, unsigned short * green, unsigned short * blue);
 unsigned int GetMostRecentImage(at_32 * arr, at_u32 size);
 unsigned int GetMostRecentImage16(unsigned short * arr, at_u32 size);
-// unsigned int GetMSTimingsData(short * TimeOfStart, float * pfDifferences, int inoOfImages);
-// unsigned int GetMetaDataInfo(short * TimeOfStart, float * pfTimeFromStart, unsigned int index);
-// unsigned int GetMSTimingsEnabled();
+// unsigned int GetMSTimingsData(SYSTEMTIME * TimeOfStart, float * pfDifferences, int inoOfImages);
+unsigned int GetMetaDataInfo(SYSTEMTIME * TimeOfStart, float * pfTimeFromStart, unsigned int index);
+unsigned int GetMSTimingsEnabled();
 unsigned int GetNewData(at_32 * arr, at_u32 size);
 unsigned int GetNewData16(unsigned short * arr, at_u32 size);
 unsigned int GetNewData8(unsigned char * arr, at_u32 size);
@@ -232,7 +258,10 @@ unsigned int GetNumberDevices(int * numDevs);
 unsigned int GetNumberFKVShiftSpeeds(int * number);
 unsigned int GetNumberHorizontalSpeeds(int * number);
 unsigned int GetNumberHSSpeeds(int channel, int typ, int * speeds);
+unsigned int GetNumberMissedExternalTriggers(unsigned int first, unsigned int last, unsigned short * arr, unsigned int size);
+unsigned int GetIRIGData(unsigned char * _uc_irigData, unsigned int _ui_index);
 unsigned int GetNumberNewImages(at_32 * first, at_32 * last);
+unsigned int GetNumberPhotonCountingDivisions(at_u32 * noOfDivisions);
 unsigned int GetNumberPreAmpGains(int * noGains);
 unsigned int GetNumberRingExposureTimes(int * ipnumTimes);
 unsigned int GetNumberIO(int * iNumber);
@@ -245,24 +274,38 @@ unsigned int GetPhosphorStatus(int * piFlag);
 unsigned int GetPhysicalDMAAddress(at_u32 * Address1, at_u32 * Address2);
 unsigned int GetPixelSize(float * xSize, float * ySize);
 unsigned int GetPreAmpGain(int index, float * gain);
+unsigned int GetPreAmpGainText(int index, char * name, int length);
+unsigned int GetDualExposureTimes(float * exposure1, float * exposure2);
+unsigned int GetQE(char * sensor, float wavelength, unsigned int mode, float * QE);
 unsigned int GetReadOutTime(float * ReadOutTime);
 unsigned int GetRegisterDump(int * mode);
+unsigned int GetRelativeImageTimes(unsigned int first, unsigned int last, at_u64 * arr, unsigned int size);
 unsigned int GetRingExposureRange(float * fpMin, float * fpMax);
+unsigned int GetSDK3Handle(int * Handle);
+unsigned int GetSensitivity(int channel, int horzShift, int amplifier, int pa, float * sensitivity);
+unsigned int GetShutterMinTimes(int * minclosingtime, int * minopeningtime);
 unsigned int GetSizeOfCircularBuffer(at_32 * index);
 unsigned int GetSlotBusDeviceFunction(at_u32 * dwslot, at_u32 * dwBus, at_u32 * dwDevice, at_u32 * dwFunction);
 unsigned int GetSoftwareVersion(unsigned int * eprom, unsigned int * coffile, unsigned int * vxdrev, unsigned int * vxdver, unsigned int * dllrev, unsigned int * dllver);
 unsigned int GetSpoolProgress(at_32 * index);
+unsigned int GetStartUpTime(float * time);
 unsigned int GetStatus(int * status);
+unsigned int GetTECStatus(int * piFlag);
 unsigned int GetTemperature(int * temperature);
 unsigned int GetTemperatureF(float * temperature);
 unsigned int GetTemperatureRange(int * mintemp, int * maxtemp);
+unsigned int GetTemperaturePrecision(int * precision);
 unsigned int GetTemperatureStatus(float * SensorTemp, float * TargetTemp, float * AmbientTemp, float * CoolerVolts);
 unsigned int GetTotalNumberImagesAcquired(at_32 * index);
 unsigned int GetIODirection(int index, int * iDirection);
 unsigned int GetIOLevel(int index, int * iLevel);
+unsigned int GetUSBDeviceDetails(unsigned short * VendorID, unsigned short * ProductID, unsigned short * FirmwareVersion, unsigned short * SpecificationNumber);
 unsigned int GetVersionInfo(AT_VersionInfoId arr, char * szVersionInfo, at_u32 ui32BufferLen);
 unsigned int GetVerticalSpeed(int index, int * speed);
 unsigned int GetVirtualDMAAddress(void ** Address1, void ** Address2);
+unsigned int GetVSAmplitudeString(int index, char * text);
+unsigned int GetVSAmplitudeFromString(char * text, int * index);
+unsigned int GetVSAmplitudeValue(int index, int * value);
 unsigned int GetVSSpeed(int index, float * speed);
 unsigned int GPIBReceive(int id, short address, char * text, int size);
 unsigned int GPIBSend(int id, short address, char * text);
@@ -277,13 +320,15 @@ unsigned int Initialize(char * dir);
 unsigned int InitializeDevice(char * dir);
 unsigned int IsAmplifierAvailable(int iamp);
 unsigned int IsCoolerOn(int * iCoolerStatus);
+unsigned int IsCountConvertModeAvailable(int mode);
 unsigned int IsInternalMechanicalShutter(int * InternalShutter);
 unsigned int IsPreAmpGainAvailable(int channel, int amplifier, int index, int pa, int * status);
+unsigned int IsReadoutFlippedByAmplifier(int iAmplifier, int * iFlipped);
 unsigned int IsTriggerModeAvailable(int iTriggerMode);
 unsigned int Merge(const at_32 * arr, at_32 nOrder, at_32 nPoint, at_32 nPixel, float * coeff, at_32 fit, at_32 hbin, at_32 * output, float * start, float * step_Renamed);
 unsigned int OutAuxPort(int port, int state);
 unsigned int PrepareAcquisition();
-unsigned int SaveAsBmp(char * path, char * palette, at_32 ymin, at_32 ymax);
+unsigned int SaveAsBmp(const char * path, const char * palette, at_32 ymin, at_32 ymax);
 unsigned int SaveAsCommentedSif(char * path, char * comment);
 unsigned int SaveAsEDF(char * szPath, int iMode);
 unsigned int SaveAsFITS(char * szFileTitle, int typ);
@@ -299,15 +344,21 @@ unsigned int SendSoftwareTrigger();
 unsigned int SetAccumulationCycleTime(float time);
 // unsigned int SetAcqStatusEvent(HANDLE statusEvent);
 unsigned int SetAcquisitionMode(int mode);
+unsigned int SetSensorPortMode(int mode);
+unsigned int SelectSensorPort(int port);
 unsigned int SetAcquisitionType(int typ);
 unsigned int SetADChannel(int channel);
 unsigned int SetAdvancedTriggerModeState(int iState);
 unsigned int SetBackground(at_32 * arr, at_u32 size);
 unsigned int SetBaselineClamp(int state);
 unsigned int SetBaselineOffset(int offset);
+unsigned int SetCameraLinkMode(int mode);
 unsigned int SetCameraStatusEnable(unsigned long Enable);
+unsigned int SetChargeShifting(unsigned int NumberRows, unsigned int NumberRepeats);
 unsigned int SetComplexImage(int numAreas, int * areas);
 unsigned int SetCoolerMode(int mode);
+unsigned int SetCountConvertMode(int Mode);
+unsigned int SetCountConvertWavelength(float wavelength);
 unsigned int SetCropMode(int active, int cropHeight, int reserved);
 unsigned int SetCurrentCamera(at_32 cameraHandle);
 unsigned int SetCustomTrackHBin(int bin);
@@ -317,6 +368,7 @@ unsigned int SetDACOutputScale(int iScale);
 unsigned int SetDDGAddress(unsigned char t0, unsigned char t1, unsigned char t2, unsigned char t3, unsigned char address);
 unsigned int SetDDGExternalOutputEnabled(at_u32 uiIndex, at_u32 uiEnabled);
 unsigned int SetDDGExternalOutputPolarity(at_u32 uiIndex, at_u32 uiPolarity);
+unsigned int SetDDGExternalOutputStepEnabled(at_u32 uiIndex, at_u32 uiEnabled);
 unsigned int SetDDGExternalOutputTime(at_u32 uiIndex, at_u64 uiDelay, at_u64 uiWidth);
 unsigned int SetDDGGain(int gain);
 unsigned int SetDDGGateStep(double step_Renamed);
@@ -327,6 +379,8 @@ unsigned int SetDDGIOC(int state);
 unsigned int SetDDGIOCFrequency(double frequency);
 unsigned int SetDDGIOCNumber(unsigned long numberPulses);
 unsigned int SetDDGIOCPeriod(at_u64 period);
+unsigned int SetDDGIOCTrigger(at_u32 trigger);
+unsigned int SetDDGOpticalWidthEnabled(at_u32 uiEnabled);
 
 // DDG Lite functions
 unsigned int SetDDGLiteGlobalControlByte(unsigned char control);
@@ -337,7 +391,9 @@ unsigned int SetDDGLiteInterPulseDelay(AT_DDGLiteChannelId channel, float fDelay
 unsigned int SetDDGLitePulsesPerExposure(AT_DDGLiteChannelId channel, at_u32 ui32Pulses);
 
 unsigned int SetDDGStepCoefficients(at_u32 mode, double p1, double p2);
+unsigned int SetDDGWidthStepCoefficients(at_u32 mode, double p1, double p2);
 unsigned int SetDDGStepMode(at_u32 mode);
+unsigned int SetDDGWidthStepMode(at_u32 mode);
 unsigned int SetDDGTimes(double t0, double t1, double t2);
 unsigned int SetDDGTriggerMode(int mode);
 unsigned int SetDDGVariableGateStep(int mode, double p1, double p2);
@@ -359,6 +415,7 @@ unsigned int SetFilterParameters(int width, float sensitivity, int range, float 
 unsigned int SetFKVShiftSpeed(int index);
 unsigned int SetFPDP(int state);
 unsigned int SetFrameTransferMode(int mode);
+// unsigned int SetFrontEndEvent(HANDLE driverEvent);
 unsigned int SetFullImage(int hbin, int vbin);
 unsigned int SetFVBHBin(int bin);
 unsigned int SetGain(int gain);
@@ -371,6 +428,7 @@ unsigned int SetImage(int hbin, int vbin, int hstart, int hend, int vstart, int 
 unsigned int SetImageFlip(int iHFlip, int iVFlip);
 unsigned int SetImageRotate(int iRotate);
 unsigned int SetIsolatedCropMode(int active, int cropheight, int cropwidth, int vbin, int hbin);
+unsigned int SetIsolatedCropModeEx(int active, int cropheight, int cropwidth, int vbin, int hbin, int cropleft, int cropbottom);
 unsigned int SetKineticCycleTime(float time);
 unsigned int SetMCPGain(int gain);
 unsigned int SetMCPGating(int gating);
@@ -390,10 +448,15 @@ unsigned int SetOverlapMode(int mode);
 unsigned int SetPCIMode(int mode, int value);
 unsigned int SetPhotonCounting(int state);
 unsigned int SetPhotonCountingThreshold(at_32 min, at_32 max);
+// unsigned int SetPhosphorEvent(HANDLE driverEvent);
+unsigned int SetPhotonCountingDivisions(at_u32 noOfDivisions, at_32 * divisions);
 unsigned int SetPixelMode(int bitdepth, int colormode);
 unsigned int SetPreAmpGain(int index);
+unsigned int SetDualExposureTimes(float expTime1, float expTime2);
+unsigned int SetDualExposureMode(int mode);
 unsigned int SetRandomTracks(int numTracks, int * areas);
 unsigned int SetReadMode(int mode);
+unsigned int SetReadoutRegisterPacking(unsigned int mode);
 unsigned int SetRegisterDump(int mode);
 unsigned int SetRingExposureTimes(int numTimes, float * times);
 // unsigned int SetSaturationEvent(HANDLE saturationEvent);
@@ -404,11 +467,15 @@ unsigned int SetSifComment(char * comment);
 unsigned int SetSingleTrack(int centre, int height);
 unsigned int SetSingleTrackHBin(int bin);
 unsigned int SetSpool(int active, int method, char * path, int framebuffersize);
+unsigned int SetSpoolThreadCount(int count);
 unsigned int SetStorageMode(at_32 mode);
+// unsigned int SetTECEvent(HANDLE driverEvent);
 unsigned int SetTemperature(int temperature);
 // unsigned int SetTemperatureEvent(HANDLE temperatureEvent);
 unsigned int SetTriggerMode(int mode);
 unsigned int SetTriggerInvert(int mode);
+unsigned int GetTriggerLevelRange(float * minimum, float * maximum);
+unsigned int SetTriggerLevel(float f_level);
 unsigned int SetIODirection(int index, int iDirection);
 unsigned int SetIOLevel(int index, int iLevel);
 // unsigned int SetUserEvent(HANDLE userEvent);
@@ -426,6 +493,40 @@ unsigned int WaitForAcquisitionByHandle(at_32 cameraHandle);
 unsigned int WaitForAcquisitionByHandleTimeOut(long cameraHandle, int iTimeOutMs);
 unsigned int WaitForAcquisitionTimeOut(int iTimeOutMs);
 unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsigned short * wBlue, float * fRelR, float * fRelB, WhiteBalanceInfo * info);
+
+unsigned int OA_Initialize(const char * const pcFilename, unsigned int uiFileNameLen);
+unsigned int OA_EnableMode(const char * const pcModeName);
+unsigned int OA_GetModeAcqParams(const char * const pcModeName, char * const pcListOfParams);
+unsigned int OA_GetUserModeNames(char * pcListOfModes);
+unsigned int OA_GetPreSetModeNames(char * pcListOfModes);
+unsigned int OA_GetNumberOfUserModes(unsigned int * const puiNumberOfModes);
+unsigned int OA_GetNumberOfPreSetModes(unsigned int * const puiNumberOfModes);
+unsigned int OA_GetNumberOfAcqParams(const char * const pcModeName, unsigned int * const puiNumberOfParams);
+unsigned int OA_AddMode(char * pcModeName, unsigned int uiModeNameLen, char * pcModeDescription, unsigned int uiModeDescriptionLen);
+unsigned int OA_WriteToFile(const char * const pcFileName, unsigned int uiFileNameLen);
+unsigned int OA_DeleteMode(const char * const pcModeName, unsigned int uiModeNameLen);
+unsigned int OA_SetInt(const char * const pcModeName, const char * pcModeParam, const int iIntValue);
+unsigned int OA_SetFloat(const char * const pcModeName, const char * pcModeParam, const float fFloatValue);
+unsigned int OA_SetString(const char * const pcModeName, const char * pcModeParam, char * pcStringValue, const unsigned int uiStringLen);
+unsigned int OA_GetInt(const char * const pcModeName, const char * const pcModeParam, int * iIntValue);
+unsigned int OA_GetFloat(const char * const pcModeName, const char * const pcModeParam, float * fFloatValue);
+unsigned int OA_GetString(const char * const pcModeName, const char * const pcModeParam, char * pcStringValue, const unsigned int uiStringLen);
+
+unsigned int Filter_SetMode(unsigned int mode);
+unsigned int Filter_GetMode(unsigned int * mode);
+unsigned int Filter_SetThreshold(float threshold);
+unsigned int Filter_GetThreshold(float * threshold);
+unsigned int Filter_SetDataAveragingMode(int mode);
+unsigned int Filter_GetDataAveragingMode(int * mode);
+unsigned int Filter_SetAveragingFrameCount(int frames);
+unsigned int Filter_GetAveragingFrameCount(int * frames);
+unsigned int Filter_SetAveragingFactor(int averagingFactor);
+unsigned int Filter_GetAveragingFactor(int * averagingFactor);
+
+unsigned int PostProcessNoiseFilter(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iBaseline, int iMode, float fThreshold, int iHeight, int iWidth);
+unsigned int PostProcessCountConvert(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iBaseline, int iMode, int iEmGain, float fQE, float fSensitivity, int iHeight, int iWidth);
+unsigned int PostProcessPhotonCounting(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iNumframes, int iNumberOfThresholds, float * pfThreshold, int iHeight, int iWidth);
+unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iAveragingFilterMode, int iHeight, int iWidth, int iFrameCount, int iAveragingFactor);
 
 #define DRV_ERROR_CODES 20001
 #define DRV_SUCCESS 20002
@@ -507,10 +608,12 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define DRV_P8INVALID 20084
 #define DRV_P9INVALID 20085
 #define DRV_P10INVALID 20086
+#define DRV_P11INVALID 20087
 
 #define DRV_USBERROR 20089
 #define DRV_IOCERROR 20090
 #define DRV_VRMVERSIONERROR 20091
+#define DRV_GATESTEPERROR 20092
 #define DRV_USB_INTERRUPT_ENDPOINT_ERROR 20093
 #define DRV_RANDOM_TRACK_ERROR 20094
 #define DRV_INVALID_TRIGGER_MODE 20095
@@ -519,6 +622,7 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define DRV_INVALID_RINGEXPOSURES 20098
 #define DRV_BINNING_ERROR 20099
 #define DRV_INVALID_AMPLIFIER 20100
+#define DRV_INVALID_COUNTCONVERT_MODE 20101
 
 #define DRV_ERROR_NOCAMERA 20990
 #define DRV_NOT_SUPPORTED 20991
@@ -541,6 +645,32 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define DRV_OW_NOT_INITIALIZED 20154
 #define DRV_OW_ERROR_SLAVE_NUM 20155
 #define DRV_MSTIMINGS_ERROR 20156
+
+#define DRV_OA_NULL_ERROR 20173
+#define DRV_OA_PARSE_DTD_ERROR 20174
+#define DRV_OA_DTD_VALIDATE_ERROR 20175
+#define DRV_OA_FILE_ACCESS_ERROR 20176
+#define DRV_OA_FILE_DOES_NOT_EXIST 20177
+#define DRV_OA_XML_INVALID_OR_NOT_FOUND_ERROR 20178
+#define DRV_OA_PRESET_FILE_NOT_LOADED 20179
+#define DRV_OA_USER_FILE_NOT_LOADED 20180
+#define DRV_OA_PRESET_AND_USER_FILE_NOT_LOADED 20181
+#define DRV_OA_INVALID_FILE 20182
+#define DRV_OA_FILE_HAS_BEEN_MODIFIED 20183
+#define DRV_OA_BUFFER_FULL 20184
+#define DRV_OA_INVALID_STRING_LENGTH 20185
+#define DRV_OA_INVALID_CHARS_IN_NAME 20186
+#define DRV_OA_INVALID_NAMING 20187
+#define DRV_OA_GET_CAMERA_ERROR 20188
+#define DRV_OA_MODE_ALREADY_EXISTS 20189
+#define DRV_OA_STRINGS_NOT_EQUAL 20190
+#define DRV_OA_NO_USER_DATA 20191
+#define DRV_OA_VALUE_NOT_SUPPORTED 20192
+#define DRV_OA_MODE_DOES_NOT_EXIST 20193
+#define DRV_OA_CAMERA_NOT_SUPPORTED 20194
+#define DRV_OA_FAILED_TO_GET_MODE 20195
+
+#define DRV_PROCESSING_FAILED 20211
 
 #define AC_ACQMODE_SINGLE 1
 #define AC_ACQMODE_VIDEO 2
@@ -565,6 +695,7 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define AC_TRIGGERMODE_EXTERNALSTART 16
 #define AC_TRIGGERMODE_EXTERNALEXPOSURE 32
 #define AC_TRIGGERMODE_INVERTED 0x40
+#define AC_TRIGGERMODE_EXTERNAL_CHARGESHIFTING 0x80
 
 // Deprecated for AC_TRIGGERMODE_EXTERNALEXPOSURE
 #define AC_TRIGGERMODE_BULB 32
@@ -588,6 +719,16 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define AC_CAMERATYPE_UNPROGRAMMED 16
 #define AC_CAMERATYPE_CLARA 17
 #define AC_CAMERATYPE_USBISTAR 18
+#define AC_CAMERATYPE_SIMCAM 19
+#define AC_CAMERATYPE_NEO 20
+#define AC_CAMERATYPE_IXONULTRA 21
+#define AC_CAMERATYPE_VOLMOS 22
+#define AC_CAMERATYPE_IVAC_CCD 23
+#define AC_CAMERATYPE_ASPEN 24
+#define AC_CAMERATYPE_ASCENT 25
+#define AC_CAMERATYPE_ALTA 26
+#define AC_CAMERATYPE_ALTAF 27
+#define AC_CAMERATYPE_IKONXL 28
 
 #define AC_PIXELMODE_8BIT 1
 #define AC_PIXELMODE_14BIT 2
@@ -620,6 +761,14 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define AC_SETFUNCTION_INTELLIGATE 0x080000
 #define AC_SETFUNCTION_INSERTION_DELAY 0x100000
 #define AC_SETFUNCTION_GATESTEP 0x200000
+#define AC_SETFUNCTION_GATEDELAYSTEP 0x200000
+#define AC_SETFUNCTION_TRIGGERTERMINATION 0x400000
+#define AC_SETFUNCTION_EXTENDEDNIR 0x800000
+#define AC_SETFUNCTION_SPOOLTHREADCOUNT 0x1000000
+#define AC_SETFUNCTION_REGISTERPACK 0x2000000
+#define AC_SETFUNCTION_PRESCANS 0x4000000
+#define AC_SETFUNCTION_GATEWIDTHSTEP 0x8000000
+#define AC_SETFUNCTION_EXTENDED_CROP_MODE 0x10000000
 
 // Deprecated for AC_SETFUNCTION_MCPGAIN
 #define AC_SETFUNCTION_GAIN 8
@@ -638,8 +787,11 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define AC_GETFUNCTION_INTELLIGATE 0x0400
 #define AC_GETFUNCTION_INSERTION_DELAY 0x0800
 #define AC_GETFUNCTION_GATESTEP 0x1000
+#define AC_GETFUNCTION_GATEDELAYSTEP 0x1000
 #define AC_GETFUNCTION_PHOSPHORSTATUS 0x2000
 #define AC_GETFUNCTION_MCPGAINTABLE 0x4000
+#define AC_GETFUNCTION_BASELINECLAMP 0x8000
+#define AC_GETFUNCTION_GATEWIDTHSTEP 0x10000
 
 // Deprecated for AC_GETFUNCTION_MCPGAIN
 #define AC_GETFUNCTION_GAIN 0x10
@@ -662,6 +814,21 @@ unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsign
 #define AC_FEATURES_DACCONTROL 0x4000
 #define AC_FEATURES_METADATA 0x8000
 #define AC_FEATURES_IOCONTROL 0x10000
+#define AC_FEATURES_PHOTONCOUNTING 0x20000
+#define AC_FEATURES_COUNTCONVERT 0x40000
+#define AC_FEATURES_DUALMODE 0x80000
+#define AC_FEATURES_OPTACQUIRE 0x100000
+#define AC_FEATURES_REALTIMESPURIOUSNOISEFILTER 0x200000
+#define AC_FEATURES_POSTPROCESSSPURIOUSNOISEFILTER 0x400000
+#define AC_FEATURES_DUALPREAMPGAIN 0x800000
+#define AC_FEATURES_DEFECT_CORRECTION 0x1000000
+#define AC_FEATURES_STARTOFEXPOSURE_EVENT 0x2000000
+#define AC_FEATURES_ENDOFEXPOSURE_EVENT 0x4000000
+#define AC_FEATURES_CAMERALINK 0x8000000
+#define AC_FEATURES_FIFOFULL_EVENT 0x10000000
+#define AC_FEATURES_SENSOR_PORT_CONFIGURATION 0x20000000
+#define AC_FEATURES_SENSOR_COMPENSATION 0x40000000
+#define AC_FEATURES_IRIG_SUPPORT 0x80000000
 
 #define AC_EMGAIN_8BIT 1
 #define AC_EMGAIN_12BIT 2

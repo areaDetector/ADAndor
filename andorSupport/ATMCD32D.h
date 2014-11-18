@@ -10,18 +10,15 @@
 extern "C" {
 #endif
 
-#ifdef EXPNETFUNCS
-#define EXPNETTYPE __declspec(dllexport)
-#else
-#define EXPNETTYPE __declspec(dllimport)
-#endif
-
 #define at_32 long
 #define at_u32 unsigned long
 
-#if defined(__BORLANDC__) && (__BORLANDC__<=0x540)  
+#if defined(__BORLANDC__) &&  (__BORLANDC__<=0x540) 
   #define at_64 __int64
   #define at_u64 unsigned __int64
+#elif defined(_MSC_VER) &&  (_MSC_VER<=1310)
+	#define at_64 __int64
+	#define at_u64 unsigned __int64
 #else
   #define at_64 long long
   #define at_u64 unsigned long long
@@ -133,362 +130,390 @@ typedef struct WHITEBALANCEINFO
 	int iOperation;
 } WhiteBalanceInfo;
 	
-EXPNETTYPE unsigned int WINAPI AbortAcquisition(void);
-EXPNETTYPE unsigned int WINAPI CancelWait(void);
-EXPNETTYPE unsigned int WINAPI CoolerOFF(void);
-EXPNETTYPE unsigned int WINAPI CoolerON(void);
-EXPNETTYPE unsigned int WINAPI DemosaicImage(WORD * grey, WORD * red, WORD * green, WORD * blue, ColorDemosaicInfo * info);
-EXPNETTYPE unsigned int WINAPI EnableKeepCleans(int iMode);
-EXPNETTYPE unsigned int WINAPI FreeInternalMemory(void);
-EXPNETTYPE unsigned int WINAPI GetAcquiredData(at_32 * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetAcquiredData16(WORD * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetAcquiredFloatData(float * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetAcquisitionProgress(long * acc, long * series);
-EXPNETTYPE unsigned int WINAPI GetAcquisitionTimings(float * exposure, float * accumulate, float * kinetic);
-EXPNETTYPE unsigned int WINAPI GetAdjustedRingExposureTimes(int inumTimes, float * fptimes);
-EXPNETTYPE unsigned int WINAPI GetAllDMAData(at_32 * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetAmpDesc(int index, char * name, int length);
-EXPNETTYPE unsigned int WINAPI GetAmpMaxSpeed(int index, float * speed);
-EXPNETTYPE unsigned int WINAPI GetAvailableCameras(long * totalCameras);
-EXPNETTYPE unsigned int WINAPI GetBackground(at_32 * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetBaselineClamp(int * state);
-EXPNETTYPE unsigned int WINAPI GetBitDepth(int channel, int * depth);
-EXPNETTYPE unsigned int WINAPI GetCameraEventStatus(DWORD * camStatus);
-EXPNETTYPE unsigned int WINAPI GetCameraHandle(long cameraIndex, long * cameraHandle);
-EXPNETTYPE unsigned int WINAPI GetCameraInformation(int index, long * information);
-EXPNETTYPE unsigned int WINAPI GetCameraSerialNumber(int * number);
-EXPNETTYPE unsigned int WINAPI GetCapabilities(AndorCapabilities * caps);
-EXPNETTYPE unsigned int WINAPI GetControllerCardModel(char * controllerCardModel);
-EXPNETTYPE unsigned int WINAPI GetCountConvertWavelengthRange(float * minval, float * maxval);
-EXPNETTYPE unsigned int WINAPI GetCurrentCamera(long * cameraHandle);
-EXPNETTYPE unsigned int WINAPI GetCYMGShift(int * iXshift, int * iYShift);
-EXPNETTYPE unsigned int WINAPI GetDDGExternalOutputEnabled(at_u32 uiIndex, at_u32 * puiEnabled);
-EXPNETTYPE unsigned int WINAPI GetDDGExternalOutputPolarity(at_u32 uiIndex, at_u32 * puiPolarity);
-EXPNETTYPE unsigned int WINAPI GetDDGExternalOutputStepEnabled(at_u32 uiIndex, at_u32 * puiEnabled);
-EXPNETTYPE unsigned int WINAPI GetDDGExternalOutputTime(at_u32 uiIndex, at_u64 * puiDelay, at_u64 * puiWidth);
-EXPNETTYPE unsigned int WINAPI GetDDGGateTime(at_u64 * puiDelay, at_u64 * puiWidth);
-EXPNETTYPE unsigned int WINAPI GetDDGInsertionDelay(int * piState);
-EXPNETTYPE unsigned int WINAPI GetDDGIntelligate(int * piState);
-EXPNETTYPE unsigned int WINAPI GetDDGIOC(int * state);
-EXPNETTYPE unsigned int WINAPI GetDDGIOCFrequency(double * frequency);
-EXPNETTYPE unsigned int WINAPI GetDDGIOCNumber(unsigned long * numberPulses);
-EXPNETTYPE unsigned int WINAPI GetDDGIOCNumberRequested(at_u32 * pulses);
-EXPNETTYPE unsigned int WINAPI GetDDGIOCPeriod(at_u64 * period);
-EXPNETTYPE unsigned int WINAPI GetDDGIOCPulses(int * pulses);
+unsigned int WINAPI AbortAcquisition(void);
+unsigned int WINAPI CancelWait(void);
+unsigned int WINAPI CoolerOFF(void);
+unsigned int WINAPI CoolerON(void);
+unsigned int WINAPI DemosaicImage(WORD * grey, WORD * red, WORD * green, WORD * blue, ColorDemosaicInfo * info);
+unsigned int WINAPI EnableKeepCleans(int iMode);
+unsigned int WINAPI EnableSensorCompensation(int iMode);
+unsigned int WINAPI SetIRIGModulation(char mode);
+unsigned int WINAPI FreeInternalMemory(void);
+unsigned int WINAPI GetAcquiredData(at_32 * arr, unsigned long size);
+unsigned int WINAPI GetAcquiredData16(WORD * arr, unsigned long size);
+unsigned int WINAPI GetAcquiredFloatData(float * arr, unsigned long size);
+unsigned int WINAPI GetAcquisitionProgress(long * acc, long * series);
+unsigned int WINAPI GetAcquisitionTimings(float * exposure, float * accumulate, float * kinetic);
+unsigned int WINAPI GetAdjustedRingExposureTimes(int inumTimes, float * fptimes);
+unsigned int WINAPI GetAllDMAData(at_32 * arr, unsigned long size);
+unsigned int WINAPI GetAmpDesc(int index, char * name, int length);
+unsigned int WINAPI GetAmpMaxSpeed(int index, float * speed);
+unsigned int WINAPI GetAvailableCameras(long * totalCameras);
+unsigned int WINAPI GetBackground(at_32 * arr, unsigned long size);
+unsigned int WINAPI GetBaselineClamp(int * state);
+unsigned int WINAPI GetBitDepth(int channel, int * depth);
+unsigned int WINAPI GetCameraEventStatus(DWORD * camStatus);
+unsigned int WINAPI GetCameraHandle(long cameraIndex, long * cameraHandle);
+unsigned int WINAPI GetCameraInformation(int index, long * information);
+unsigned int WINAPI GetCameraSerialNumber(int * number);
+unsigned int WINAPI GetCapabilities(AndorCapabilities * caps);
+unsigned int WINAPI GetControllerCardModel(char * controllerCardModel);
+unsigned int WINAPI GetCountConvertWavelengthRange(float * minval, float * maxval);
+unsigned int WINAPI GetCurrentCamera(long * cameraHandle);
+unsigned int WINAPI GetCYMGShift(int * iXshift, int * iYShift);
+unsigned int WINAPI GetDDGExternalOutputEnabled(at_u32 uiIndex, at_u32 * puiEnabled);
+unsigned int WINAPI GetDDGExternalOutputPolarity(at_u32 uiIndex, at_u32 * puiPolarity);
+unsigned int WINAPI GetDDGExternalOutputStepEnabled(at_u32 uiIndex, at_u32 * puiEnabled);
+unsigned int WINAPI GetDDGExternalOutputTime(at_u32 uiIndex, at_u64 * puiDelay, at_u64 * puiWidth);
+unsigned int WINAPI GetDDGTTLGateWidth(at_u64 opticalWidth, at_u64 * ttlWidth);
+unsigned int WINAPI GetDDGGateTime(at_u64 * puiDelay, at_u64 * puiWidth);
+unsigned int WINAPI GetDDGInsertionDelay(int * piState);
+unsigned int WINAPI GetDDGIntelligate(int * piState);
+unsigned int WINAPI GetDDGIOC(int * state);
+unsigned int WINAPI GetDDGIOCFrequency(double * frequency);
+unsigned int WINAPI GetDDGIOCNumber(unsigned long * numberPulses);
+unsigned int WINAPI GetDDGIOCNumberRequested(at_u32 * pulses);
+unsigned int WINAPI GetDDGIOCPeriod(at_u64 * period);
+unsigned int WINAPI GetDDGIOCPulses(int * pulses);
+unsigned int WINAPI GetDDGIOCTrigger(at_u32 * trigger);
+unsigned int WINAPI GetDDGOpticalWidthEnabled(at_u32 * puiEnabled);
 
 // DDG Lite functions
-EXPNETTYPE unsigned int WINAPI GetDDGLiteGlobalControlByte(unsigned char * control);
-EXPNETTYPE unsigned int WINAPI GetDDGLiteControlByte(AT_DDGLiteChannelId channel, unsigned char * control);
-EXPNETTYPE unsigned int WINAPI GetDDGLiteInitialDelay(AT_DDGLiteChannelId channel, float * fDelay);
-EXPNETTYPE unsigned int WINAPI GetDDGLitePulseWidth(AT_DDGLiteChannelId channel, float * fWidth);
-EXPNETTYPE unsigned int WINAPI GetDDGLiteInterPulseDelay(AT_DDGLiteChannelId channel, float * fDelay);
-EXPNETTYPE unsigned int WINAPI GetDDGLitePulsesPerExposure(AT_DDGLiteChannelId channel, at_u32 * ui32Pulses);
+unsigned int WINAPI GetDDGLiteGlobalControlByte(unsigned char * control);
+unsigned int WINAPI GetDDGLiteControlByte(AT_DDGLiteChannelId channel, unsigned char * control);
+unsigned int WINAPI GetDDGLiteInitialDelay(AT_DDGLiteChannelId channel, float * fDelay);
+unsigned int WINAPI GetDDGLitePulseWidth(AT_DDGLiteChannelId channel, float * fWidth);
+unsigned int WINAPI GetDDGLiteInterPulseDelay(AT_DDGLiteChannelId channel, float * fDelay);
+unsigned int WINAPI GetDDGLitePulsesPerExposure(AT_DDGLiteChannelId channel, at_u32 * ui32Pulses);
 
-EXPNETTYPE unsigned int WINAPI GetDDGPulse(double wid, double resolution, double * Delay, double * Width);
-EXPNETTYPE unsigned int WINAPI GetDDGStepCoefficients(at_u32 mode, double * p1, double * p2);
-EXPNETTYPE unsigned int WINAPI GetDDGStepMode(at_u32 * mode);
-EXPNETTYPE unsigned int WINAPI GetDetector(int * xpixels, int * ypixels);
-EXPNETTYPE unsigned int WINAPI GetDICameraInfo(void * info);
-EXPNETTYPE unsigned int WINAPI GetEMCCDGain(int * gain);
-EXPNETTYPE unsigned int WINAPI GetEMGainRange(int * low, int * high);
-EXPNETTYPE unsigned int WINAPI GetExternalTriggerTermination(at_u32 * puiTermination);
-EXPNETTYPE unsigned int WINAPI GetFastestRecommendedVSSpeed(int * index, float * speed);
-EXPNETTYPE unsigned int WINAPI GetFIFOUsage(int * FIFOusage);
-EXPNETTYPE unsigned int WINAPI GetFilterMode(int * mode);
-EXPNETTYPE unsigned int WINAPI GetFKExposureTime(float * time);
-EXPNETTYPE unsigned int WINAPI GetFKVShiftSpeed(int index, int * speed);
-EXPNETTYPE unsigned int WINAPI GetFKVShiftSpeedF(int index, float * speed);
-EXPNETTYPE unsigned int WINAPI GetFrontEndStatus(int * piFlag);
-EXPNETTYPE unsigned int WINAPI GetGateMode(int * piGatemode);
-EXPNETTYPE unsigned int WINAPI GetHardwareVersion(unsigned int * PCB, unsigned int * Decode, unsigned int * dummy1, unsigned int * dummy2, unsigned int * CameraFirmwareVersion, unsigned int * CameraFirmwareBuild);
-EXPNETTYPE unsigned int WINAPI GetHeadModel(char * name);
-EXPNETTYPE unsigned int WINAPI GetHorizontalSpeed(int index, int * speed);
-EXPNETTYPE unsigned int WINAPI GetHSSpeed(int channel, int typ, int index, float * speed);
-EXPNETTYPE unsigned int WINAPI GetHVflag(int * bFlag);
-EXPNETTYPE unsigned int WINAPI GetID(int devNum, int * id);
-EXPNETTYPE unsigned int WINAPI GetImageFlip(int * iHFlip, int * iVFlip);
-EXPNETTYPE unsigned int WINAPI GetImageRotate(int * iRotate);
-EXPNETTYPE unsigned int WINAPI GetImages(long first, long last, at_32 * arr, unsigned long size, long * validfirst, long * validlast);
-EXPNETTYPE unsigned int WINAPI GetImages16(long first, long last, WORD * arr, unsigned long size, long * validfirst, long * validlast);
-EXPNETTYPE unsigned int WINAPI GetImagesPerDMA(unsigned long * images);
-EXPNETTYPE unsigned int WINAPI GetIRQ(int * IRQ);
-EXPNETTYPE unsigned int WINAPI GetKeepCleanTime(float * KeepCleanTime);
-EXPNETTYPE unsigned int WINAPI GetMaximumBinning(int ReadMode, int HorzVert, int * MaxBinning);
-EXPNETTYPE unsigned int WINAPI GetMaximumExposure(float * MaxExp);
-EXPNETTYPE unsigned int WINAPI GetMCPGain(int * piGain);
-EXPNETTYPE unsigned int WINAPI GetMCPGainRange(int * iLow, int * iHigh);
-EXPNETTYPE unsigned int WINAPI GetMCPGainTable(int iNum, int * piGain, float * pfPhotoepc);
-EXPNETTYPE unsigned int WINAPI GetMCPVoltage(int * iVoltage);
-EXPNETTYPE unsigned int WINAPI GetMinimumImageLength(int * MinImageLength);
-EXPNETTYPE unsigned int WINAPI GetMinimumNumberInSeries(int * number);
-EXPNETTYPE unsigned int WINAPI GetMostRecentColorImage16(unsigned long size, int algorithm, WORD * red, WORD * green, WORD * blue);
-EXPNETTYPE unsigned int WINAPI GetMostRecentImage(at_32 * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetMostRecentImage16(WORD * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetMSTimingsData(SYSTEMTIME * TimeOfStart, float * pfDifferences, int inoOfImages);
-EXPNETTYPE unsigned int WINAPI GetMetaDataInfo(SYSTEMTIME * TimeOfStart, float * pfTimeFromStart, unsigned int index);
-EXPNETTYPE unsigned int WINAPI GetMSTimingsEnabled(void);
-EXPNETTYPE unsigned int WINAPI GetNewData(at_32 * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetNewData16(WORD * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetNewData8(unsigned char * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetNewFloatData(float * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetNumberADChannels(int * channels);
-EXPNETTYPE unsigned int WINAPI GetNumberAmp(int * amp);
-EXPNETTYPE unsigned int WINAPI GetNumberAvailableImages(at_32 * first, at_32 * last);
-EXPNETTYPE unsigned int WINAPI GetNumberDDGExternalOutputs(at_u32 * puiCount);
-EXPNETTYPE unsigned int WINAPI GetNumberDevices(int * numDevs);
-EXPNETTYPE unsigned int WINAPI GetNumberFKVShiftSpeeds(int * number);
-EXPNETTYPE unsigned int WINAPI GetNumberHorizontalSpeeds(int * number);
-EXPNETTYPE unsigned int WINAPI GetNumberHSSpeeds(int channel, int typ, int * speeds);
-EXPNETTYPE unsigned int WINAPI GetNumberNewImages(long * first, long * last);
-EXPNETTYPE unsigned int WINAPI GetNumberPhotonCountingDivisions(at_u32 * noOfDivisions);
-EXPNETTYPE unsigned int WINAPI GetNumberPreAmpGains(int * noGains);
-EXPNETTYPE unsigned int WINAPI GetNumberRingExposureTimes(int * ipnumTimes);
-EXPNETTYPE unsigned int WINAPI GetNumberIO(int * iNumber);
-EXPNETTYPE unsigned int WINAPI GetNumberVerticalSpeeds(int * number);
-EXPNETTYPE unsigned int WINAPI GetNumberVSAmplitudes(int * number);
-EXPNETTYPE unsigned int WINAPI GetNumberVSSpeeds(int * speeds);
-EXPNETTYPE unsigned int WINAPI GetOldestImage(at_32 * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetOldestImage16(WORD * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI GetPhosphorStatus(int * piFlag);
-EXPNETTYPE unsigned int WINAPI GetPhysicalDMAAddress(unsigned long * Address1, unsigned long * Address2);
-EXPNETTYPE unsigned int WINAPI GetPixelSize(float * xSize, float * ySize);
-EXPNETTYPE unsigned int WINAPI GetPreAmpGain(int index, float * gain);
-EXPNETTYPE unsigned int WINAPI GetPreAmpGainText(int index, char * name, int length);
-EXPNETTYPE unsigned int WINAPI GetDualExposureTimes(float * exposure1, float * exposure2);
-EXPNETTYPE unsigned int WINAPI GetQE(char * sensor, float wavelength, unsigned int mode, float * QE);
-EXPNETTYPE unsigned int WINAPI GetReadOutTime(float * ReadOutTime);
-EXPNETTYPE unsigned int WINAPI GetRegisterDump(int * mode);
-EXPNETTYPE unsigned int WINAPI GetRingExposureRange(float * fpMin, float * fpMax);
-EXPNETTYPE unsigned int WINAPI GetSDK3Handle(int * Handle);
-EXPNETTYPE unsigned int WINAPI GetSensitivity(int channel, int horzShift, int amplifier, int pa, float * sensitivity);
-EXPNETTYPE unsigned int WINAPI GetSizeOfCircularBuffer(long * index);
-EXPNETTYPE unsigned int WINAPI GetSlotBusDeviceFunction(DWORD * dwslot, DWORD * dwBus, DWORD * dwDevice, DWORD * dwFunction);
-EXPNETTYPE unsigned int WINAPI GetSoftwareVersion(unsigned int * eprom, unsigned int * coffile, unsigned int * vxdrev, unsigned int * vxdver, unsigned int * dllrev, unsigned int * dllver);
-EXPNETTYPE unsigned int WINAPI GetSpoolProgress(long * index);
-EXPNETTYPE unsigned int WINAPI GetStartUpTime(float * time);
-EXPNETTYPE unsigned int WINAPI GetStatus(int * status);
-EXPNETTYPE unsigned int WINAPI GetTECStatus(int * piFlag);
-EXPNETTYPE unsigned int WINAPI GetTemperature(int * temperature);
-EXPNETTYPE unsigned int WINAPI GetTemperatureF(float * temperature);
-EXPNETTYPE unsigned int WINAPI GetTemperatureRange(int * mintemp, int * maxtemp);
-EXPNETTYPE unsigned int WINAPI GetTemperatureStatus(float * SensorTemp, float * TargetTemp, float * AmbientTemp, float * CoolerVolts);
-EXPNETTYPE unsigned int WINAPI GetTotalNumberImagesAcquired(long * index);
-EXPNETTYPE unsigned int WINAPI GetIODirection(int index, int * iDirection);
-EXPNETTYPE unsigned int WINAPI GetIOLevel(int index, int * iLevel);
-EXPNETTYPE unsigned int WINAPI GetVersionInfo(AT_VersionInfoId arr, char * szVersionInfo, at_u32 ui32BufferLen);
-EXPNETTYPE unsigned int WINAPI GetVerticalSpeed(int index, int * speed);
-EXPNETTYPE unsigned int WINAPI GetVirtualDMAAddress(void ** Address1, void ** Address2);
-EXPNETTYPE unsigned int WINAPI GetVSSpeed(int index, float * speed);
-EXPNETTYPE unsigned int WINAPI GPIBReceive(int id, short address, char * text, int size);
-EXPNETTYPE unsigned int WINAPI GPIBSend(int id, short address, char * text);
-EXPNETTYPE unsigned int WINAPI I2CBurstRead(BYTE i2cAddress, long nBytes, BYTE * data);
-EXPNETTYPE unsigned int WINAPI I2CBurstWrite(BYTE i2cAddress, long nBytes, BYTE * data);
-EXPNETTYPE unsigned int WINAPI I2CRead(BYTE deviceID, BYTE intAddress, BYTE * pdata);
-EXPNETTYPE unsigned int WINAPI I2CReset(void);
-EXPNETTYPE unsigned int WINAPI I2CWrite(BYTE deviceID, BYTE intAddress, BYTE data);
-EXPNETTYPE unsigned int WINAPI IdAndorDll(void);
-EXPNETTYPE unsigned int WINAPI InAuxPort(int port, int * state);
-EXPNETTYPE unsigned int WINAPI Initialize(char * dir);
-EXPNETTYPE unsigned int WINAPI InitializeDevice(char * dir);
-EXPNETTYPE unsigned int WINAPI IsAmplifierAvailable(int iamp);
-EXPNETTYPE unsigned int WINAPI IsCoolerOn(int * iCoolerStatus);
-EXPNETTYPE unsigned int WINAPI IsCountConvertModeAvailable(int mode);
-EXPNETTYPE unsigned int WINAPI IsInternalMechanicalShutter(int * InternalShutter);
-EXPNETTYPE unsigned int WINAPI IsPreAmpGainAvailable(int channel, int amplifier, int index, int pa, int * status);
-EXPNETTYPE unsigned int WINAPI IsTriggerModeAvailable(int iTriggerMode);
-EXPNETTYPE unsigned int WINAPI Merge(const at_32 * arr, long nOrder, long nPoint, long nPixel, float * coeff, long fit, long hbin, at_32 * output, float * start, float * step_Renamed);
-EXPNETTYPE unsigned int WINAPI OutAuxPort(int port, int state);
-EXPNETTYPE unsigned int WINAPI PrepareAcquisition(void);
-EXPNETTYPE unsigned int WINAPI SaveAsBmp(char * path, char * palette, long ymin, long ymax);
-EXPNETTYPE unsigned int WINAPI SaveAsCommentedSif(char * path, char * comment);
-EXPNETTYPE unsigned int WINAPI SaveAsEDF(char * szPath, int iMode);
-EXPNETTYPE unsigned int WINAPI SaveAsFITS(char * szFileTitle, int typ);
-EXPNETTYPE unsigned int WINAPI SaveAsRaw(char * szFileTitle, int typ);
-EXPNETTYPE unsigned int WINAPI SaveAsSif(char * path);
-EXPNETTYPE unsigned int WINAPI SaveAsSPC(char * path);
-EXPNETTYPE unsigned int WINAPI SaveAsTiff(char * path, char * palette, int position, int typ);
-EXPNETTYPE unsigned int WINAPI SaveAsTiffEx(char * path, char * palette, int position, int typ, int mode);
-EXPNETTYPE unsigned int WINAPI SaveEEPROMToFile(char * cFileName);
-EXPNETTYPE unsigned int WINAPI SaveToClipBoard(char * palette);
-EXPNETTYPE unsigned int WINAPI SelectDevice(int devNum);
-EXPNETTYPE unsigned int WINAPI SendSoftwareTrigger(void);
-EXPNETTYPE unsigned int WINAPI SetAccumulationCycleTime(float time);
-EXPNETTYPE unsigned int WINAPI SetAcqStatusEvent(HANDLE statusEvent);
-EXPNETTYPE unsigned int WINAPI SetAcquisitionMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetAcquisitionType(int typ);
-EXPNETTYPE unsigned int WINAPI SetADChannel(int channel);
-EXPNETTYPE unsigned int WINAPI SetAdvancedTriggerModeState(int iState);
-EXPNETTYPE unsigned int WINAPI SetBackground(at_32 * arr, unsigned long size);
-EXPNETTYPE unsigned int WINAPI SetBaselineClamp(int state);
-EXPNETTYPE unsigned int WINAPI SetBaselineOffset(int offset);
-EXPNETTYPE unsigned int WINAPI SetCameraStatusEnable(DWORD Enable);
-EXPNETTYPE unsigned int WINAPI SetChargeShifting(unsigned int NumberRows, unsigned int NumberRepeats);
-EXPNETTYPE unsigned int WINAPI SetComplexImage(int numAreas, int * areas);
-EXPNETTYPE unsigned int WINAPI SetCoolerMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetCountConvertMode(int Mode);
-EXPNETTYPE unsigned int WINAPI SetCountConvertWavelength(float wavelength);
-EXPNETTYPE unsigned int WINAPI SetCropMode(int active, int cropHeight, int reserved);
-EXPNETTYPE unsigned int WINAPI SetCurrentCamera(long cameraHandle);
-EXPNETTYPE unsigned int WINAPI SetCustomTrackHBin(int bin);
-EXPNETTYPE unsigned int WINAPI SetDataType(int typ);
-EXPNETTYPE unsigned int WINAPI SetDACOutput(int iOption, int iResolution, int iValue);
-EXPNETTYPE unsigned int WINAPI SetDACOutputScale(int iScale);
-EXPNETTYPE unsigned int WINAPI SetDDGAddress(BYTE t0, BYTE t1, BYTE t2, BYTE t3, BYTE address);
-EXPNETTYPE unsigned int WINAPI SetDDGExternalOutputEnabled(at_u32 uiIndex, at_u32 uiEnabled);
-EXPNETTYPE unsigned int WINAPI SetDDGExternalOutputPolarity(at_u32 uiIndex, at_u32 uiPolarity);
-EXPNETTYPE unsigned int WINAPI SetDDGExternalOutputStepEnabled(at_u32 uiIndex, at_u32 uiEnabled);
-EXPNETTYPE unsigned int WINAPI SetDDGExternalOutputTime(at_u32 uiIndex, at_u64 uiDelay, at_u64 uiWidth);
-EXPNETTYPE unsigned int WINAPI SetDDGGain(int gain);
-EXPNETTYPE unsigned int WINAPI SetDDGGateStep(double step_Renamed);
-EXPNETTYPE unsigned int WINAPI SetDDGGateTime(at_u64 uiDelay, at_u64 uiWidth);
-EXPNETTYPE unsigned int WINAPI SetDDGInsertionDelay(int state);
-EXPNETTYPE unsigned int WINAPI SetDDGIntelligate(int state);
-EXPNETTYPE unsigned int WINAPI SetDDGIOC(int state);
-EXPNETTYPE unsigned int WINAPI SetDDGIOCFrequency(double frequency);
-EXPNETTYPE unsigned int WINAPI SetDDGIOCNumber(unsigned long numberPulses);
-EXPNETTYPE unsigned int WINAPI SetDDGIOCPeriod(at_u64 period);
+unsigned int WINAPI GetDDGPulse(double wid, double resolution, double * Delay, double * Width);
+unsigned int WINAPI GetDDGStepCoefficients(at_u32 mode, double * p1, double * p2);
+unsigned int WINAPI GetDDGWidthStepCoefficients(at_u32 mode, double * p1, double * p2);
+unsigned int WINAPI GetDDGStepMode(at_u32 * mode);
+unsigned int WINAPI GetDDGWidthStepMode(at_u32 * mode);
+unsigned int WINAPI GetDetector(int * xpixels, int * ypixels);
+unsigned int WINAPI GetDICameraInfo(void * info);
+unsigned int WINAPI GetEMAdvanced(int * state);
+unsigned int WINAPI GetEMCCDGain(int * gain);
+unsigned int WINAPI GetEMGainRange(int * low, int * high);
+unsigned int WINAPI GetExternalTriggerTermination(at_u32 * puiTermination);
+unsigned int WINAPI GetFastestRecommendedVSSpeed(int * index, float * speed);
+unsigned int WINAPI GetFIFOUsage(int * FIFOusage);
+unsigned int WINAPI GetFilterMode(int * mode);
+unsigned int WINAPI GetFKExposureTime(float * time);
+unsigned int WINAPI GetFKVShiftSpeed(int index, int * speed);
+unsigned int WINAPI GetFKVShiftSpeedF(int index, float * speed);
+unsigned int WINAPI GetFrontEndStatus(int * piFlag);
+unsigned int WINAPI GetGateMode(int * piGatemode);
+unsigned int WINAPI GetHardwareVersion(unsigned int * PCB, unsigned int * Decode, unsigned int * dummy1, unsigned int * dummy2, unsigned int * CameraFirmwareVersion, unsigned int * CameraFirmwareBuild);
+unsigned int WINAPI GetHeadModel(char * name);
+unsigned int WINAPI GetHorizontalSpeed(int index, int * speed);
+unsigned int WINAPI GetHSSpeed(int channel, int typ, int index, float * speed);
+unsigned int WINAPI GetHVflag(int * bFlag);
+unsigned int WINAPI GetID(int devNum, int * id);
+unsigned int WINAPI GetImageFlip(int * iHFlip, int * iVFlip);
+unsigned int WINAPI GetImageRotate(int * iRotate);
+unsigned int WINAPI GetImages(long first, long last, at_32 * arr, unsigned long size, long * validfirst, long * validlast);
+unsigned int WINAPI GetImages16(long first, long last, WORD * arr, unsigned long size, long * validfirst, long * validlast);
+unsigned int WINAPI GetImagesPerDMA(unsigned long * images);
+unsigned int WINAPI GetIRQ(int * IRQ);
+unsigned int WINAPI GetKeepCleanTime(float * KeepCleanTime);
+unsigned int WINAPI GetMaximumBinning(int ReadMode, int HorzVert, int * MaxBinning);
+unsigned int WINAPI GetMaximumExposure(float * MaxExp);
+unsigned int WINAPI GetMaximumNumberRingExposureTimes(int * number);
+unsigned int WINAPI GetMCPGain(int * piGain);
+unsigned int WINAPI GetMCPGainRange(int * iLow, int * iHigh);
+unsigned int WINAPI GetMCPGainTable(int iNum, int * piGain, float * pfPhotoepc);
+unsigned int WINAPI GetMCPVoltage(int * iVoltage);
+unsigned int WINAPI GetMinimumImageLength(int * MinImageLength);
+unsigned int WINAPI GetMinimumNumberInSeries(int * number);
+unsigned int WINAPI GetMostRecentColorImage16(unsigned long size, int algorithm, WORD * red, WORD * green, WORD * blue);
+unsigned int WINAPI GetMostRecentImage(at_32 * arr, unsigned long size);
+unsigned int WINAPI GetMostRecentImage16(WORD * arr, unsigned long size);
+unsigned int WINAPI GetMSTimingsData(SYSTEMTIME * TimeOfStart, float * pfDifferences, int inoOfImages);
+unsigned int WINAPI GetMetaDataInfo(SYSTEMTIME * TimeOfStart, float * pfTimeFromStart, unsigned int index);
+unsigned int WINAPI GetMSTimingsEnabled(void);
+unsigned int WINAPI GetNewData(at_32 * arr, unsigned long size);
+unsigned int WINAPI GetNewData16(WORD * arr, unsigned long size);
+unsigned int WINAPI GetNewData8(unsigned char * arr, unsigned long size);
+unsigned int WINAPI GetNewFloatData(float * arr, unsigned long size);
+unsigned int WINAPI GetNumberADChannels(int * channels);
+unsigned int WINAPI GetNumberAmp(int * amp);
+unsigned int WINAPI GetNumberAvailableImages(at_32 * first, at_32 * last);
+unsigned int WINAPI GetNumberDDGExternalOutputs(at_u32 * puiCount);
+unsigned int WINAPI GetNumberDevices(int * numDevs);
+unsigned int WINAPI GetNumberFKVShiftSpeeds(int * number);
+unsigned int WINAPI GetNumberHorizontalSpeeds(int * number);
+unsigned int WINAPI GetNumberHSSpeeds(int channel, int typ, int * speeds);
+unsigned int WINAPI GetNumberMissedExternalTriggers(unsigned int first, unsigned int last, WORD * arr, unsigned int size);
+unsigned int WINAPI GetIRIGData(unsigned char * _uc_irigData, unsigned int _ui_index);
+unsigned int WINAPI GetNumberNewImages(long * first, long * last);
+unsigned int WINAPI GetNumberPhotonCountingDivisions(at_u32 * noOfDivisions);
+unsigned int WINAPI GetNumberPreAmpGains(int * noGains);
+unsigned int WINAPI GetNumberRingExposureTimes(int * ipnumTimes);
+unsigned int WINAPI GetNumberIO(int * iNumber);
+unsigned int WINAPI GetNumberVerticalSpeeds(int * number);
+unsigned int WINAPI GetNumberVSAmplitudes(int * number);
+unsigned int WINAPI GetNumberVSSpeeds(int * speeds);
+unsigned int WINAPI GetOldestImage(at_32 * arr, unsigned long size);
+unsigned int WINAPI GetOldestImage16(WORD * arr, unsigned long size);
+unsigned int WINAPI GetPhosphorStatus(int * piFlag);
+unsigned int WINAPI GetPhysicalDMAAddress(unsigned long * Address1, unsigned long * Address2);
+unsigned int WINAPI GetPixelSize(float * xSize, float * ySize);
+unsigned int WINAPI GetPreAmpGain(int index, float * gain);
+unsigned int WINAPI GetPreAmpGainText(int index, char * name, int length);
+unsigned int WINAPI GetDualExposureTimes(float * exposure1, float * exposure2);
+unsigned int WINAPI GetQE(char * sensor, float wavelength, unsigned int mode, float * QE);
+unsigned int WINAPI GetReadOutTime(float * ReadOutTime);
+unsigned int WINAPI GetRegisterDump(int * mode);
+unsigned int WINAPI GetRelativeImageTimes(unsigned int first, unsigned int last, at_u64 * arr, unsigned int size);
+unsigned int WINAPI GetRingExposureRange(float * fpMin, float * fpMax);
+unsigned int WINAPI GetSDK3Handle(int * Handle);
+unsigned int WINAPI GetSensitivity(int channel, int horzShift, int amplifier, int pa, float * sensitivity);
+unsigned int WINAPI GetShutterMinTimes(int * minclosingtime, int * minopeningtime);
+unsigned int WINAPI GetSizeOfCircularBuffer(long * index);
+unsigned int WINAPI GetSlotBusDeviceFunction(DWORD * dwslot, DWORD * dwBus, DWORD * dwDevice, DWORD * dwFunction);
+unsigned int WINAPI GetSoftwareVersion(unsigned int * eprom, unsigned int * coffile, unsigned int * vxdrev, unsigned int * vxdver, unsigned int * dllrev, unsigned int * dllver);
+unsigned int WINAPI GetSpoolProgress(long * index);
+unsigned int WINAPI GetStartUpTime(float * time);
+unsigned int WINAPI GetStatus(int * status);
+unsigned int WINAPI GetTECStatus(int * piFlag);
+unsigned int WINAPI GetTemperature(int * temperature);
+unsigned int WINAPI GetTemperatureF(float * temperature);
+unsigned int WINAPI GetTemperatureRange(int * mintemp, int * maxtemp);
+unsigned int WINAPI GetTemperaturePrecision(int * precision);
+unsigned int WINAPI GetTemperatureStatus(float * SensorTemp, float * TargetTemp, float * AmbientTemp, float * CoolerVolts);
+unsigned int WINAPI GetTotalNumberImagesAcquired(long * index);
+unsigned int WINAPI GetIODirection(int index, int * iDirection);
+unsigned int WINAPI GetIOLevel(int index, int * iLevel);
+unsigned int WINAPI GetUSBDeviceDetails(WORD * VendorID, WORD * ProductID, WORD * FirmwareVersion, WORD * SpecificationNumber);
+unsigned int WINAPI GetVersionInfo(AT_VersionInfoId arr, char * szVersionInfo, at_u32 ui32BufferLen);
+unsigned int WINAPI GetVerticalSpeed(int index, int * speed);
+unsigned int WINAPI GetVirtualDMAAddress(void ** Address1, void ** Address2);
+unsigned int WINAPI GetVSAmplitudeString(int index, char * text);
+unsigned int WINAPI GetVSAmplitudeFromString(char * text, int * index);
+unsigned int WINAPI GetVSAmplitudeValue(int index, int * value);
+unsigned int WINAPI GetVSSpeed(int index, float * speed);
+unsigned int WINAPI GPIBReceive(int id, short address, char * text, int size);
+unsigned int WINAPI GPIBSend(int id, short address, char * text);
+unsigned int WINAPI I2CBurstRead(BYTE i2cAddress, long nBytes, BYTE * data);
+unsigned int WINAPI I2CBurstWrite(BYTE i2cAddress, long nBytes, BYTE * data);
+unsigned int WINAPI I2CRead(BYTE deviceID, BYTE intAddress, BYTE * pdata);
+unsigned int WINAPI I2CReset(void);
+unsigned int WINAPI I2CWrite(BYTE deviceID, BYTE intAddress, BYTE data);
+unsigned int WINAPI IdAndorDll(void);
+unsigned int WINAPI InAuxPort(int port, int * state);
+unsigned int WINAPI Initialize(char * dir);
+unsigned int WINAPI InitializeDevice(char * dir);
+unsigned int WINAPI IsAmplifierAvailable(int iamp);
+unsigned int WINAPI IsCoolerOn(int * iCoolerStatus);
+unsigned int WINAPI IsCountConvertModeAvailable(int mode);
+unsigned int WINAPI IsInternalMechanicalShutter(int * InternalShutter);
+unsigned int WINAPI IsPreAmpGainAvailable(int channel, int amplifier, int index, int pa, int * status);
+unsigned int WINAPI IsReadoutFlippedByAmplifier(int iAmplifier, int * iFlipped);
+unsigned int WINAPI IsTriggerModeAvailable(int iTriggerMode);
+unsigned int WINAPI Merge(const at_32 * arr, long nOrder, long nPoint, long nPixel, float * coeff, long fit, long hbin, at_32 * output, float * start, float * step_Renamed);
+unsigned int WINAPI OutAuxPort(int port, int state);
+unsigned int WINAPI PrepareAcquisition(void);
+unsigned int WINAPI SaveAsBmp(const char * path, const char * palette, long ymin, long ymax);
+unsigned int WINAPI SaveAsCommentedSif(char * path, char * comment);
+unsigned int WINAPI SaveAsEDF(char * szPath, int iMode);
+unsigned int WINAPI SaveAsFITS(char * szFileTitle, int typ);
+unsigned int WINAPI SaveAsRaw(char * szFileTitle, int typ);
+unsigned int WINAPI SaveAsSif(char * path);
+unsigned int WINAPI SaveAsSPC(char * path);
+unsigned int WINAPI SaveAsTiff(char * path, char * palette, int position, int typ);
+unsigned int WINAPI SaveAsTiffEx(char * path, char * palette, int position, int typ, int mode);
+unsigned int WINAPI SaveEEPROMToFile(char * cFileName);
+unsigned int WINAPI SaveToClipBoard(char * palette);
+unsigned int WINAPI SelectDevice(int devNum);
+unsigned int WINAPI SendSoftwareTrigger(void);
+unsigned int WINAPI SetAccumulationCycleTime(float time);
+unsigned int WINAPI SetAcqStatusEvent(HANDLE statusEvent);
+unsigned int WINAPI SetAcquisitionMode(int mode);
+unsigned int WINAPI SetSensorPortMode(int mode);
+unsigned int WINAPI SelectSensorPort(int port);
+unsigned int WINAPI SetAcquisitionType(int typ);
+unsigned int WINAPI SetADChannel(int channel);
+unsigned int WINAPI SetAdvancedTriggerModeState(int iState);
+unsigned int WINAPI SetBackground(at_32 * arr, unsigned long size);
+unsigned int WINAPI SetBaselineClamp(int state);
+unsigned int WINAPI SetBaselineOffset(int offset);
+unsigned int WINAPI SetCameraLinkMode(int mode);
+unsigned int WINAPI SetCameraStatusEnable(DWORD Enable);
+unsigned int WINAPI SetChargeShifting(unsigned int NumberRows, unsigned int NumberRepeats);
+unsigned int WINAPI SetComplexImage(int numAreas, int * areas);
+unsigned int WINAPI SetCoolerMode(int mode);
+unsigned int WINAPI SetCountConvertMode(int Mode);
+unsigned int WINAPI SetCountConvertWavelength(float wavelength);
+unsigned int WINAPI SetCropMode(int active, int cropHeight, int reserved);
+unsigned int WINAPI SetCurrentCamera(long cameraHandle);
+unsigned int WINAPI SetCustomTrackHBin(int bin);
+unsigned int WINAPI SetDataType(int typ);
+unsigned int WINAPI SetDACOutput(int iOption, int iResolution, int iValue);
+unsigned int WINAPI SetDACOutputScale(int iScale);
+unsigned int WINAPI SetDDGAddress(BYTE t0, BYTE t1, BYTE t2, BYTE t3, BYTE address);
+unsigned int WINAPI SetDDGExternalOutputEnabled(at_u32 uiIndex, at_u32 uiEnabled);
+unsigned int WINAPI SetDDGExternalOutputPolarity(at_u32 uiIndex, at_u32 uiPolarity);
+unsigned int WINAPI SetDDGExternalOutputStepEnabled(at_u32 uiIndex, at_u32 uiEnabled);
+unsigned int WINAPI SetDDGExternalOutputTime(at_u32 uiIndex, at_u64 uiDelay, at_u64 uiWidth);
+unsigned int WINAPI SetDDGGain(int gain);
+unsigned int WINAPI SetDDGGateStep(double step_Renamed);
+unsigned int WINAPI SetDDGGateTime(at_u64 uiDelay, at_u64 uiWidth);
+unsigned int WINAPI SetDDGInsertionDelay(int state);
+unsigned int WINAPI SetDDGIntelligate(int state);
+unsigned int WINAPI SetDDGIOC(int state);
+unsigned int WINAPI SetDDGIOCFrequency(double frequency);
+unsigned int WINAPI SetDDGIOCNumber(unsigned long numberPulses);
+unsigned int WINAPI SetDDGIOCPeriod(at_u64 period);
+unsigned int WINAPI SetDDGIOCTrigger(at_u32 trigger);
+unsigned int WINAPI SetDDGOpticalWidthEnabled(at_u32 uiEnabled);
 
 // DDG Lite functions
-EXPNETTYPE unsigned int WINAPI SetDDGLiteGlobalControlByte(unsigned char control);
-EXPNETTYPE unsigned int WINAPI SetDDGLiteControlByte(AT_DDGLiteChannelId channel, unsigned char control);
-EXPNETTYPE unsigned int WINAPI SetDDGLiteInitialDelay(AT_DDGLiteChannelId channel, float fDelay);
-EXPNETTYPE unsigned int WINAPI SetDDGLitePulseWidth(AT_DDGLiteChannelId channel, float fWidth);
-EXPNETTYPE unsigned int WINAPI SetDDGLiteInterPulseDelay(AT_DDGLiteChannelId channel, float fDelay);
-EXPNETTYPE unsigned int WINAPI SetDDGLitePulsesPerExposure(AT_DDGLiteChannelId channel, at_u32 ui32Pulses);
+unsigned int WINAPI SetDDGLiteGlobalControlByte(unsigned char control);
+unsigned int WINAPI SetDDGLiteControlByte(AT_DDGLiteChannelId channel, unsigned char control);
+unsigned int WINAPI SetDDGLiteInitialDelay(AT_DDGLiteChannelId channel, float fDelay);
+unsigned int WINAPI SetDDGLitePulseWidth(AT_DDGLiteChannelId channel, float fWidth);
+unsigned int WINAPI SetDDGLiteInterPulseDelay(AT_DDGLiteChannelId channel, float fDelay);
+unsigned int WINAPI SetDDGLitePulsesPerExposure(AT_DDGLiteChannelId channel, at_u32 ui32Pulses);
 
-EXPNETTYPE unsigned int WINAPI SetDDGStepCoefficients(at_u32 mode, double p1, double p2);
-EXPNETTYPE unsigned int WINAPI SetDDGStepMode(at_u32 mode);
-EXPNETTYPE unsigned int WINAPI SetDDGTimes(double t0, double t1, double t2);
-EXPNETTYPE unsigned int WINAPI SetDDGTriggerMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetDDGVariableGateStep(int mode, double p1, double p2);
-EXPNETTYPE unsigned int WINAPI SetDelayGenerator(int board, short address, int typ);
-EXPNETTYPE unsigned int WINAPI SetDMAParameters(int MaxImagesPerDMA, float SecondsPerDMA);
-EXPNETTYPE unsigned int WINAPI SetDriverEvent(HANDLE driverEvent);
-EXPNETTYPE unsigned int WINAPI SetEMAdvanced(int state);
-EXPNETTYPE unsigned int WINAPI SetEMCCDGain(int gain);
-EXPNETTYPE unsigned int WINAPI SetEMClockCompensation(int EMClockCompensationFlag);
-EXPNETTYPE unsigned int WINAPI SetEMGainMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetExposureTime(float time);
-EXPNETTYPE unsigned int WINAPI SetExternalTriggerTermination(at_u32 uiTermination);
-EXPNETTYPE unsigned int WINAPI SetFanMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetFastExtTrigger(int mode);
-EXPNETTYPE unsigned int WINAPI SetFastKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin);
-EXPNETTYPE unsigned int WINAPI SetFastKineticsEx(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
-EXPNETTYPE unsigned int WINAPI SetFilterMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetFilterParameters(int width, float sensitivity, int range, float accept, int smooth, int noise);
-EXPNETTYPE unsigned int WINAPI SetFKVShiftSpeed(int index);
-EXPNETTYPE unsigned int WINAPI SetFPDP(int state);
-EXPNETTYPE unsigned int WINAPI SetFrameTransferMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetFrontEndEvent(HANDLE driverEvent);
-EXPNETTYPE unsigned int WINAPI SetFullImage(int hbin, int vbin);
-EXPNETTYPE unsigned int WINAPI SetFVBHBin(int bin);
-EXPNETTYPE unsigned int WINAPI SetGain(int gain);
-EXPNETTYPE unsigned int WINAPI SetGate(float delay, float width, float stepRenamed);
-EXPNETTYPE unsigned int WINAPI SetGateMode(int gatemode);
-EXPNETTYPE unsigned int WINAPI SetHighCapacity(int state);
-EXPNETTYPE unsigned int WINAPI SetHorizontalSpeed(int index);
-EXPNETTYPE unsigned int WINAPI SetHSSpeed(int typ, int index);
-EXPNETTYPE unsigned int WINAPI SetImage(int hbin, int vbin, int hstart, int hend, int vstart, int vend);
-EXPNETTYPE unsigned int WINAPI SetImageFlip(int iHFlip, int iVFlip);
-EXPNETTYPE unsigned int WINAPI SetImageRotate(int iRotate);
-EXPNETTYPE unsigned int WINAPI SetIsolatedCropMode(int active, int cropheight, int cropwidth, int vbin, int hbin);
-EXPNETTYPE unsigned int WINAPI SetKineticCycleTime(float time);
-EXPNETTYPE unsigned int WINAPI SetMCPGain(int gain);
-EXPNETTYPE unsigned int WINAPI SetMCPGating(int gating);
-EXPNETTYPE unsigned int WINAPI SetMessageWindow(HWND wnd);
-EXPNETTYPE unsigned int WINAPI SetMetaData(int state);
-EXPNETTYPE unsigned int WINAPI SetMultiTrack(int number, int height, int offset, int * bottom, int * gap);
-EXPNETTYPE unsigned int WINAPI SetMultiTrackHBin(int bin);
-EXPNETTYPE unsigned int WINAPI SetMultiTrackHRange(int iStart, int iEnd);
-EXPNETTYPE unsigned int WINAPI SetMultiTrackScan(int trackHeight, int numberTracks, int iSIHStart, int iSIHEnd, int trackHBinning, int trackVBinning, int trackGap, int trackOffset, int trackSkip, int numberSubFrames);
-EXPNETTYPE unsigned int WINAPI SetNextAddress(at_32 * data, long lowAdd, long highAdd, long length, long physical);
-EXPNETTYPE unsigned int WINAPI SetNextAddress16(at_32 * data, long lowAdd, long highAdd, long length, long physical);
-EXPNETTYPE unsigned int WINAPI SetNumberAccumulations(int number);
-EXPNETTYPE unsigned int WINAPI SetNumberKinetics(int number);
-EXPNETTYPE unsigned int WINAPI SetNumberPrescans(int iNumber);
-EXPNETTYPE unsigned int WINAPI SetOutputAmplifier(int typ);
-EXPNETTYPE unsigned int WINAPI SetOverlapMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetPCIMode(int mode, int value);
-EXPNETTYPE unsigned int WINAPI SetPhotonCounting(int state);
-EXPNETTYPE unsigned int WINAPI SetPhotonCountingThreshold(long min, long max);
-EXPNETTYPE unsigned int WINAPI SetPhosphorEvent(HANDLE driverEvent);
-EXPNETTYPE unsigned int WINAPI SetPhotonCountingDivisions(at_u32 noOfDivisions, at_32 * divisions);
-EXPNETTYPE unsigned int WINAPI SetPixelMode(int bitdepth, int colormode);
-EXPNETTYPE unsigned int WINAPI SetPreAmpGain(int index);
-EXPNETTYPE unsigned int WINAPI SetDualExposureTimes(float expTime1, float expTime2);
-EXPNETTYPE unsigned int WINAPI SetDualExposureMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetRandomTracks(int numTracks, int * areas);
-EXPNETTYPE unsigned int WINAPI SetReadMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetRegisterDump(int mode);
-EXPNETTYPE unsigned int WINAPI SetRingExposureTimes(int numTimes, float * times);
-EXPNETTYPE unsigned int WINAPI SetSaturationEvent(HANDLE saturationEvent);
-EXPNETTYPE unsigned int WINAPI SetShutter(int typ, int mode, int closingtime, int openingtime);
-EXPNETTYPE unsigned int WINAPI SetShutterEx(int typ, int mode, int closingtime, int openingtime, int extmode);
-EXPNETTYPE unsigned int WINAPI SetShutters(int typ, int mode, int closingtime, int openingtime, int exttype, int extmode, int dummy1, int dummy2);
-EXPNETTYPE unsigned int WINAPI SetSifComment(char * comment);
-EXPNETTYPE unsigned int WINAPI SetSingleTrack(int centre, int height);
-EXPNETTYPE unsigned int WINAPI SetSingleTrackHBin(int bin);
-EXPNETTYPE unsigned int WINAPI SetSpool(int active, int method, char * path, int framebuffersize);
-EXPNETTYPE unsigned int WINAPI SetSpoolThreadCount(int count);
-EXPNETTYPE unsigned int WINAPI SetStorageMode(long mode);
-EXPNETTYPE unsigned int WINAPI SetTECEvent(HANDLE driverEvent);
-EXPNETTYPE unsigned int WINAPI SetTemperature(int temperature);
-EXPNETTYPE unsigned int WINAPI SetTemperatureEvent(HANDLE temperatureEvent);
-EXPNETTYPE unsigned int WINAPI SetTriggerMode(int mode);
-EXPNETTYPE unsigned int WINAPI SetTriggerInvert(int mode);
-EXPNETTYPE unsigned int WINAPI GetTriggerLevelRange(float * minimum, float * maximum);
-EXPNETTYPE unsigned int WINAPI SetTriggerLevel(float f_level);
-EXPNETTYPE unsigned int WINAPI SetIODirection(int index, int iDirection);
-EXPNETTYPE unsigned int WINAPI SetIOLevel(int index, int iLevel);
-EXPNETTYPE unsigned int WINAPI SetUserEvent(HANDLE userEvent);
-EXPNETTYPE unsigned int WINAPI SetUSGenomics(long width, long height);
-EXPNETTYPE unsigned int WINAPI SetVerticalRowBuffer(int rows);
-EXPNETTYPE unsigned int WINAPI SetVerticalSpeed(int index);
-EXPNETTYPE unsigned int WINAPI SetVirtualChip(int state);
-EXPNETTYPE unsigned int WINAPI SetVSAmplitude(int index);
-EXPNETTYPE unsigned int WINAPI SetVSSpeed(int index);
-EXPNETTYPE unsigned int WINAPI ShutDown(void);
-EXPNETTYPE unsigned int WINAPI StartAcquisition(void);
-EXPNETTYPE unsigned int WINAPI UnMapPhysicalAddress(void);
-EXPNETTYPE unsigned int WINAPI WaitForAcquisition(void);
-EXPNETTYPE unsigned int WINAPI WaitForAcquisitionByHandle(long cameraHandle);
-EXPNETTYPE unsigned int WINAPI WaitForAcquisitionByHandleTimeOut(long cameraHandle, int iTimeOutMs);
-EXPNETTYPE unsigned int WINAPI WaitForAcquisitionTimeOut(int iTimeOutMs);
-EXPNETTYPE unsigned int WINAPI WhiteBalance(WORD * wRed, WORD * wGreen, WORD * wBlue, float * fRelR, float * fRelB, WhiteBalanceInfo * info);
+unsigned int WINAPI SetDDGStepCoefficients(at_u32 mode, double p1, double p2);
+unsigned int WINAPI SetDDGWidthStepCoefficients(at_u32 mode, double p1, double p2);
+unsigned int WINAPI SetDDGStepMode(at_u32 mode);
+unsigned int WINAPI SetDDGWidthStepMode(at_u32 mode);
+unsigned int WINAPI SetDDGTimes(double t0, double t1, double t2);
+unsigned int WINAPI SetDDGTriggerMode(int mode);
+unsigned int WINAPI SetDDGVariableGateStep(int mode, double p1, double p2);
+unsigned int WINAPI SetDelayGenerator(int board, short address, int typ);
+unsigned int WINAPI SetDMAParameters(int MaxImagesPerDMA, float SecondsPerDMA);
+unsigned int WINAPI SetDriverEvent(HANDLE driverEvent);
+unsigned int WINAPI SetEMAdvanced(int state);
+unsigned int WINAPI SetEMCCDGain(int gain);
+unsigned int WINAPI SetEMClockCompensation(int EMClockCompensationFlag);
+unsigned int WINAPI SetEMGainMode(int mode);
+unsigned int WINAPI SetExposureTime(float time);
+unsigned int WINAPI SetExternalTriggerTermination(at_u32 uiTermination);
+unsigned int WINAPI SetFanMode(int mode);
+unsigned int WINAPI SetFastExtTrigger(int mode);
+unsigned int WINAPI SetFastKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin);
+unsigned int WINAPI SetFastKineticsEx(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
+unsigned int WINAPI SetFilterMode(int mode);
+unsigned int WINAPI SetFilterParameters(int width, float sensitivity, int range, float accept, int smooth, int noise);
+unsigned int WINAPI SetFKVShiftSpeed(int index);
+unsigned int WINAPI SetFPDP(int state);
+unsigned int WINAPI SetFrameTransferMode(int mode);
+unsigned int WINAPI SetFrontEndEvent(HANDLE driverEvent);
+unsigned int WINAPI SetFullImage(int hbin, int vbin);
+unsigned int WINAPI SetFVBHBin(int bin);
+unsigned int WINAPI SetGain(int gain);
+unsigned int WINAPI SetGate(float delay, float width, float stepRenamed);
+unsigned int WINAPI SetGateMode(int gatemode);
+unsigned int WINAPI SetHighCapacity(int state);
+unsigned int WINAPI SetHorizontalSpeed(int index);
+unsigned int WINAPI SetHSSpeed(int typ, int index);
+unsigned int WINAPI SetImage(int hbin, int vbin, int hstart, int hend, int vstart, int vend);
+unsigned int WINAPI SetImageFlip(int iHFlip, int iVFlip);
+unsigned int WINAPI SetImageRotate(int iRotate);
+unsigned int WINAPI SetIsolatedCropMode(int active, int cropheight, int cropwidth, int vbin, int hbin);
+unsigned int WINAPI SetIsolatedCropModeEx(int active, int cropheight, int cropwidth, int vbin, int hbin, int cropleft, int cropbottom);
+unsigned int WINAPI SetKineticCycleTime(float time);
+unsigned int WINAPI SetMCPGain(int gain);
+unsigned int WINAPI SetMCPGating(int gating);
+unsigned int WINAPI SetMessageWindow(HWND wnd);
+unsigned int WINAPI SetMetaData(int state);
+unsigned int WINAPI SetMultiTrack(int number, int height, int offset, int * bottom, int * gap);
+unsigned int WINAPI SetMultiTrackHBin(int bin);
+unsigned int WINAPI SetMultiTrackHRange(int iStart, int iEnd);
+unsigned int WINAPI SetMultiTrackScan(int trackHeight, int numberTracks, int iSIHStart, int iSIHEnd, int trackHBinning, int trackVBinning, int trackGap, int trackOffset, int trackSkip, int numberSubFrames);
+unsigned int WINAPI SetNextAddress(at_32 * data, long lowAdd, long highAdd, long length, long physical);
+unsigned int WINAPI SetNextAddress16(at_32 * data, long lowAdd, long highAdd, long length, long physical);
+unsigned int WINAPI SetNumberAccumulations(int number);
+unsigned int WINAPI SetNumberKinetics(int number);
+unsigned int WINAPI SetNumberPrescans(int iNumber);
+unsigned int WINAPI SetOutputAmplifier(int typ);
+unsigned int WINAPI SetOverlapMode(int mode);
+unsigned int WINAPI SetPCIMode(int mode, int value);
+unsigned int WINAPI SetPhotonCounting(int state);
+unsigned int WINAPI SetPhotonCountingThreshold(long min, long max);
+unsigned int WINAPI SetPhosphorEvent(HANDLE driverEvent);
+unsigned int WINAPI SetPhotonCountingDivisions(at_u32 noOfDivisions, at_32 * divisions);
+unsigned int WINAPI SetPixelMode(int bitdepth, int colormode);
+unsigned int WINAPI SetPreAmpGain(int index);
+unsigned int WINAPI SetDualExposureTimes(float expTime1, float expTime2);
+unsigned int WINAPI SetDualExposureMode(int mode);
+unsigned int WINAPI SetRandomTracks(int numTracks, int * areas);
+unsigned int WINAPI SetReadMode(int mode);
+unsigned int WINAPI SetReadoutRegisterPacking(unsigned int mode);
+unsigned int WINAPI SetRegisterDump(int mode);
+unsigned int WINAPI SetRingExposureTimes(int numTimes, float * times);
+unsigned int WINAPI SetSaturationEvent(HANDLE saturationEvent);
+unsigned int WINAPI SetShutter(int typ, int mode, int closingtime, int openingtime);
+unsigned int WINAPI SetShutterEx(int typ, int mode, int closingtime, int openingtime, int extmode);
+unsigned int WINAPI SetShutters(int typ, int mode, int closingtime, int openingtime, int exttype, int extmode, int dummy1, int dummy2);
+unsigned int WINAPI SetSifComment(char * comment);
+unsigned int WINAPI SetSingleTrack(int centre, int height);
+unsigned int WINAPI SetSingleTrackHBin(int bin);
+unsigned int WINAPI SetSpool(int active, int method, char * path, int framebuffersize);
+unsigned int WINAPI SetSpoolThreadCount(int count);
+unsigned int WINAPI SetStorageMode(long mode);
+unsigned int WINAPI SetTECEvent(HANDLE driverEvent);
+unsigned int WINAPI SetTemperature(int temperature);
+unsigned int WINAPI SetTemperatureEvent(HANDLE temperatureEvent);
+unsigned int WINAPI SetTriggerMode(int mode);
+unsigned int WINAPI SetTriggerInvert(int mode);
+unsigned int WINAPI GetTriggerLevelRange(float * minimum, float * maximum);
+unsigned int WINAPI SetTriggerLevel(float f_level);
+unsigned int WINAPI SetIODirection(int index, int iDirection);
+unsigned int WINAPI SetIOLevel(int index, int iLevel);
+unsigned int WINAPI SetUserEvent(HANDLE userEvent);
+unsigned int WINAPI SetUSGenomics(long width, long height);
+unsigned int WINAPI SetVerticalRowBuffer(int rows);
+unsigned int WINAPI SetVerticalSpeed(int index);
+unsigned int WINAPI SetVirtualChip(int state);
+unsigned int WINAPI SetVSAmplitude(int index);
+unsigned int WINAPI SetVSSpeed(int index);
+unsigned int WINAPI ShutDown(void);
+unsigned int WINAPI StartAcquisition(void);
+unsigned int WINAPI UnMapPhysicalAddress(void);
+unsigned int WINAPI WaitForAcquisition(void);
+unsigned int WINAPI WaitForAcquisitionByHandle(long cameraHandle);
+unsigned int WINAPI WaitForAcquisitionByHandleTimeOut(long cameraHandle, int iTimeOutMs);
+unsigned int WINAPI WaitForAcquisitionTimeOut(int iTimeOutMs);
+unsigned int WINAPI WhiteBalance(WORD * wRed, WORD * wGreen, WORD * wBlue, float * fRelR, float * fRelB, WhiteBalanceInfo * info);
 
-EXPNETTYPE unsigned int WINAPI OA_Initialize(const char * const pcFilename, unsigned int uiFileNameLen);
-EXPNETTYPE unsigned int WINAPI OA_EnableMode(const char * const pcModeName);
-EXPNETTYPE unsigned int WINAPI OA_GetModeAcqParams(const char * const pcModeName, char * const pcListOfParams);
-EXPNETTYPE unsigned int WINAPI OA_GetUserModeNames(char * pcListOfModes);
-EXPNETTYPE unsigned int WINAPI OA_GetPreSetModeNames(char * pcListOfModes);
-EXPNETTYPE unsigned int WINAPI OA_GetNumberOfUserModes(unsigned int * const puiNumberOfModes);
-EXPNETTYPE unsigned int WINAPI OA_GetNumberOfPreSetModes(unsigned int * const puiNumberOfModes);
-EXPNETTYPE unsigned int WINAPI OA_GetNumberOfAcqParams(const char * const pcModeName, unsigned int * const puiNumberOfParams);
-EXPNETTYPE unsigned int WINAPI OA_AddMode(char * pcModeName, unsigned int uiModeNameLen, char * pcModeDescription, unsigned int uiModeDescriptionLen);
-EXPNETTYPE unsigned int WINAPI OA_WriteToFile(const char * const pcFileName, unsigned int uiFileNameLen);
-EXPNETTYPE unsigned int WINAPI OA_DeleteMode(const char * const pcModeName, unsigned int uiModeNameLen);
-EXPNETTYPE unsigned int WINAPI OA_SetInt(const char * const pcModeName, const char * pcModeParam, const int iIntValue);
-EXPNETTYPE unsigned int WINAPI OA_SetFloat(const char * const pcModeName, const char * pcModeParam, const float fFloatValue);
-EXPNETTYPE unsigned int WINAPI OA_SetString(const char * const pcModeName, const char * pcModeParam, char * pcStringValue, const unsigned int uiStringLen);
-EXPNETTYPE unsigned int WINAPI OA_GetInt(const char * const pcModeName, const char * const pcModeParam, int * iIntValue);
-EXPNETTYPE unsigned int WINAPI OA_GetFloat(const char * const pcModeName, const char * const pcModeParam, float * fFloatValue);
-EXPNETTYPE unsigned int WINAPI OA_GetString(const char * const pcModeName, const char * const pcModeParam, char * pcStringValue, const unsigned int uiStringLen);
+unsigned int WINAPI OA_Initialize(const char * const pcFilename, unsigned int uiFileNameLen);
+unsigned int WINAPI OA_EnableMode(const char * const pcModeName);
+unsigned int WINAPI OA_GetModeAcqParams(const char * const pcModeName, char * const pcListOfParams);
+unsigned int WINAPI OA_GetUserModeNames(char * pcListOfModes);
+unsigned int WINAPI OA_GetPreSetModeNames(char * pcListOfModes);
+unsigned int WINAPI OA_GetNumberOfUserModes(unsigned int * const puiNumberOfModes);
+unsigned int WINAPI OA_GetNumberOfPreSetModes(unsigned int * const puiNumberOfModes);
+unsigned int WINAPI OA_GetNumberOfAcqParams(const char * const pcModeName, unsigned int * const puiNumberOfParams);
+unsigned int WINAPI OA_AddMode(char * pcModeName, unsigned int uiModeNameLen, char * pcModeDescription, unsigned int uiModeDescriptionLen);
+unsigned int WINAPI OA_WriteToFile(const char * const pcFileName, unsigned int uiFileNameLen);
+unsigned int WINAPI OA_DeleteMode(const char * const pcModeName, unsigned int uiModeNameLen);
+unsigned int WINAPI OA_SetInt(const char * const pcModeName, const char * pcModeParam, const int iIntValue);
+unsigned int WINAPI OA_SetFloat(const char * const pcModeName, const char * pcModeParam, const float fFloatValue);
+unsigned int WINAPI OA_SetString(const char * const pcModeName, const char * pcModeParam, char * pcStringValue, const unsigned int uiStringLen);
+unsigned int WINAPI OA_GetInt(const char * const pcModeName, const char * const pcModeParam, int * iIntValue);
+unsigned int WINAPI OA_GetFloat(const char * const pcModeName, const char * const pcModeParam, float * fFloatValue);
+unsigned int WINAPI OA_GetString(const char * const pcModeName, const char * const pcModeParam, char * pcStringValue, const unsigned int uiStringLen);
 
-EXPNETTYPE unsigned int WINAPI Filter_SetMode(unsigned int mode);
-EXPNETTYPE unsigned int WINAPI Filter_GetMode(unsigned int * mode);
-EXPNETTYPE unsigned int WINAPI Filter_SetThreshold(float threshold);
-EXPNETTYPE unsigned int WINAPI Filter_GetThreshold(float * threshold);
-EXPNETTYPE unsigned int WINAPI Filter_SetDataAveragingMode(int mode);
-EXPNETTYPE unsigned int WINAPI Filter_GetDataAveragingMode(int * mode);
-EXPNETTYPE unsigned int WINAPI Filter_SetAveragingFrameCount(int frames);
-EXPNETTYPE unsigned int WINAPI Filter_GetAveragingFrameCount(int * frames);
-EXPNETTYPE unsigned int WINAPI Filter_SetAveragingFactor(int averagingFactor);
-EXPNETTYPE unsigned int WINAPI Filter_GetAveragingFactor(int * averagingFactor);
+unsigned int WINAPI Filter_SetMode(unsigned int mode);
+unsigned int WINAPI Filter_GetMode(unsigned int * mode);
+unsigned int WINAPI Filter_SetThreshold(float threshold);
+unsigned int WINAPI Filter_GetThreshold(float * threshold);
+unsigned int WINAPI Filter_SetDataAveragingMode(int mode);
+unsigned int WINAPI Filter_GetDataAveragingMode(int * mode);
+unsigned int WINAPI Filter_SetAveragingFrameCount(int frames);
+unsigned int WINAPI Filter_GetAveragingFrameCount(int * frames);
+unsigned int WINAPI Filter_SetAveragingFactor(int averagingFactor);
+unsigned int WINAPI Filter_GetAveragingFactor(int * averagingFactor);
 
-EXPNETTYPE unsigned int WINAPI PostProcessNoiseFilter(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iBaseline, int iMode, float fThreshold, int iHeight, int iWidth);
-EXPNETTYPE unsigned int WINAPI PostProcessCountConvert(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iBaseline, int iMode, int iEmGain, float fQE, float fSensitivity, int iHeight, int iWidth);
-EXPNETTYPE unsigned int WINAPI PostProcessPhotonCounting(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iNumframes, int iNumberOfThresholds, float * pfThreshold, int iHeight, int iWidth);
-EXPNETTYPE unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iAveragingFilterMode, int iHeight, int iWidth, int iFrameCount, int iAveragingFactor);
+unsigned int WINAPI PostProcessNoiseFilter(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iBaseline, int iMode, float fThreshold, int iHeight, int iWidth);
+unsigned int WINAPI PostProcessCountConvert(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iBaseline, int iMode, int iEmGain, float fQE, float fSensitivity, int iHeight, int iWidth);
+unsigned int WINAPI PostProcessPhotonCounting(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iNumframes, int iNumberOfThresholds, float * pfThreshold, int iHeight, int iWidth);
+unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage, int iOutputBufferSize, int iNumImages, int iAveragingFilterMode, int iHeight, int iWidth, int iFrameCount, int iAveragingFactor);
 
 #define DRV_ERROR_CODES 20001
 #define DRV_SUCCESS 20002
@@ -683,7 +708,14 @@ EXPNETTYPE unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_
 #define AC_CAMERATYPE_USBISTAR 18
 #define AC_CAMERATYPE_SIMCAM 19
 #define AC_CAMERATYPE_NEO 20
-#define AC_CAMERATYPE_XTREME 21
+#define AC_CAMERATYPE_IXONULTRA 21
+#define AC_CAMERATYPE_VOLMOS 22
+#define AC_CAMERATYPE_IVAC_CCD 23
+#define AC_CAMERATYPE_ASPEN 24
+#define AC_CAMERATYPE_ASCENT 25
+#define AC_CAMERATYPE_ALTA 26
+#define AC_CAMERATYPE_ALTAF 27
+#define AC_CAMERATYPE_IKONXL 28
 
 #define AC_PIXELMODE_8BIT 1
 #define AC_PIXELMODE_14BIT 2
@@ -716,9 +748,14 @@ EXPNETTYPE unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_
 #define AC_SETFUNCTION_INTELLIGATE 0x080000
 #define AC_SETFUNCTION_INSERTION_DELAY 0x100000
 #define AC_SETFUNCTION_GATESTEP 0x200000
+#define AC_SETFUNCTION_GATEDELAYSTEP 0x200000
 #define AC_SETFUNCTION_TRIGGERTERMINATION 0x400000
 #define AC_SETFUNCTION_EXTENDEDNIR 0x800000
 #define AC_SETFUNCTION_SPOOLTHREADCOUNT 0x1000000
+#define AC_SETFUNCTION_REGISTERPACK 0x2000000
+#define AC_SETFUNCTION_PRESCANS 0x4000000
+#define AC_SETFUNCTION_GATEWIDTHSTEP 0x8000000
+#define AC_SETFUNCTION_EXTENDED_CROP_MODE 0x10000000
 
 // Deprecated for AC_SETFUNCTION_MCPGAIN
 #define AC_SETFUNCTION_GAIN 8
@@ -737,9 +774,11 @@ EXPNETTYPE unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_
 #define AC_GETFUNCTION_INTELLIGATE 0x0400
 #define AC_GETFUNCTION_INSERTION_DELAY 0x0800
 #define AC_GETFUNCTION_GATESTEP 0x1000
+#define AC_GETFUNCTION_GATEDELAYSTEP 0x1000
 #define AC_GETFUNCTION_PHOSPHORSTATUS 0x2000
 #define AC_GETFUNCTION_MCPGAINTABLE 0x4000
 #define AC_GETFUNCTION_BASELINECLAMP 0x8000
+#define AC_GETFUNCTION_GATEWIDTHSTEP 0x10000
 
 // Deprecated for AC_GETFUNCTION_MCPGAIN
 #define AC_GETFUNCTION_GAIN 0x10
@@ -769,6 +808,14 @@ EXPNETTYPE unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_
 #define AC_FEATURES_REALTIMESPURIOUSNOISEFILTER 0x200000
 #define AC_FEATURES_POSTPROCESSSPURIOUSNOISEFILTER 0x400000
 #define AC_FEATURES_DUALPREAMPGAIN 0x800000
+#define AC_FEATURES_DEFECT_CORRECTION 0x1000000
+#define AC_FEATURES_STARTOFEXPOSURE_EVENT 0x2000000
+#define AC_FEATURES_ENDOFEXPOSURE_EVENT 0x4000000
+#define AC_FEATURES_CAMERALINK 0x8000000
+#define AC_FEATURES_FIFOFULL_EVENT 0x10000000
+#define AC_FEATURES_SENSOR_PORT_CONFIGURATION 0x20000000
+#define AC_FEATURES_SENSOR_COMPENSATION 0x40000000
+#define AC_FEATURES_IRIG_SUPPORT 0x80000000
 
 #define AC_EMGAIN_8BIT 1
 #define AC_EMGAIN_12BIT 2
