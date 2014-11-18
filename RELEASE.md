@@ -29,7 +29,6 @@ R2-2 (XXX-Nov-2014)
   - R2-0 through R2-1-1 used 2.90 on Windows and 2.84 on Linux.
 * Added support for the Shamrock spectrographs on Linux. 
 
-
 R2-1-1 (13-Jul-2014)
 ----
 * Added support for the Shamrock spectrographs on 64-bit Windows. 
