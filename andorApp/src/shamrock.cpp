@@ -11,6 +11,9 @@
  */
 
 #include <iocsh.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <epicsString.h>
 
 #include <asynPortDriver.h>
@@ -238,7 +241,7 @@ asynStatus shamrock::getStatus()
     setDoubleParam(0, SRMaxWavelength_, calibration_[numPixels_-1]);
     // We need to find a C/C++ library to do 3'rd order polynomial fit
     // For now we do a first order fit!
-    double slope = (calibration_[numPixels_-1] - calibration_[0]) / (numPixels_-1);
+    //double slope = (calibration_[numPixels_-1] - calibration_[0]) / (numPixels_-1);
 
     for (i=0; i<MAX_ADDR; i++) {
         callParamCallbacks(i);
@@ -335,7 +338,7 @@ asynStatus shamrock::readFloat32Array(asynUser *pasynUser, epicsFloat32 *pValue,
 {
     asynStatus status = asynSuccess;
     int function = pasynUser->reason;
-    static const char *functionName = "readFloat32Array";
+    //static const char *functionName = "readFloat32Array";
     
     if (function == SRCalibration_) {
         *nIn = numPixels_;
@@ -351,7 +354,7 @@ asynStatus shamrock::readFloat32Array(asynUser *pasynUser, epicsFloat32 *pValue,
  */
 void shamrock::report(FILE *fp, int details)
 {
-    static const char *functionName = "report";
+    //static const char *functionName = "report";
     
     asynPortDriver::report(fp, details);
     return;
