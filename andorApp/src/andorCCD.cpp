@@ -22,16 +22,19 @@
 #include <iocsh.h>
 #include <epicsExit.h>
 
+#include <tinyxml.h>
+#include <ADDriver.h>
+
 #ifdef _WIN32
 #include "ATMCD32D.h"
-#include "ShamrockCIF.h"
 #else
 #include "atmcdLXd.h"
 #endif
-
-#include "andorCCD.h"
+#include "ShamrockCIF.h"
+#include "SPEHeader.h"
 
 #include <epicsExport.h>
+#include "andorCCD.h"
 
 static const char *driverName = "andorCCD";
 
@@ -1487,8 +1490,7 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   calibrationString = (char *) calloc(nx*20, sizeof(char));
   for (i=0; i<nx; i++) calibration[i] = (float) i; 
   
-  // If we are on Windows and there is a valid Shamrock spectrometer get the calibration
-#ifdef _WIN32
+  // If there is a valid Shamrock spectrometer get the calibration
   int error;
   int numSpectrometers;
   error = ShamrockGetNumberDevices(&numSpectrometers);
@@ -1502,7 +1504,6 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
       driverName, functionName);
   }
   noSpectrometers:  
-#endif 
   
   // Create the calibration string
   for (i=0; i<nx; i++) {
