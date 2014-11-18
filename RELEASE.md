@@ -25,8 +25,8 @@ Release Notes
 
 R2-2 (XXX-Nov-2014)
 ----
-* Upgraded the Andor SDK version used to 2.98.3.  
-  - R2-0 through R2-1-1 used 2.96 on Windows and 2.84 on Linux.
+* Upgraded the Andor SDK version used to 2.98.3 on both Windows and Linux. 
+  - R2-0 through R2-1-1 used 2.90 on Windows and 2.84 on Linux.
 * Added support for the Shamrock spectrographs on Linux. 
 
 
