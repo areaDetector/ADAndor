@@ -42,7 +42,7 @@ PROD_LIBS_WIN32 += ShamrockCIFm
 # Note: we use PROD_SYS_LIBS because we are building statically but this library is only provided in dynamic
 # format (.so)
 PROD_SYS_LIBS_Linux += andor
-PROD_SYS_LIBS_Linux += shamrock
+PROD_SYS_LIBS_Linux += shamrockcif
 
 include $(ADCORE)/ADApp/commonDriverMakefile
 
