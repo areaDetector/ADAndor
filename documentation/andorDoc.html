@@ -81,7 +81,7 @@
     to the directory containing the Andor shareable libraries from the SDK must be added
     to the LD_LIBRARY_PATH environment variable when running the areaDetector IOC.</p>
   <p>
-    NOTE: When using the Shamrock spectrograph the following DLLs must actually be copied
+    NOTE: When using the Shamrock spectrograph on Windows the following DLLs must actually be copied
     from the SDK directory to the current working directory from which the IOC application
     is being run, e.g. iocBoot/iocAndor.</p>
   <ul>
@@ -859,8 +859,6 @@
       errors because the Andor SDK functions won't save files if acquisition is in progress.
       Saving files in Single mode and Fast Kinetics mode works fine.</li>
     <li>Trigger modes have not been tested.</li>
-    <li>The Shamrock spectrometers are only supported on Windows. They are not supported
-      on Linux because the Andor Shamrock SDK is not yet available for Linux.</li>
     <li>The Shamrock wavelength calibration is only saved in SPE files. The Andor SDK
       file writers do not save the calibration, and it is not possible to pass the calibration
       to other file plugins as an attribute because array attributes are not currently
