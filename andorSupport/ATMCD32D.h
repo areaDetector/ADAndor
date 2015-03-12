@@ -397,6 +397,8 @@ unsigned int WINAPI SetFanMode(int mode);
 unsigned int WINAPI SetFastExtTrigger(int mode);
 unsigned int WINAPI SetFastKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin);
 unsigned int WINAPI SetFastKineticsEx(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
+unsigned int WINAPI SetSuperKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
+unsigned int WINAPI SetTimeScan(int rows, int tracks, int mode);
 unsigned int WINAPI SetFilterMode(int mode);
 unsigned int WINAPI SetFilterParameters(int width, float sensitivity, int range, float accept, int smooth, int noise);
 unsigned int WINAPI SetFKVShiftSpeed(int index);
@@ -475,6 +477,7 @@ unsigned int WINAPI SetVSSpeed(int index);
 unsigned int WINAPI ShutDown(void);
 unsigned int WINAPI StartAcquisition(void);
 unsigned int WINAPI UnMapPhysicalAddress(void);
+unsigned int WINAPI UpdateDDGTimings(void);
 unsigned int WINAPI WaitForAcquisition(void);
 unsigned int WINAPI WaitForAcquisitionByHandle(long cameraHandle);
 unsigned int WINAPI WaitForAcquisitionByHandleTimeOut(long cameraHandle, int iTimeOutMs);
@@ -666,6 +669,8 @@ unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutpu
 #define AC_ACQMODE_FRAMETRANSFER 16
 #define AC_ACQMODE_FASTKINETICS 32
 #define AC_ACQMODE_OVERLAP 64
+#define AC_ACQMODE_SUPERKINETICS 128
+#define AC_ACQMODE_TIMESCAN 256
 
 #define AC_READMODE_FULLIMAGE 1
 #define AC_READMODE_SUBIMAGE 2
@@ -716,6 +721,7 @@ unsigned int WINAPI PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutpu
 #define AC_CAMERATYPE_ALTA 26
 #define AC_CAMERATYPE_ALTAF 27
 #define AC_CAMERATYPE_IKONXL 28
+#define AC_CAMERATYPE_RES1 29
 
 #define AC_PIXELMODE_8BIT 1
 #define AC_PIXELMODE_14BIT 2

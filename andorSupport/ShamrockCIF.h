@@ -6,6 +6,7 @@
 #define SHAMROCK_P2INVALID 20267
 #define SHAMROCK_P3INVALID 20268
 #define SHAMROCK_P4INVALID 20269
+#define SHAMROCK_P5INVALID 20270
 #define SHAMROCK_NOT_INITIALIZED 20275
 #define SHAMROCK_NOT_AVAILABLE 20292
 
@@ -46,7 +47,7 @@
 
 #define SHAMROCK_ERRORLENGTH 64
 
-#ifndef linux
+#ifndef __linux__
  #include "windows.h"
 #endif
 
@@ -76,6 +77,8 @@ unsigned int WINAPI ShamrockSetDetectorOffset(int device,int offset);
 unsigned int WINAPI ShamrockGetDetectorOffset(int device,int *offset);
 unsigned int WINAPI ShamrockSetDetectorOffsetPort2(int device,int offset);
 unsigned int WINAPI ShamrockGetDetectorOffsetPort2(int device,int *offset);
+unsigned int WINAPI ShamrockSetDetectorOffsetEx(int device, int entrancePort, int exitPort, int offset);
+unsigned int WINAPI ShamrockGetDetectorOffsetEx(int device, int entrancePort, int exitPort, int *offset);
 unsigned int WINAPI ShamrockSetGratingOffset(int device,int Grating, int offset);
 unsigned int WINAPI ShamrockGetGratingOffset(int device,int Grating, int *offset);
 unsigned int WINAPI ShamrockGratingIsPresent(int device,int *present);
@@ -160,6 +163,7 @@ unsigned int WINAPI ShamrockSetNumberPixels(int device, int NumberPixels);
 unsigned int WINAPI ShamrockGetPixelWidth(int device, float* Width);
 unsigned int WINAPI ShamrockGetNumberPixels(int device, int* NumberPixels);
 unsigned int WINAPI ShamrockGetCalibration(int device, float* CalibrationValues, int NumberPixels);
+unsigned int WINAPI ShamrockGetPixelCalibrationCoefficients(int device, float* A, float* B, float* C, float* D);
 #ifdef __cplusplus
 }
 #endif

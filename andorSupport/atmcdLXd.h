@@ -410,6 +410,8 @@ unsigned int SetFanMode(int mode);
 unsigned int SetFastExtTrigger(int mode);
 unsigned int SetFastKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin);
 unsigned int SetFastKineticsEx(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
+unsigned int SetSuperKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
+unsigned int SetTimeScan(int rows, int tracks, int mode);
 unsigned int SetFilterMode(int mode);
 unsigned int SetFilterParameters(int width, float sensitivity, int range, float accept, int smooth, int noise);
 unsigned int SetFKVShiftSpeed(int index);
@@ -488,6 +490,7 @@ unsigned int SetVSSpeed(int index);
 unsigned int ShutDown();
 unsigned int StartAcquisition();
 unsigned int UnMapPhysicalAddress();
+unsigned int UpdateDDGTimings();
 unsigned int WaitForAcquisition();
 unsigned int WaitForAcquisitionByHandle(at_32 cameraHandle);
 unsigned int WaitForAcquisitionByHandleTimeOut(long cameraHandle, int iTimeOutMs);
@@ -679,6 +682,8 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define AC_ACQMODE_FRAMETRANSFER 16
 #define AC_ACQMODE_FASTKINETICS 32
 #define AC_ACQMODE_OVERLAP 64
+#define AC_ACQMODE_SUPERKINETICS 128
+#define AC_ACQMODE_TIMESCAN 256
 
 #define AC_READMODE_FULLIMAGE 1
 #define AC_READMODE_SUBIMAGE 2
@@ -729,6 +734,7 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define AC_CAMERATYPE_ALTA 26
 #define AC_CAMERATYPE_ALTAF 27
 #define AC_CAMERATYPE_IKONXL 28
+#define AC_CAMERATYPE_RES1 29
 
 #define AC_PIXELMODE_8BIT 1
 #define AC_PIXELMODE_14BIT 2
