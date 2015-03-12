@@ -23,7 +23,7 @@ files respectively, in the configure/ directory of the appropriate release of th
 Release Notes
 =============
 
-R2-2 (xxx-March-2015)
+R2-3 (xxx-March-2015)
 ----
 * Upgraded the Andor SDK version used to 2.99.3 on both Windows and Linux. 
 
