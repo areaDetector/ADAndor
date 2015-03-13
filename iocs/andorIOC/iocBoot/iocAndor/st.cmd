@@ -11,10 +11,10 @@ epicsEnvSet("XSIZE",  "2048")
 epicsEnvSet("YSIZE",  "2048")
 epicsEnvSet("NCHANS", "2048")
 
-# andorCCDConfig(const char *portName, int maxBuffers, size_t maxMemory, 
-#                const char *installPath, int priority, int stackSize)
-#andorCCDConfig("$(PORT)", 0, 0, "/usr/local/etc/andor/", 0, 0)
-andorCCDConfig("$(PORT)", 0, 0, "", 0, 0)
+# andorCCDConfig(const char *portName, const char *installPath, int shamrockID,
+#                int maxBuffers, size_t maxMemory, int priority, int stackSize)
+#andorCCDConfig("$(PORT)", "/usr/local/etc/andor/", 0, 0, 0, 0 ,0)
+andorCCDConfig("$(PORT)", "", 0, 0, 0, 0, 0)
 
 dbLoadRecords("$(ADCORE)/db/ADBase.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 dbLoadRecords("$(ADCORE)/db/NDFile.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
