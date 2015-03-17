@@ -8,6 +8,8 @@
  *
  * Created: April 9, 2014
  *
+ * Modified: March 16, 2015 to add Flipper functions
+ *
  */
 
 #include <iocsh.h>
@@ -26,21 +28,27 @@ static const char *driverName = "shamrock";
 
 
 /* Shamrock driver specific parameters */
-#define SRWavelengthString         "SR_WAVELENGTH"
-#define SRMinWavelengthString      "SR_MIN_WAVELENGTH"
-#define SRMaxWavelengthString      "SR_MAX_WAVELENGTH"
-#define SRCalibrationString        "SR_CALIBRATION"
-#define SRGratingString            "SR_GRATING"
-#define SRNumGratingsString        "SR_NUM_GRATINGS"
-#define SRGratingExistsString      "SR_GRATING_EXISTS"
-#define SRSlitExistsString         "SR_SLIT_EXISTS"
-#define SRSlitSizeString           "SR_SLIT_SIZE"
+#define SRWavelengthString            "SR_WAVELENGTH"
+#define SRMinWavelengthString         "SR_MIN_WAVELENGTH"
+#define SRMaxWavelengthString         "SR_MAX_WAVELENGTH"
+#define SRCalibrationString           "SR_CALIBRATION"
+#define SRGratingString               "SR_GRATING"
+#define SRNumGratingsString           "SR_NUM_GRATINGS"
+#define SRGratingExistsString         "SR_GRATING_EXISTS"
+#define SRFlipperMirrorExistsString   "SR_FLIPPER_MIRROR_EXISTS"
+#define SRFlipperMirrorPortString     "SR_FLIPPER_MIRROR_PORT"
+#define SRSlitExistsString            "SR_SLIT_EXISTS"
+#define SRSlitSizeString              "SR_SLIT_SIZE"
+
 
 #define MAX_ERROR_MESSAGE_SIZE 100
 
 #define MAX_SLITS 4
 
 #define MAX_GRATINGS 3
+
+#define MAX_FLIPPER_MIRRORS 2
+
 
 // Maximum number of address.
 #define MAX_ADDR 4
@@ -68,9 +76,12 @@ protected:
     int SRGrating_;             /** Grating                      (int32 read/write) */
     int SRNumGratings_;         /** Number of gratings           (int32 read) */
     int SRGratingExists_;       /** Grating exists               (int32 read) */
+    int SRFlipperMirrorExists_; /** Flipper Mirror exists        (int32 read) */
+    int SRFlipperMirrorPort_;   /** Flipper Mirror Port          (int32 read/write) */
     int SRSlitExists_;          /** Slit exists                  (int32 read) */
     int SRSlitSize_;            /** Slit width                   (float64 read/write) */
     #define LAST_SR_PARAM SRSlitSize_
+
 
 private:
     /* Local methods to this class */
@@ -83,6 +94,7 @@ private:
     int numPixels_;
     float *calibration_;
     char lastError_[MAX_ERROR_MESSAGE_SIZE];
+    bool flipperMirrorIsPresent_[MAX_FLIPPER_MIRRORS];
 };
 
 /** Number of asynPortDriver parameters this driver supports. */
@@ -127,6 +139,7 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
     int numGratings;
     float pixelWidth;
     int i;
+    int numFlipperStatus;
 
     createParam(SRWavelengthString,       asynParamFloat64,   &SRWavelength_);
     createParam(SRMinWavelengthString,    asynParamFloat64,   &SRMinWavelength_);
@@ -135,7 +148,9 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
     createParam(SRGratingString,          asynParamInt32,     &SRGrating_);
     createParam(SRNumGratingsString,      asynParamInt32,     &SRNumGratings_);
     createParam(SRGratingExistsString,    asynParamInt32,     &SRGratingExists_);
-    createParam(SRSlitExistsString,       asynParamInt32,     &SRSlitExists_);
+    createParam(SRFlipperMirrorPortString,		asynParamInt32,     &SRFlipperMirrorPort_);
+    createParam(SRFlipperMirrorExistsString,    asynParamInt32,     &SRFlipperMirrorExists_);
+    createParam(SRSlitExistsString,	  asynParamInt32,     &SRSlitExists_);
     createParam(SRSlitSizeString,         asynParamFloat64,   &SRSlitSize_);
 
     error = ShamrockInitialize((char *)iniPath);
@@ -172,6 +187,7 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
     error = ShamrockGetNumberGratings(shamrockId_, &numGratings);
     status = checkError(error, functionName, "ShamrockGetNumberGratings");
     setIntegerParam(SRNumGratings_, numGratings);
+
     // Get wavelength range of each grating
     for (i=1; i<=numGratings; i++) {
         setIntegerParam(i, SRGratingExists_, 1);
@@ -184,6 +200,13 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
         setIntegerParam(i, SRGratingExists_, 0);
     }
     
+    // Determine which Flipper Mirrors exist
+    for (i=0; i<MAX_FLIPPER_MIRRORS; i++) {
+		error = ShamrockFlipperMirrorIsPresent(shamrockId_, i+1, &numFlipperStatus);
+        status = checkError(error, functionName, "ShamrockFlipperMirrorIsPresent");
+        flipperMirrorIsPresent_[i] = (numFlipperStatus== 1); 
+		setIntegerParam(i, SRFlipperMirrorExists_, flipperMirrorIsPresent_[i]);
+    }
     
     getStatus();
     
@@ -215,12 +238,23 @@ asynStatus shamrock::getStatus()
     float width;
     int i;
     static const char *functionName = "getStatus";
+	int port;
+
+    //Get Flipper Status
+    for (i=0; i<MAX_FLIPPER_MIRRORS; i++) {
+        if (flipperMirrorIsPresent_[i] == 0) continue;
+        error = ShamrockGetFlipperMirror(shamrockId_, i+1, &port);
+        status = checkError(error, functionName, "ShamrockGetFlipperMirror");
+        if (status) return asynError;
+        setIntegerParam(i, SRFlipperMirrorPort_, port);
+    }
+
 
     error = ShamrockGetGrating(shamrockId_, &grating);
     status = checkError(error, functionName, "ShamrockGetGrating");
     if (status) return asynError;
     setIntegerParam(SRGrating_, grating);
-
+    
     error = ShamrockGetWavelength(shamrockId_, &wavelength);
     status = checkError(error, functionName, "ShamrockGetWavelength");
     if (status) return asynError;
@@ -277,6 +311,15 @@ asynStatus shamrock::writeInt32( asynUser *pasynUser, epicsInt32 value)
         error = ShamrockSetGrating(shamrockId_, value);
         status = checkError(error, functionName, "ShamrockSetGrating");
     }
+    
+    // Port Information
+    else if (function == SRFlipperMirrorPort_) {
+    	if (flipperMirrorIsPresent_[addr]) {
+        	error = ShamrockSetFlipperMirror(shamrockId_, addr+1, value);
+        	status = checkError(error, functionName, "ShamrockSetFlipperMirror");
+        }
+    }
+
     
     getStatus();
 
