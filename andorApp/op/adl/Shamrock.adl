@@ -1,6 +1,6 @@
 
 file {
-	name="/home/epics/devel/areaDetector-2-0/ADAndor/andorApp/op/adl/Shamrock.adl"
+	name="/local/DPbin/epics/epics_2015-03-31/synApps_5_8/support/areaDetector-2-1/ADAndor-R2-3beta/andorApp/op/adl/Shamrock.adl"
 	version=030107
 }
 display {
@@ -127,7 +127,7 @@ rectangle {
 		x=5
 		y=35
 		width=350
-		height=280
+		height=265
 	}
 	"basic attribute" {
 		clr=14
@@ -932,4 +932,182 @@ text {
 	align="horiz. centered"
 	limits {
 	}
+}
+rectangle {
+	object {
+		x=5
+		y=305
+		width=350
+		height=90
+	}
+	"basic attribute" {
+		clr=14
+		fill="outline"
+	}
+}
+text {
+	object {
+		x=13
+		y=349
+		width=70
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Input"
+	align="horiz. right"
+}
+menu {
+	object {
+		x=151
+		y=350
+		width=100
+		height=20
+	}
+	control {
+		chan="$(P)$(R)FlipperMirror1"
+		clr=14
+		bclr=51
+	}
+}
+"text update" {
+	object {
+		x=257
+		y=350
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)FlipperMirror1_RBV"
+		clr=54
+		bclr=4
+	}
+	limits {
+	}
+}
+rectangle {
+	object {
+		x=91
+		y=306
+		width=170
+		height=21
+	}
+	"basic attribute" {
+		clr=2
+	}
+}
+text {
+	object {
+		x=76
+		y=306
+		width=200
+		height=20
+	}
+	"basic attribute" {
+		clr=54
+	}
+	textix="Flipper Mirrors"
+	align="horiz. centered"
+}
+"text update" {
+	object {
+		x=257
+		y=373
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)FlipperMirror2_RBV"
+		clr=54
+		bclr=4
+	}
+	limits {
+	}
+}
+menu {
+	object {
+		x=152
+		y=373
+		width=100
+		height=20
+	}
+	control {
+		chan="$(P)$(R)FlipperMirror2"
+		clr=14
+		bclr=51
+	}
+}
+text {
+	object {
+		x=13
+		y=372
+		width=70
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Output"
+	align="horiz. right"
+}
+text {
+	object {
+		x=88
+		y=329
+		width=60
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Exists"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=88
+		y=351
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)FlipperMirrorExists1"
+		clr=54
+		bclr=2
+	}
+	clrmod="alarm"
+	align="horiz. centered"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=88
+		y=374
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)FlipperMirrorExists2"
+		clr=54
+		bclr=2
+	}
+	clrmod="alarm"
+	align="horiz. centered"
+	limits {
+	}
+}
+text {
+	object {
+		x=151
+		y=329
+		width=60
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Port"
+	align="horiz. right"
 }
