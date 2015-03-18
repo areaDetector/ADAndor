@@ -148,9 +148,9 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
     createParam(SRGratingString,          asynParamInt32,     &SRGrating_);
     createParam(SRNumGratingsString,      asynParamInt32,     &SRNumGratings_);
     createParam(SRGratingExistsString,    asynParamInt32,     &SRGratingExists_);
-    createParam(SRFlipperMirrorPortString,		asynParamInt32,     &SRFlipperMirrorPort_);
+    createParam(SRFlipperMirrorPortString,        asynParamInt32,     &SRFlipperMirrorPort_);
     createParam(SRFlipperMirrorExistsString,    asynParamInt32,     &SRFlipperMirrorExists_);
-    createParam(SRSlitExistsString,	  asynParamInt32,     &SRSlitExists_);
+    createParam(SRSlitExistsString,      asynParamInt32,     &SRSlitExists_);
     createParam(SRSlitSizeString,         asynParamFloat64,   &SRSlitSize_);
 
     error = ShamrockInitialize((char *)iniPath);
@@ -202,10 +202,10 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
     
     // Determine which Flipper Mirrors exist
     for (i=0; i<MAX_FLIPPER_MIRRORS; i++) {
-		error = ShamrockFlipperMirrorIsPresent(shamrockId_, i+1, &numFlipperStatus);
+        error = ShamrockFlipperMirrorIsPresent(shamrockId_, i+1, &numFlipperStatus);
         status = checkError(error, functionName, "ShamrockFlipperMirrorIsPresent");
         flipperMirrorIsPresent_[i] = (numFlipperStatus== 1); 
-		setIntegerParam(i, SRFlipperMirrorExists_, flipperMirrorIsPresent_[i]);
+        setIntegerParam(i, SRFlipperMirrorExists_, flipperMirrorIsPresent_[i]);
     }
     
     getStatus();
@@ -238,7 +238,7 @@ asynStatus shamrock::getStatus()
     float width;
     int i;
     static const char *functionName = "getStatus";
-	int port;
+    int port;
 
     //Get Flipper Status
     for (i=0; i<MAX_FLIPPER_MIRRORS; i++) {
@@ -314,9 +314,9 @@ asynStatus shamrock::writeInt32( asynUser *pasynUser, epicsInt32 value)
     
     // Port Information
     else if (function == SRFlipperMirrorPort_) {
-    	if (flipperMirrorIsPresent_[addr]) {
-        	error = ShamrockSetFlipperMirror(shamrockId_, addr+1, value);
-        	status = checkError(error, functionName, "ShamrockSetFlipperMirror");
+        if (flipperMirrorIsPresent_[addr]) {
+            error = ShamrockSetFlipperMirror(shamrockId_, addr+1, value);
+            status = checkError(error, functionName, "ShamrockSetFlipperMirror");
         }
     }
 
