@@ -258,3 +258,62 @@ record(waveform, "$(P)$(R)Calibration")
    field(NELM, "$(PIXELS)")
    field(SCAN, "I/O Intr")
 }
+
+record(bo, "$(P)$(R)FlipperMirror1")
+{
+   field(PINI, "1")
+   field(DTYP, "asynInt32")
+   field(OUT,  "@asyn($(PORT),0,$(TIMEOUT))SR_FLIPPER_MIRROR_PORT")
+   field(ZNAM, "Direct")
+   field(ONAM, "Side")
+}
+
+record(bi, "$(P)$(R)FlipperMirror1_RBV")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_FLIPPER_MIRROR_PORT")
+   field(ZNAM, "Direct")
+   field(ONAM, "Side")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)FlipperMirrorExists1")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),0,$(TIMEOUT))SR_FLIPPER_MIRROR_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
+record(bo, "$(P)$(R)FlipperMirror2")
+{
+   field(PINI, "1")
+   field(DTYP, "asynInt32")
+   field(OUT,  "@asyn($(PORT),1,$(TIMEOUT))SR_FLIPPER_MIRROR_PORT")
+   field(ZNAM, "Direct")
+   field(ONAM, "Side")
+}
+
+record(bi, "$(P)$(R)FlipperMirror2_RBV")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_FLIPPER_MIRROR_PORT")
+   field(ZNAM, "Direct")
+   field(ONAM, "Side")
+   field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)FlipperMirrorExists2")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),1,$(TIMEOUT))SR_FLIPPER_MIRROR_EXISTS")
+   field(ZNAM, "No")
+   field(ZSV,  "MINOR")
+   field(ONAM, "Yes")
+   field(OSV,  "NO_ALARM")
+   field(SCAN, "I/O Intr")
+}
+
