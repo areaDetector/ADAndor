@@ -5,3 +5,6 @@ $(P)$(R)AndorShutterExTTL
 $(P)$(R)PALFilePath
 $(P)$(R)AndorPreAmpGain
 $(P)$(R)AndorADCSpeed
+file "ADBase_settings.req", P=$(P), R=$(R)
+file "NDFile_settings.req", P=$(P), R=$(R)
+
