@@ -23,7 +23,7 @@ files respectively, in the configure/ directory of the appropriate release of th
 Release Notes
 =============
 
-R2-3 (30-March-2015)
+R2-3 (16-April-2015)
 ----
 * Upgraded the Andor SDK version used to 2.99.3 on both Windows and Linux.
 * Changed st.cmd to be compatible with ADCore R2-2. 
