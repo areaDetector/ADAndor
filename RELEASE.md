@@ -23,8 +23,7 @@ files respectively, in the configure/ directory of the appropriate release of th
 Release Notes
 =============
 
-R2-4 (September 8, 2015)
-* Updated Makefile and st.cmd to be compatible with ADCore R2-4 and ADExample R2-0.
+R2-4 (September 15, 2015)
 * Updated autoconverted .edl, .ui, and .opi files.
 
 R2-3 (16-April-2015)
