@@ -44,7 +44,7 @@ PROD_LIBS_WIN32 += ShamrockCIFm
 PROD_SYS_LIBS_Linux += andor
 PROD_SYS_LIBS_Linux += shamrockcif
 
-include $(ADEXAMPLE)/exampleApp/commonDriverMakefile
+include $(ADCORE)/ADApp/commonDriverMakefile
 
 #=============================
 
