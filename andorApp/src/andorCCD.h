@@ -184,6 +184,8 @@ class AndorCCD : public ADDriver {
   float mAcquireTime;
   float mAcquirePeriod;
   float mAccumulatePeriod;
+  int mMinShutterOpenTime;
+  int mMinShutterCloseTime;
   
   // Shamrock spectrometer ID
   int mShamrockId;

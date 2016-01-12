@@ -162,6 +162,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     checkStatus(GetHeadModel(model));
     checkStatus(SetReadMode(ARImage));
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
+    checkStatus(GetShutterMinTimes(&mMinShutterCloseTime, &mMinShutterOpenTime));
     callParamCallbacks();
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
@@ -718,8 +719,16 @@ asynStatus AndorCCD::setupShutter(int command)
   getDoubleParam(ADShutterOpenDelay, &dTemp);
   // Convert to ms
   openTime = (int)(dTemp * 1000.);
+  if (openTime < mMinShutterOpenTime) {
+    openTime = mMinShutterOpenTime;
+    setDoubleParam(ADShutterOpenDelay, openTime / 1000.);
+  }
   getDoubleParam(ADShutterCloseDelay, &dTemp);
   closeTime = (int)(dTemp * 1000.);
+  if (closeTime < mMinShutterCloseTime) {
+    closeTime = mMinShutterCloseTime;
+    setDoubleParam(ADShutterCloseDelay, closeTime / 1000.);
+  }
   getIntegerParam(AndorShutterMode, &shutterMode);
   getIntegerParam(AndorShutterExTTL, &shutterExTTL);
   
