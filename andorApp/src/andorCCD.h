@@ -165,14 +165,6 @@ class AndorCCD : public ADDriver {
   static const epicsInt32 AFFFITS;
   static const epicsInt32 AFFSPE;
 
-  /**
-   * List of EM Gain Modes
-   */
-  static const epicsInt32 AG8bitDac;
-  static const epicsInt32 AG12bitDac;
-  static const epicsInt32 AGLinear;
-  static const epicsInt32 AGReal;
-
   epicsEventId statusEvent;
   epicsEventId dataEvent;
   double mPollingPeriod;

@@ -83,11 +83,6 @@ const epicsInt32 AndorCCD::AFFRAW  = 4;
 const epicsInt32 AndorCCD::AFFFITS = 5;
 const epicsInt32 AndorCCD::AFFSPE  = 6;
 
-const epicsInt32 AndorCCD::AG8bitDac  = 0;
-const epicsInt32 AndorCCD::AG12bitDac = 1;
-const epicsInt32 AndorCCD::AGLinear   = 2;
-const epicsInt32 AndorCCD::AGReal     = 3;
-
 //C Function prototypes to tie in with EPICS
 static void andorStatusTaskC(void *drvPvt);
 static void andorDataTaskC(void *drvPvt);
