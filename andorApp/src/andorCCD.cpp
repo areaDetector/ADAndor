@@ -137,6 +137,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   createParam(AndorPreAmpGainString,              asynParamInt32, &AndorPreAmpGain);
   createParam(AndorEmGainString,                  asynParamInt32, &AndorEmGain);
   createParam(AndorEmGainModeString,              asynParamInt32, &AndorEmGainMode);
+  createParam(AndorEmGainAdvancedString,          asynParamInt32, &AndorEmGainAdvanced);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
 
   // Create the epicsEvent for signaling to the status task when parameters should have changed.
@@ -215,6 +216,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   status |= setDoubleParam(AndorAccumulatePeriod, mAccumulatePeriod); 
   status |= setIntegerParam(AndorEmGain, 0); 
   status |= setIntegerParam(AndorEmGainMode, 0); 
+  status |= setIntegerParam(AndorEmGainAdvanced, 0); 
   status |= setIntegerParam(AndorAdcSpeed, 0);
   status |= setIntegerParam(AndorShutterExTTL, 1);
   status |= setIntegerParam(AndorShutterMode, AShutterAuto);
@@ -544,13 +546,14 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
         } 
       }
     }
-    else if ((function == ADNumExposures) || (function == ADNumImages) ||
-             (function == ADImageMode)                                 ||
-             (function == ADBinX)         || (function == ADBinY)      ||
-             (function == ADMinX)         || (function == ADMinY)      ||
-             (function == ADSizeX)        || (function == ADSizeY)     ||
-             (function == ADTriggerMode)  || (function == AndorEmGain) || 
-             (function == AndorEmGainMode)|| (function == AndorAdcSpeed)) {
+    else if ((function == ADNumExposures) || (function == ADNumImages)         ||
+             (function == ADImageMode)                                         ||
+             (function == ADBinX)         || (function == ADBinY)              ||
+             (function == ADMinX)         || (function == ADMinY)              ||
+             (function == ADSizeX)        || (function == ADSizeY)             ||
+             (function == ADTriggerMode)  || (function == AndorEmGain)         || 
+             (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
+             (function == AndorAdcSpeed)) {
       status = setupAcquisition();
       if (function == AndorAdcSpeed) setupPreAmpGains();
       if (status != asynSuccess) setIntegerParam(function, oldValue);
@@ -966,6 +969,7 @@ asynStatus AndorCCD::setupAcquisition()
   int FKmode = 4;
   int emGain;
   int emGainMode;
+  int emGainAdvanced;
   int FKOffset;
   AndorADCSpeed_t *pSpeed;
   static const char *functionName = "setupAcquisition";
@@ -993,6 +997,8 @@ asynStatus AndorCCD::setupAcquisition()
   }
   // Check EM gain capability and range, and set gain mode before setting gain and limits
   if ((int)mCapabilities.ulEMGainCapability > 0) {
+    getIntegerParam(AndorEmGainAdvanced, &emGainAdvanced);
+    setIntegerParam(AndorEmGainAdvanced, emGainAdvanced);
     getIntegerParam(AndorEmGainMode, &emGainMode);
     setIntegerParam(AndorEmGainMode, emGainMode);
     checkStatus(GetEMGainRange(&mEmGainRangeLow, &mEmGainRangeHigh));
@@ -1071,20 +1077,26 @@ asynStatus AndorCCD::setupAcquisition()
       driverName, functionName, mAcquireTime);
     checkStatus(SetExposureTime(mAcquireTime));
    
-    // Check if camera has EM gain capability before setting it 
-    if ((int)mCapabilities.ulEMGainCapability > 0) {
-      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s:%s:, SetEMCCDGain(%d)\n", 
-        driverName, functionName, emGain);
-      checkStatus(SetEMCCDGain(emGain));
-    }
-    
-    // Check if camera has EM gain capability before setting mode 
+    // Check if camera has EM gain capability before setting modes or EM gain
     if ((int)mCapabilities.ulEMGainCapability > 0) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s:%s:, SetEMGainMode(%d)\n", 
         driverName, functionName, emGainMode);
       checkStatus(SetEMGainMode(emGainMode));
+    }
+      
+    if ((int)mCapabilities.ulEMGainCapability > 0) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s:%s:, SetEMGainAdvanced(%d)\n", 
+        driverName, functionName, emGainAdvanced);
+      checkStatus(SetEMAdvanced(emGainAdvanced));
+    }
+    
+    if ((int)mCapabilities.ulEMGainCapability > 0) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s:%s:, SetEMCCDGain(%d)\n", 
+        driverName, functionName, emGain);
+      checkStatus(SetEMCCDGain(emGain));
     }
     
     switch (imageMode) {

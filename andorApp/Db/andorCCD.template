@@ -324,6 +324,25 @@ record(mbbi, "$(P)$(R)AndorEMGainMode_RBV")
     field(SCAN, "I/O Intr")
 }
 
+# EM Gain Advanced Mode
+record(bo, "$(P)$(R)AndorEMGainAdvanced")
+{
+    field(PINI, "1")
+    field(DTYP, "asynInt32")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN_ADVANCED")
+}
+
+record(bi, "$(P)$(R)AndorEMGainAdvanced_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN_ADVANCED")
+    field(SCAN, "I/O Intr")
+}
+
 
 
 #Records in ADBase that do not apply to Andor
