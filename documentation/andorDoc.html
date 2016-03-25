@@ -51,6 +51,7 @@
     <li>Change the ADC sampling speed (0.05MHz and 2.5MHz on the iKon)</li>
     <li>Set a region of interest (a smaller region can be read out faster)</li>
     <li>Set and monitor the CCD temperature</li>
+    <li>Electron Multiplying (EM) Gain on supported detectors</li>
   </ul>
   <p>
     The Andor module includes a separate driver to control the Andor Shamrock spectrographs.
@@ -597,6 +598,78 @@
           AndorAcquirePeriodActual</td>
         <td>
           ai</td>
+      </tr>
+      <tr>
+        <td>
+          AndorEMGain</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Controls the Electron Multiplying (EM) Gain level on supported detectors. The valid range depends 
+          on the value of AndorEMGainMode and the detector temperature. For cameras that do not
+          support EM Gain, AndorEMGain has no effect.</td>
+        <td>
+          ANDOR_EM_GAIN</td>
+        <td>
+          AndorEMGain<br />
+          AndorEMGain_RBV</td>
+        <td>
+          ao<br />
+          ai</td>
+      </tr>
+      <tr>
+        <td>
+          AndorEMGainMode</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Sets the EM Gain mode on supported detectors. Choices are:
+          <ul>
+            <li>8 bit DAC</li>
+            <li>12 bit DAC</li>
+            <li>Linear Mode</li>
+            <li>Real EM Gain</li>
+          </ul>
+          For cameras that do not support EM Gain, AndorEMGainMode has no effect.</td>
+        <td>
+          ANDOR_EM_GAIN_MODE</td>
+        <td>
+          AndorEMGainMode<br />
+          AndorEMGainMode_RBV</td>
+        <td>
+          mbbo<br />
+          mbbi</td>
+      </tr>
+      <tr>
+        <td>
+          AndorEMGainAdvanced</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Enables access to higher EM Gain levels. Choices are:
+          <ul>
+            <li>Disabled</li>
+            <li>Enabled</li>
+          </ul>
+          For cameras that do not support EM Gain, AndorEMGainAdvanced has no effect.
+          NOTE: Before using higher levels, you should ensure that light levels do not
+          exceed the regime of tens of photons per pixel, otherwise accelerated 
+          ageing of the sensor can occur.
+        </td>
+        <td>
+          ANDOR_EM_GAIN_ADVANCED</td>
+        <td>
+          AndorEMGainAdvanced<br />
+          AndorEMGainAdvanced_RBV</td>
+        <td>
+          bo<br />
+          bi</td>
       </tr>
     </tbody>
   </table>

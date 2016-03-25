@@ -23,8 +23,12 @@ files respectively, in the configure/ directory of the appropriate release of th
 Release Notes
 =============
 
+R2-5 ()
+* Added support for Electron Multiplying (EM) Gain.
+
 R2-4 (September 15, 2015)
 * Updated autoconverted .edl, .ui, and .opi files.
+* Added support for Electron Multiplying (EM) Gain.
 
 R2-3 (16-April-2015)
 ----
