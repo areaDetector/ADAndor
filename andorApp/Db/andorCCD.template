@@ -277,6 +277,72 @@ record(mbbi, "$(P)$(R)AndorPreAmpGain_RBV")
    field(SCAN, "I/O Intr")
 }
 
+# EM Gain
+record(longout, "$(P)$(R)AndorEMGain")
+{
+   field(PINI, "1")
+   field(DTYP, "asynInt32")
+   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN")
+   field(VAL,  "0")
+}
+
+record(longin, "$(P)$(R)AndorEMGain_RBV")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN")
+   field(SCAN, "I/O Intr")
+}
+
+# EM Gain Mode
+record(mbbo, "$(P)$(R)AndorEMGainMode")
+{
+    field(PINI, "1")
+    field(DTYP, "asynInt32")
+    field(ZRST, "8 bit DAC")
+    field(ZRVL, "0")
+    field(ONST, "12 bit DAC")
+    field(ONVL, "1")
+    field(TWST, "Linear Mode")
+    field(TWVL, "2")
+    field(THST, "Real EM Gain")
+    field(THVL, "3")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN_MODE")
+}
+
+record(mbbi, "$(P)$(R)AndorEMGainMode_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(ZRST, "8 bit DAC")
+    field(ZRVL, "0")
+    field(ONST, "12 bit DAC")
+    field(ONVL, "1")
+    field(TWST, "Linear Mode")
+    field(TWVL, "2")
+    field(THST, "Real EM Gain")
+    field(THVL, "3")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN_MODE")
+    field(SCAN, "I/O Intr")
+}
+
+# EM Gain Advanced Mode
+record(bo, "$(P)$(R)AndorEMGainAdvanced")
+{
+    field(PINI, "1")
+    field(DTYP, "asynInt32")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN_ADVANCED")
+}
+
+record(bi, "$(P)$(R)AndorEMGainAdvanced_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_EM_GAIN_ADVANCED")
+    field(SCAN, "I/O Intr")
+}
+
 
 
 #Records in ADBase that do not apply to Andor
