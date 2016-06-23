@@ -136,6 +136,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   createParam(AndorAccumulatePeriodString,      asynParamFloat64, &AndorAccumulatePeriod);
   createParam(AndorPreAmpGainString,              asynParamInt32, &AndorPreAmpGain);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
+  createParam(AndorBaselineClampString,           asynParamInt32, &AndorBaselineClamp);
 
   // Create the epicsEvent for signaling to the status task when parameters should have changed.
   // This will cause it to do a poll immediately, rather than wait for the poll time period.
@@ -578,6 +579,9 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if ((function == AndorShutterMode) ||
              (function == AndorShutterExTTL)) {
       status = setupShutter(-1);
+    }
+    else if (function == AndorBaselineClamp) {
+      checkStatus(SetBaselineClamp(value));
     }
     else {
       status = ADDriver::writeInt32(pasynUser, value);
