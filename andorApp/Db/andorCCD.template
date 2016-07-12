@@ -277,6 +277,22 @@ record(mbbi, "$(P)$(R)AndorPreAmpGain_RBV")
    field(SCAN, "I/O Intr")
 }
 
+record(bo, "$(P)$(R)AndorBaselineClamp")
+{
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_BASELINE_CLAMP")
+    field(ZNAM, "Disable")
+    field(ONAM, "Enable")
+}
+
+record(bi, "$(P)$(R)AndorBaselineClamp_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_BASELINE_CLAMP")
+    field(ZNAM, "Disable")
+    field(ONAM, "Enable")
+    field(SCAN, "I/O Intr")
+}
 
 
 #Records in ADBase that do not apply to Andor

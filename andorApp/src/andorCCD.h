@@ -29,6 +29,7 @@
 #define AndorAccumulatePeriodString        "ANDOR_ACCUMULATE_PERIOD"
 #define AndorPreAmpGainString              "ANDOR_PREAMP_GAIN"
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
+#define AndorBaselineClampString           "ANDOR_BASELINE_CLAMP"
 
 /**
  * Structure defining an ADC speed for the ADAndor driver.
@@ -86,7 +87,8 @@ class AndorCCD : public ADDriver {
   int AndorAccumulatePeriod;
   int AndorPreAmpGain;
   int AndorAdcSpeed;
-  #define LAST_ANDOR_PARAM AndorAdcSpeed
+  int AndorBaselineClamp;
+  #define LAST_ANDOR_PARAM AndorBaselineClamp
 
  private:
 
