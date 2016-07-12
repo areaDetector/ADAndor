@@ -22,8 +22,15 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
+R2-5 (July XXX, 2016)
+----
+* Add ability to set the BaselineClamp in the Andor SDK.  Thanks to Matt Pearson for this.
+* Enforce minimum values of ADShutterOpenDelay and ADShutterCloseDelay based on query of SDK.
+* Fix bug when setting MinX and MinY with binning.  There was an incorrect factor of 2 present.
+  Thanks to Hinko Kocevar for this fix.
 
 R2-4 (September 15, 2015)
+----
 * Updated autoconverted .edl, .ui, and .opi files.
 
 R2-3 (16-April-2015)
