@@ -992,12 +992,12 @@ asynStatus AndorCCD::setupAcquisition()
   getIntegerParam(ADSizeY, &sizeY);
   getIntegerParam(ADMaxSizeX, &maxSizeX);
   getIntegerParam(ADMaxSizeY, &maxSizeY);
-  if (minX > (maxSizeX - 2*binX)) {
-    minX = maxSizeX - 2*binX;
+  if (minX > (maxSizeX - binX)) {
+    minX = maxSizeX - binX;
     setIntegerParam(ADMinX, minX);
   }
-  if (minY > (maxSizeY - 2*binY)) {
-    minY = maxSizeY - 2*binY;
+  if (minY > (maxSizeY - binY)) {
+    minY = maxSizeY - binY;
     setIntegerParam(ADMinY, minY);
   }
   if ((minX + sizeX) > maxSizeX) {
