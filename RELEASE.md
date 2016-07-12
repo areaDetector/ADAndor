@@ -24,6 +24,7 @@ Release Notes
 =============
 R2-5 (July XXX, 2016)
 ----
+* Added support for Electron Multiplying (EM) Gain.  Thanks to Mike Dunning for this.
 * Add ability to set the BaselineClamp in the Andor SDK.  Thanks to Matt Pearson for this.
 * Enforce minimum values of ADShutterOpenDelay and ADShutterCloseDelay based on query of SDK.
 * Fix bug when setting MinX and MinY with binning.  There was an incorrect factor of 2 present.
@@ -76,5 +77,4 @@ Release notes are part of the
 
 Future Releases
 ===============
-* Upgrade to Release 2.98 of SDK
 * dataTask should check while (!mExiting)
