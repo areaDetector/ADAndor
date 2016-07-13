@@ -110,7 +110,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
              asynEnumMask, asynEnumMask,
              ASYN_CANBLOCK, 1, priority, stackSize),
-    mExiting(false), mShamrockId(shamrockID), mSPEDoc(0)
+    mExiting(false), mShamrockId(shamrockID), mSPEDoc(0), mInitOK(false)
 {
 
   int status = asynSuccess;
@@ -156,6 +156,18 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     return;
   }
 
+  // Initialize ADC enums
+  for (i=0; i<MAX_ADC_SPEEDS; i++) {
+    mADCSpeeds[i].EnumValue = i;
+    mADCSpeeds[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  }
+
+  // Initialize Pre-Amp enums
+  for (i=0; i<MAX_PREAMP_GAINS; i++) {
+    mPreAmpGains[i].EnumValue = i;
+    mPreAmpGains[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  }
+
   // Initialize camera
   try {
     printf("%s:%s: initializing camera\n",
@@ -176,18 +188,6 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
       driverName, functionName, e.c_str());
     return;
   }
-  
-  // Initialize ADC enums
-  for (i=0; i<MAX_ADC_SPEEDS; i++) {
-    mADCSpeeds[i].EnumValue = i;
-    mADCSpeeds[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
-  } 
-
-  // Initialize Pre-Amp enums
-  for (i=0; i<MAX_PREAMP_GAINS; i++) {
-    mPreAmpGains[i].EnumValue = i;
-    mPreAmpGains[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
-  } 
   
 
   /* Set some default values for parameters */
@@ -273,6 +273,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     return;
   }
   printf("CCD initialized OK!\n");
+  mInitOK = true;
 }
 
 /**
@@ -723,6 +724,7 @@ asynStatus AndorCCD::setupShutter(int command)
   int openTime, closeTime;
   int shutterExTTL;
   int shutterMode;
+  AndorCapabilities capabilities;
   asynStatus status=asynSuccess;
   static const char *functionName = "setupShutter";
   
@@ -755,11 +757,14 @@ asynStatus AndorCCD::setupShutter(int command)
   }
 
   try {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s:%s:, SetShutter(%d,%d,%d,%d)\n", 
-      driverName, functionName, shutterExTTL, shutterMode, closeTime, openTime);
-    checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime)); 
-
+    capabilities.ulSize = sizeof(capabilities);
+    checkStatus(GetCapabilities(&capabilities));
+    if (capabilities.ulFeatures & AC_FEATURES_SHUTTER) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s:, SetShutter(%d,%d,%d,%d)\n",
+        driverName, functionName, shutterExTTL, shutterMode, closeTime, openTime);
+      checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime));
+    }
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
       "%s:%s: %s\n",
@@ -851,6 +856,8 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
     throw std::string("ERROR: Problem communicating with camera.");  
   } else if (returnStatus == DRV_LOAD_FIRMWARE_ERROR) {
     throw std::string("ERROR: Error loading firmware.");  
+  } else if (returnStatus == DRV_NOT_SUPPORTED) {
+    throw std::string("ERROR: Feature not supported.");
   } else {
     sprintf(message, "ERROR: Unknown error code=%d returned from Andor SDK.", returnStatus);
     throw std::string(message);
@@ -978,6 +985,10 @@ asynStatus AndorCCD::setupAcquisition()
   AndorADCSpeed_t *pSpeed;
   static const char *functionName = "setupAcquisition";
   
+  if (!mInitOK) {
+    return asynDisabled;
+  }
+
   getIntegerParam(ADImageMode, &imageMode);
   getIntegerParam(ADNumExposures, &numExposures);
   if (numExposures <= 0) {

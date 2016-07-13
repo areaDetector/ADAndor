@@ -209,6 +209,8 @@ class AndorCCD : public ADDriver {
   tagCSMAHEAD *mSPEHeader;
   TiXmlDocument *mSPEDoc;
 
+  // Camera init status
+  bool mInitOK;
 };
 
 #define NUM_ANDOR_DET_PARAMS ((int)(&LAST_ANDOR_PARAM - &FIRST_ANDOR_PARAM + 1))
