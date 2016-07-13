@@ -29,6 +29,7 @@ R2-5 (July XXX, 2016)
 * Enforce minimum values of ADShutterOpenDelay and ADShutterCloseDelay based on query of SDK.
 * Fix bug when setting MinX and MinY with binning.  There was an incorrect factor of 2 present.
   Thanks to Hinko Kocevar for this fix.
+* Add support for Full Vertical Binning (FVB) readout mode.
 
 R2-4 (September 15, 2015)
 ----
