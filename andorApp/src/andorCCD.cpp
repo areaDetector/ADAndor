@@ -135,6 +135,9 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   createParam(AndorPalFileNameString,             asynParamOctet, &AndorPalFileName);
   createParam(AndorAccumulatePeriodString,      asynParamFloat64, &AndorAccumulatePeriod);
   createParam(AndorPreAmpGainString,              asynParamInt32, &AndorPreAmpGain);
+  createParam(AndorEmGainString,                  asynParamInt32, &AndorEmGain);
+  createParam(AndorEmGainModeString,              asynParamInt32, &AndorEmGainMode);
+  createParam(AndorEmGainAdvancedString,          asynParamInt32, &AndorEmGainAdvanced);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
   createParam(AndorBaselineClampString,           asynParamInt32, &AndorBaselineClamp);
 
@@ -164,6 +167,8 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     checkStatus(SetReadMode(ARImage));
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
     checkStatus(GetShutterMinTimes(&mMinShutterCloseTime, &mMinShutterOpenTime));
+    mCapabilities.ulSize = sizeof(mCapabilities);
+    checkStatus(GetCapabilities(&mCapabilities));
     callParamCallbacks();
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
@@ -210,6 +215,9 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   status |= setIntegerParam(NDArraySize, sizeX*sizeY*sizeof(epicsUInt16)); 
   mAccumulatePeriod = 2.0;
   status |= setDoubleParam(AndorAccumulatePeriod, mAccumulatePeriod); 
+  status |= setIntegerParam(AndorEmGain, 0); 
+  status |= setIntegerParam(AndorEmGainMode, 0); 
+  status |= setIntegerParam(AndorEmGainAdvanced, 0); 
   status |= setIntegerParam(AndorAdcSpeed, 0);
   status |= setIntegerParam(AndorShutterExTTL, 1);
   status |= setIntegerParam(AndorShutterMode, AShutterAuto);
@@ -419,7 +427,6 @@ void AndorCCD::report(FILE *fp, int details)
   unsigned int uIntParam4;
   unsigned int uIntParam5;
   unsigned int uIntParam6;
-  AndorCapabilities capabilities;
   AndorADCSpeed_t *pSpeed;
   static const char *functionName = "report";
 
@@ -462,20 +469,18 @@ void AndorCCD::report(FILE *fp, int details)
         fprintf(fp, "    Index=%d, Gain=%f\n",
                 mPreAmpGains[i].EnumValue, mPreAmpGains[i].Gain);
       }
-      capabilities.ulSize = sizeof(capabilities);
-      checkStatus(GetCapabilities(&capabilities));
       fprintf(fp, "  Capabilities\n");
-      fprintf(fp, "        AcqModes=0x%X\n", (int)capabilities.ulAcqModes);
-      fprintf(fp, "       ReadModes=0x%X\n", (int)capabilities.ulReadModes);
-      fprintf(fp, "     FTReadModes=0x%X\n", (int)capabilities.ulFTReadModes);
-      fprintf(fp, "    TriggerModes=0x%X\n", (int)capabilities.ulTriggerModes);
-      fprintf(fp, "      CameraType=%d\n",   (int)capabilities.ulCameraType);
-      fprintf(fp, "      PixelModes=0x%X\n", (int)capabilities.ulPixelMode);
-      fprintf(fp, "    SetFunctions=0x%X\n", (int)capabilities.ulSetFunctions);
-      fprintf(fp, "    GetFunctions=0x%X\n", (int)capabilities.ulGetFunctions);
-      fprintf(fp, "        Features=0x%X\n", (int)capabilities.ulFeatures);
-      fprintf(fp, "         PCI MHz=%d\n",   (int)capabilities.ulPCICard);
-      fprintf(fp, "          EMGain=0x%X\n", (int)capabilities.ulEMGainCapability);
+      fprintf(fp, "        AcqModes=0x%X\n", (int)mCapabilities.ulAcqModes);
+      fprintf(fp, "       ReadModes=0x%X\n", (int)mCapabilities.ulReadModes);
+      fprintf(fp, "     FTReadModes=0x%X\n", (int)mCapabilities.ulFTReadModes);
+      fprintf(fp, "    TriggerModes=0x%X\n", (int)mCapabilities.ulTriggerModes);
+      fprintf(fp, "      CameraType=%d\n",   (int)mCapabilities.ulCameraType);
+      fprintf(fp, "      PixelModes=0x%X\n", (int)mCapabilities.ulPixelMode);
+      fprintf(fp, "    SetFunctions=0x%X\n", (int)mCapabilities.ulSetFunctions);
+      fprintf(fp, "    GetFunctions=0x%X\n", (int)mCapabilities.ulGetFunctions);
+      fprintf(fp, "        Features=0x%X\n", (int)mCapabilities.ulFeatures);
+      fprintf(fp, "         PCI MHz=%d\n",   (int)mCapabilities.ulPCICard);
+      fprintf(fp, "          EMGain=0x%X\n", (int)mCapabilities.ulEMGainCapability);
 
     } catch (const std::string &e) {
       asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
@@ -542,12 +547,13 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
         } 
       }
     }
-    else if ((function == ADNumExposures) || (function == ADNumImages) ||
-             (function == ADImageMode)                                 ||
-             (function == ADBinX)         || (function == ADBinY)      ||
-             (function == ADMinX)         || (function == ADMinY)      ||
-             (function == ADSizeX)        || (function == ADSizeY)     ||
-             (function == ADTriggerMode)                               || 
+    else if ((function == ADNumExposures) || (function == ADNumImages)         ||
+             (function == ADImageMode)                                         ||
+             (function == ADBinX)         || (function == ADBinY)              ||
+             (function == ADMinX)         || (function == ADMinY)              ||
+             (function == ADSizeX)        || (function == ADSizeY)             ||
+             (function == ADTriggerMode)  || (function == AndorEmGain)         || 
+             (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
              (function == AndorAdcSpeed)) {
       status = setupAcquisition();
       if (function == AndorAdcSpeed) setupPreAmpGains();
@@ -965,6 +971,9 @@ asynStatus AndorCCD::setupAcquisition()
   int binX, binY, minX, minY, sizeX, sizeY, maxSizeX, maxSizeY;
   float acquireTimeAct, acquirePeriodAct, accumulatePeriodAct;
   int FKmode = 4;
+  int emGain;
+  int emGainMode;
+  int emGainAdvanced;
   int FKOffset;
   AndorADCSpeed_t *pSpeed;
   static const char *functionName = "setupAcquisition";
@@ -989,6 +998,23 @@ asynStatus AndorCCD::setupAcquisition()
   if (binY <= 0) {
     binY = 1;
     setIntegerParam(ADBinY, binY);
+  }
+  // Check EM gain capability and range, and set gain mode before setting gain and limits
+  if ((int)mCapabilities.ulEMGainCapability > 0) {
+    getIntegerParam(AndorEmGainAdvanced, &emGainAdvanced);
+    setIntegerParam(AndorEmGainAdvanced, emGainAdvanced);
+    getIntegerParam(AndorEmGainMode, &emGainMode);
+    setIntegerParam(AndorEmGainMode, emGainMode);
+    checkStatus(GetEMGainRange(&mEmGainRangeLow, &mEmGainRangeHigh));
+    getIntegerParam(AndorEmGain, &emGain);
+    if (emGain < mEmGainRangeLow) {
+      emGain = mEmGainRangeLow;
+      setIntegerParam(AndorEmGain, emGain);
+    }
+    else if (emGain > mEmGainRangeHigh) {
+      emGain = mEmGainRangeHigh;
+      setIntegerParam(AndorEmGain, emGain);
+    }
   }
   getIntegerParam(ADMinX, &minX);
   getIntegerParam(ADMinY, &minY);
@@ -1054,6 +1080,28 @@ asynStatus AndorCCD::setupAcquisition()
       "%s:%s:, SetExposureTime(%f)\n", 
       driverName, functionName, mAcquireTime);
     checkStatus(SetExposureTime(mAcquireTime));
+   
+    // Check if camera has EM gain capability before setting modes or EM gain
+    if ((int)mCapabilities.ulEMGainCapability > 0) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s:%s:, SetEMGainMode(%d)\n", 
+        driverName, functionName, emGainMode);
+      checkStatus(SetEMGainMode(emGainMode));
+    }
+      
+    if ((int)mCapabilities.ulEMGainCapability > 0) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s:%s:, SetEMGainAdvanced(%d)\n", 
+        driverName, functionName, emGainAdvanced);
+      checkStatus(SetEMAdvanced(emGainAdvanced));
+    }
+    
+    if ((int)mCapabilities.ulEMGainCapability > 0) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+        "%s:%s:, SetEMCCDGain(%d)\n", 
+        driverName, functionName, emGain);
+      checkStatus(SetEMCCDGain(emGain));
+    }
     
     switch (imageMode) {
       case ADImageSingle:
