@@ -850,6 +850,8 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
     throw std::string("ERROR: Problem communicating with camera.");  
   } else if (returnStatus == DRV_LOAD_FIRMWARE_ERROR) {
     throw std::string("ERROR: Error loading firmware.");  
+  } else if (returnStatus == DRV_NOT_SUPPORTED) {
+    throw std::string("ERROR: Feature not supported.");
   } else {
     sprintf(message, "ERROR: Unknown error code=%d returned from Andor SDK.", returnStatus);
     throw std::string(message);
