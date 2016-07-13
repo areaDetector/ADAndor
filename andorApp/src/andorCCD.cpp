@@ -110,7 +110,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
              asynEnumMask, asynEnumMask,
              ASYN_CANBLOCK, 1, priority, stackSize),
-    mExiting(false), mShamrockId(shamrockID), mSPEDoc(0)
+    mExiting(false), mShamrockId(shamrockID), mSPEDoc(0), mInitOK(false)
 {
 
   int status = asynSuccess;
@@ -153,6 +153,18 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     return;
   }
 
+  // Initialize ADC enums
+  for (i=0; i<MAX_ADC_SPEEDS; i++) {
+    mADCSpeeds[i].EnumValue = i;
+    mADCSpeeds[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  }
+
+  // Initialize Pre-Amp enums
+  for (i=0; i<MAX_PREAMP_GAINS; i++) {
+    mPreAmpGains[i].EnumValue = i;
+    mPreAmpGains[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  }
+
   // Initialize camera
   try {
     printf("%s:%s: initializing camera\n",
@@ -171,18 +183,6 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
       driverName, functionName, e.c_str());
     return;
   }
-  
-  // Initialize ADC enums
-  for (i=0; i<MAX_ADC_SPEEDS; i++) {
-    mADCSpeeds[i].EnumValue = i;
-    mADCSpeeds[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
-  } 
-
-  // Initialize Pre-Amp enums
-  for (i=0; i<MAX_PREAMP_GAINS; i++) {
-    mPreAmpGains[i].EnumValue = i;
-    mPreAmpGains[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
-  } 
   
 
   /* Set some default values for parameters */
@@ -265,6 +265,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     return;
   }
   printf("CCD initialized OK!\n");
+  mInitOK = true;
 }
 
 /**
@@ -969,6 +970,10 @@ asynStatus AndorCCD::setupAcquisition()
   AndorADCSpeed_t *pSpeed;
   static const char *functionName = "setupAcquisition";
   
+  if (!mInitOK) {
+    return asynDisabled;
+  }
+
   getIntegerParam(ADImageMode, &imageMode);
   getIntegerParam(ADNumExposures, &numExposures);
   if (numExposures <= 0) {
