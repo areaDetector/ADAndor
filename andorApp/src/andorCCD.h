@@ -28,6 +28,9 @@
 #define AndorPalFileNameString             "ANDOR_PAL_FILE_PATH"
 #define AndorAccumulatePeriodString        "ANDOR_ACCUMULATE_PERIOD"
 #define AndorPreAmpGainString              "ANDOR_PREAMP_GAIN"
+#define AndorEmGainString                  "ANDOR_EM_GAIN"
+#define AndorEmGainModeString              "ANDOR_EM_GAIN_MODE"
+#define AndorEmGainAdvancedString          "ANDOR_EM_GAIN_ADVANCED"
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
 #define AndorBaselineClampString           "ANDOR_BASELINE_CLAMP"
 
@@ -86,6 +89,9 @@ class AndorCCD : public ADDriver {
   int AndorPalFileName;
   int AndorAccumulatePeriod;
   int AndorPreAmpGain;
+  int AndorEmGain;
+  int AndorEmGainMode;
+  int AndorEmGainAdvanced;
   int AndorAdcSpeed;
   int AndorBaselineClamp;
   #define LAST_ANDOR_PARAM AndorBaselineClamp
@@ -192,10 +198,19 @@ class AndorCCD : public ADDriver {
   // Shamrock spectrometer ID
   int mShamrockId;
 
+  // AndorCapabilities structure
+  AndorCapabilities mCapabilities;
+
+  // EM Gain parameters 
+  int mEmGainRangeLow;
+  int mEmGainRangeHigh;
+  
   // SPE file header
   tagCSMAHEAD *mSPEHeader;
   TiXmlDocument *mSPEDoc;
 
+  // Camera init status
+  bool mInitOK;
 };
 
 #define NUM_ANDOR_DET_PARAMS ((int)(&LAST_ANDOR_PARAM - &FIRST_ANDOR_PARAM + 1))
