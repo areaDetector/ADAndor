@@ -718,6 +718,7 @@ asynStatus AndorCCD::setupShutter(int command)
   int openTime, closeTime;
   int shutterExTTL;
   int shutterMode;
+  AndorCapabilities capabilities;
   asynStatus status=asynSuccess;
   static const char *functionName = "setupShutter";
   
@@ -750,11 +751,14 @@ asynStatus AndorCCD::setupShutter(int command)
   }
 
   try {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s:%s:, SetShutter(%d,%d,%d,%d)\n", 
-      driverName, functionName, shutterExTTL, shutterMode, closeTime, openTime);
-    checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime)); 
-
+    capabilities.ulSize = sizeof(capabilities);
+    checkStatus(GetCapabilities(&capabilities));
+    if (capabilities.ulFeatures & AC_FEATURES_SHUTTER) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s:, SetShutter(%d,%d,%d,%d)\n",
+        driverName, functionName, shutterExTTL, shutterMode, closeTime, openTime);
+      checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime));
+    }
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
       "%s:%s: %s\n",
