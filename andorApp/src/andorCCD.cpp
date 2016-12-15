@@ -117,6 +117,16 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   int i;
   int binX=1, binY=1, minX=0, minY=0, sizeX, sizeY;
   char model[256];
+  char serialNumber[256];
+  char cameraFirmwareVersion[256];
+  int iSerialNumber;
+  unsigned int iPCB;
+  unsigned int iDecode;
+  unsigned int iDummy1;
+  unsigned int iDummy2;
+  unsigned int iCameraFirmwareVersion;
+  unsigned int iCameraFirmwareBuild;
+  char SDKVersion[256];
   static const char *functionName = "AndorCCD";
 
   if (installPath == NULL)
@@ -176,6 +186,12 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     setStringParam(AndorMessage, "Camera successfully initialized.");
     checkStatus(GetDetector(&sizeX, &sizeY));
     checkStatus(GetHeadModel(model));
+    checkStatus(GetCameraSerialNumber(&iSerialNumber));
+    snprintf(serialNumber, 256, "%d", iSerialNumber);
+    checkStatus(GetHardwareVersion(&iPCB, &iDecode, &iDummy1, &iDummy2,
+      &iCameraFirmwareVersion, &iCameraFirmwareBuild));
+    snprintf(cameraFirmwareVersion, 256, "%d", iCameraFirmwareVersion);
+    checkStatus(GetVersionInfo(AT_SDKVersion, SDKVersion, 256));
     checkStatus(SetReadMode(ARImage));
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
     checkStatus(GetShutterMinTimes(&mMinShutterCloseTime, &mMinShutterOpenTime));
@@ -193,6 +209,9 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   /* Set some default values for parameters */
   status =  setStringParam(ADManufacturer, "Andor");
   status |= setStringParam(ADModel, model);
+  status |= setStringParam(ADSerialNumber, serialNumber);
+  status |= setStringParam(ADFirmwareVersion, cameraFirmwareVersion);
+  status |= setStringParam(ADSDKVersion, SDKVersion);
   status |= setIntegerParam(ADSizeX, sizeX);
   status |= setIntegerParam(ADSizeY, sizeY);
   status |= setIntegerParam(ADBinX, 1);
