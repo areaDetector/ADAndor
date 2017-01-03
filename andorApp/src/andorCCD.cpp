@@ -36,6 +36,10 @@
 #include <epicsExport.h>
 #include "andorCCD.h"
 
+#define DRIVER_VERSION      2
+#define DRIVER_REVISION     5
+#define DRIVER_MODIFICATION 0
+
 static const char *driverName = "andorCCD";
 
 //Definitions of static class data members
@@ -117,6 +121,12 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   int i;
   int binX=1, binY=1, minX=0, minY=0, sizeX, sizeY;
   char model[256];
+  char SDKVersion[256];
+  char tempString[256];
+  int serialNumber;
+  unsigned int firmwareVersion;
+  unsigned int firmwareBuild;
+  unsigned int uTemp;
   static const char *functionName = "AndorCCD";
 
   if (installPath == NULL)
@@ -176,6 +186,10 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     setStringParam(AndorMessage, "Camera successfully initialized.");
     checkStatus(GetDetector(&sizeX, &sizeY));
     checkStatus(GetHeadModel(model));
+    checkStatus(GetCameraSerialNumber(&serialNumber));
+    checkStatus(GetHardwareVersion(&uTemp, &uTemp, &uTemp, 
+                                   &uTemp, &firmwareVersion, &firmwareBuild));
+    checkStatus(GetVersionInfo(AT_SDKVersion, SDKVersion, sizeof(SDKVersion)));
     checkStatus(SetReadMode(ARImage));
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
     checkStatus(GetShutterMinTimes(&mMinShutterCloseTime, &mMinShutterOpenTime));
@@ -193,6 +207,14 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   /* Set some default values for parameters */
   status =  setStringParam(ADManufacturer, "Andor");
   status |= setStringParam(ADModel, model);
+  epicsSnprintf(tempString, sizeof(tempString), "%u", serialNumber);
+  status |= setStringParam(ADSerialNumber, tempString);
+  epicsSnprintf(tempString, sizeof(tempString), "%d.%d", firmwareVersion, firmwareBuild);
+  status |= setStringParam(ADFirmwareVersion, tempString);
+  status |= setStringParam(ADSDKVersion, SDKVersion);
+  epicsSnprintf(tempString, sizeof(tempString), "%d.%d.%d", 
+                DRIVER_VERSION, DRIVER_REVISION, DRIVER_MODIFICATION);
+  setStringParam(NDDriverVersion,tempString);
   status |= setIntegerParam(ADSizeX, sizeX);
   status |= setIntegerParam(ADSizeY, sizeY);
   status |= setIntegerParam(ADBinX, 1);
@@ -553,9 +575,10 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
              (function == ADBinX)         || (function == ADBinY)              ||
              (function == ADMinX)         || (function == ADMinY)              ||
              (function == ADSizeX)        || (function == ADSizeY)             ||
+             (function == ADReverseX)     || (function == ADReverseY)          ||
              (function == ADTriggerMode)  || (function == AndorEmGain)         || 
              (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
-             (function == AndorAdcSpeed)) {
+             (function == AndorAdcSpeed)  || (function == AndorPreAmpGain)) {
       status = setupAcquisition();
       if (function == AndorAdcSpeed) setupPreAmpGains();
       if (status != asynSuccess) setIntegerParam(function, oldValue);
@@ -646,19 +669,6 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     else if (function == ADAcquirePeriod) {
       mAcquirePeriod = (float)value;  
       status = setupAcquisition();
-    }
-    else if (function == ADGain) {
-      try {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s:%s:, SetPreAmpGain(%d)\n", 
-          driverName, functionName, (int)value);
-        checkStatus(SetPreAmpGain((int)value));
-      } catch (const std::string &e) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-          "%s:%s: %s\n",
-          driverName, functionName, e.c_str());
-        status = asynError;
-      }
     }
     else if (function == AndorAccumulatePeriod) {
       mAccumulatePeriod = (float)value;  
@@ -975,7 +985,8 @@ asynStatus AndorCCD::setupAcquisition()
   int imageMode;
   int adcSpeed;
   int triggerMode;
-  int binX, binY, minX, minY, sizeX, sizeY, maxSizeX, maxSizeY;
+  int preAmpGain;
+  int binX, binY, minX, minY, sizeX, sizeY, reverseX, reverseY, maxSizeX, maxSizeY;
   float acquireTimeAct, acquirePeriodAct, accumulatePeriodAct;
   int FKmode = 4;
   int emGain;
@@ -1031,6 +1042,8 @@ asynStatus AndorCCD::setupAcquisition()
   getIntegerParam(ADMinY, &minY);
   getIntegerParam(ADSizeX, &sizeX);
   getIntegerParam(ADSizeY, &sizeY);
+  getIntegerParam(ADReverseX, &reverseX);
+  getIntegerParam(ADReverseY, &reverseY);
   getIntegerParam(ADMaxSizeX, &maxSizeX);
   getIntegerParam(ADMaxSizeY, &maxSizeY);
   if (minX > (maxSizeX - binX)) {
@@ -1055,6 +1068,8 @@ asynStatus AndorCCD::setupAcquisition()
   getIntegerParam(ADTriggerMode, &triggerMode);
   getIntegerParam(AndorAdcSpeed, &adcSpeed);
   pSpeed = &mADCSpeeds[adcSpeed];
+  
+  getIntegerParam(AndorPreAmpGain, &preAmpGain);
   
   // Unfortunately there does not seem to be a way to query the Andor SDK 
   // for the actual size of the image, so we must compute it.
@@ -1081,6 +1096,16 @@ asynStatus AndorCCD::setupAcquisition()
       "%s:%s:, SetHSSpeed(%d, %d)\n", 
       driverName, functionName, pSpeed->AmpIndex, pSpeed->HSSpeedIndex);
     checkStatus(SetHSSpeed(pSpeed->AmpIndex, pSpeed->HSSpeedIndex));
+
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+      "%s:%s:, SetPreAmpGain(%d)\n", 
+      driverName, functionName, preAmpGain);
+    checkStatus(SetPreAmpGain(preAmpGain));
+
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+      "%s:%s:, SetImageFlip(%d, %d)\n", 
+      driverName, functionName, reverseX, reverseY);
+    checkStatus(SetImageFlip(reverseX, reverseY));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s:%s:, SetImage(%d,%d,%d,%d,%d,%d)\n", 
