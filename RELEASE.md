@@ -33,8 +33,8 @@ R2-5 (January XXX, 2017)
 * Fixed bug with AndorPreAmpGain; previously it was not actually calling SetPreAmpGain().
 * Added support for SerialNumber, FirmwareVersion, SDKVersion, DriverVersion, and ADCoreVersion which
   were added in ADCore R2-6. 
-* Add support for Full Vertical Binning (FVB) readout mode.
-  Thanks to Hinko Kocevar for this.
+* Added support for Full Vertical Binning (FVB) readout mode. Thanks to Hinko Kocevar for this.
+* Added support for EPICS shutter control.
 
 R2-4 (September 15, 2015)
 ----
