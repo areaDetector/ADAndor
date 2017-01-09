@@ -75,11 +75,11 @@ const epicsInt32 AndorCCD::ARRandomTrack = 2;
 const epicsInt32 AndorCCD::ARSingleTrack = 3;
 const epicsInt32 AndorCCD::ARImage = 4;
 
-const epicsInt32 AndorCCD::AShutterAuto    = 0;
-const epicsInt32 AndorCCD::AShutterOpen    = 1;
-const epicsInt32 AndorCCD::AShutterClose   = 2;
-const epicsInt32 AndorCCD::AShutterOpenFVP = 4;
-const epicsInt32 AndorCCD::AShutterOpenAny = 5;
+const epicsInt32 AndorCCD::AShutterFullyAuto    = 0;
+const epicsInt32 AndorCCD::AShutterAlwaysOpen   = 1;
+const epicsInt32 AndorCCD::AShutterAlwaysClosed = 2;
+const epicsInt32 AndorCCD::AShutterOpenFVP      = 4;
+const epicsInt32 AndorCCD::AShutterOpenAny      = 5;
 
 const epicsInt32 AndorCCD::AFFTIFF = 0;
 const epicsInt32 AndorCCD::AFFBMP  = 1;
@@ -245,7 +245,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   status |= setIntegerParam(AndorEmGainAdvanced, 0); 
   status |= setIntegerParam(AndorAdcSpeed, 0);
   status |= setIntegerParam(AndorShutterExTTL, 1);
-  status |= setIntegerParam(AndorShutterMode, AShutterAuto);
+  status |= setIntegerParam(AndorShutterMode, AShutterFullyAuto);
   status |= setDoubleParam(ADShutterOpenDelay, 0.);
   status |= setDoubleParam(ADShutterCloseDelay, 0.);
   status |= setIntegerParam(AndorReadOutMode, ARImage);
@@ -768,11 +768,11 @@ asynStatus AndorCCD::setupShutter(int command)
   getIntegerParam(AndorShutterExTTL, &shutterExTTL);
   
   if (command == ADShutterClosed) {
-    shutterMode = AShutterClose;
+    shutterMode = AShutterAlwaysClosed;
     setIntegerParam(ADShutterStatus, ADShutterClosed);
   }
   else if (command == ADShutterOpen) {
-    if (shutterMode == AShutterOpen) {
+    if (shutterMode == AShutterAlwaysOpen) {
       setIntegerParam(ADShutterStatus, ADShutterOpen);
     }
     // No need to change shutterMode, we leave it alone and it shutter
