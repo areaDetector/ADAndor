@@ -10,7 +10,7 @@
     <h1>
       areaDetector Andor driver</h1>
     <h2>
-      July 13, 2016</h2>
+      January 9, 2017</h2>
     <h2>
       Matthew Pearson, Oak Ridge National Laboratory</h2>
     <h2>
@@ -83,9 +83,9 @@
     to the directory containing the Andor shareable libraries from the SDK must be added
     to the LD_LIBRARY_PATH environment variable when running the areaDetector IOC.</p>
   <p>
-    NOTE: When using the Shamrock spectrograph on Windows the following DLLs must actually be copied
-    from the SDK directory to the current working directory from which the IOC application
-    is being run, e.g. iocBoot/iocAndor.</p>
+    NOTE: When using the Shamrock spectrograph on Windows the following DLLs must actually
+    be copied from the SDK directory to the current working directory from which the
+    IOC application is being run, e.g. iocBoot/iocAndor.</p>
   <ul>
     <li>atmcd32d.dll</li>
     <li>ShamrockCIF.dll</li>
@@ -455,8 +455,11 @@
         <td>
           Selects the Andor shutter mode. Choices are:
           <ul>
-            <li>Auto</li>
-            <li>Open</li>
+            <li>Full Auto</li>
+            <li>Always Open</li>
+            <li>Always Closed</li>
+            <li>Open for FVB</li>
+            <li>Open for Any</li>
           </ul>
         </td>
         <td>
@@ -614,7 +617,7 @@
           ANDOR_BASELINE_CLAMP</td>
         <td>
           AndorBaselineClamp<br />
-	      AndorBaselineClamp_RBV</td>
+          AndorBaselineClamp_RBV</td>
         <td>
           bo<br />
           bi</td>
@@ -627,9 +630,9 @@
         <td>
           R/W</td>
         <td>
-          Controls the Electron Multiplying (EM) Gain level on supported detectors. The valid range depends 
-          on the value of AndorEMGainMode and the detector temperature. For cameras that do not
-          support EM Gain, AndorEMGain has no effect.</td>
+          Controls the Electron Multiplying (EM) Gain level on supported detectors. The valid
+          range depends on the value of AndorEMGainMode and the detector temperature. For
+          cameras that do not support EM Gain, AndorEMGain has no effect.</td>
         <td>
           ANDOR_EM_GAIN</td>
         <td>
@@ -677,11 +680,10 @@
             <li>Disabled</li>
             <li>Enabled</li>
           </ul>
-          For cameras that do not support EM Gain, AndorEMGainAdvanced has no effect.
-          NOTE: Before using higher levels, you should ensure that light levels do not
-          exceed the regime of tens of photons per pixel, otherwise accelerated 
-          ageing of the sensor can occur.
-        </td>
+          For cameras that do not support EM Gain, AndorEMGainAdvanced has no effect. NOTE:
+          Before using higher levels, you should ensure that light levels do not exceed the
+          regime of tens of photons per pixel, otherwise accelerated ageing of the sensor
+          can occur. </td>
         <td>
           ANDOR_EM_GAIN_ADVANCED</td>
         <td>
