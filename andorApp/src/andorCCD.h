@@ -157,6 +157,8 @@ class AndorCCD : public ADDriver {
   static const epicsInt32 AShutterAuto;
   static const epicsInt32 AShutterOpen;
   static const epicsInt32 AShutterClose;
+  static const epicsInt32 AShutterOpenFVP;
+  static const epicsInt32 AShutterOpenAny;
 
   /**
    * List of file formats
