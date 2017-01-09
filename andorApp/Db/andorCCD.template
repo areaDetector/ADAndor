@@ -213,6 +213,12 @@ record(mbbo, "$(P)$(R)AndorShutterMode")
     field(ZRVL, "0")
     field(ONST, "Always Open")
     field(ONVL, "1")
+    field(TWST, "Always Closed")
+    field(TWVL, "2")
+    field(THST, "Open for FVB")
+    field(THVL, "4")
+    field(FRST, "Open for Any")
+    field(FRVL, "5")
 }
 
 record(bo, "$(P)$(R)AndorShutterExTTL")
