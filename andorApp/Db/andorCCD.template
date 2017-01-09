@@ -209,9 +209,9 @@ record(mbbo, "$(P)$(R)AndorShutterMode")
     field(PINI, "1")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_SHUTTER_MODE")
-    field(ZRST, "Auto")
+    field(ZRST, "Fully Auto")
     field(ZRVL, "0")
-    field(ONST, "Open")
+    field(ONST, "Always Open")
     field(ONVL, "1")
 }
 
