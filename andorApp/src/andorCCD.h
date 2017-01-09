@@ -156,9 +156,9 @@ class AndorCCD : public ADDriver {
   /**
    * List of shutter modes
    */
-  static const epicsInt32 AShutterAuto;
-  static const epicsInt32 AShutterOpen;
-  static const epicsInt32 AShutterClose;
+  static const epicsInt32 AShutterFullyAuto;
+  static const epicsInt32 AShutterAlwaysOpen;
+  static const epicsInt32 AShutterAlwaysClosed;
   static const epicsInt32 AShutterOpenFVP;
   static const epicsInt32 AShutterOpenAny;
 
