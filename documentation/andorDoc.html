@@ -10,7 +10,7 @@
     <h1>
       areaDetector Andor driver</h1>
     <h2>
-      April 16, 2014</h2>
+      July 13, 2016</h2>
     <h2>
       Matthew Pearson, Oak Ridge National Laboratory</h2>
     <h2>
@@ -52,6 +52,7 @@
     <li>Set a region of interest (a smaller region can be read out faster)</li>
     <li>Set and monitor the CCD temperature</li>
     <li>Electron Multiplying (EM) Gain on supported detectors</li>
+    <li>Support for selecting between Full Vertical Binning (FVB) and Image readout modes</li>
   </ul>
   <p>
     The Andor module includes a separate driver to control the Andor Shamrock spectrographs.
@@ -613,7 +614,7 @@
           ANDOR_BASELINE_CLAMP</td>
         <td>
           AndorBaselineClamp<br />
-	        AndorBaselineClamp_RBV</td>
+	      AndorBaselineClamp_RBV</td>
         <td>
           bo<br />
           bi</td>
@@ -689,6 +690,29 @@
         <td>
           bo<br />
           bi</td>
+      </tr>
+      <tr>
+        <td>
+          AndorReadOutMode</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Switch between the readout modes. Choices are:
+          <ul>
+            <li>Full Vertical Binning (FVB)</li>
+            <li>Image</li>
+          </ul>
+        </td>
+        <td>
+          ANDOR_READOUT_MODE</td>
+        <td>
+          AndorReadOutMode<br />
+          AndorReadOutMode_RBV</td>
+        <td>
+          mbbo<br />
+          mbbi</td>
       </tr>
     </tbody>
   </table>
@@ -955,6 +979,7 @@
       file writers do not save the calibration, and it is not possible to pass the calibration
       to other file plugins as an attribute because array attributes are not currently
       supported in areaDetector.</li>
+    <li>Single-Track, Multi-Track and Random-Track readout modes are not yet supported.</li>
   </ul>
 </body>
 </html>
