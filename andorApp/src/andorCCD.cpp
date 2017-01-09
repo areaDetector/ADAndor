@@ -75,9 +75,11 @@ const epicsInt32 AndorCCD::ARRandomTrack = 2;
 const epicsInt32 AndorCCD::ARSingleTrack = 3;
 const epicsInt32 AndorCCD::ARImage = 4;
 
-const epicsInt32 AndorCCD::AShutterAuto = 0;
-const epicsInt32 AndorCCD::AShutterOpen = 1;
-const epicsInt32 AndorCCD::AShutterClose = 2;
+const epicsInt32 AndorCCD::AShutterAuto    = 0;
+const epicsInt32 AndorCCD::AShutterOpen    = 1;
+const epicsInt32 AndorCCD::AShutterClose   = 2;
+const epicsInt32 AndorCCD::AShutterOpenFVP = 4;
+const epicsInt32 AndorCCD::AShutterOpenAny = 5;
 
 const epicsInt32 AndorCCD::AFFTIFF = 0;
 const epicsInt32 AndorCCD::AFFBMP  = 1;
@@ -733,11 +735,20 @@ asynStatus AndorCCD::setupShutter(int command)
   double dTemp;
   int openTime, closeTime;
   int shutterExTTL;
+  int adShutterMode;
   int shutterMode;
   AndorCapabilities capabilities;
   asynStatus status=asynSuccess;
   static const char *functionName = "setupShutter";
-  
+
+  getIntegerParam(ADShutterMode, &adShutterMode);
+  if (adShutterMode == ADShutterModeNone) return asynSuccess;
+  if ((adShutterMode == ADShutterModeEPICS) && (command != -1)) {
+    ADDriver::setShutter(command);
+    return asynSuccess;
+  }
+
+  /* We are using internal shutter mode */
   getDoubleParam(ADShutterOpenDelay, &dTemp);
   // Convert to ms
   openTime = (int)(dTemp * 1000.);
@@ -1252,6 +1263,7 @@ void AndorCCD::dataTask(void)
   epicsInt32 imageCounter;
   epicsInt32 arrayCallbacks;
   epicsInt32 sizeX, sizeY;
+  int adShutterMode;
   NDDataType_t dataType;
   int itemp;
   at_32 firstImage, lastImage;
@@ -1285,6 +1297,10 @@ void AndorCCD::dataTask(void)
       try {
         status = setupAcquisition();
         if (status != asynSuccess) continue;
+        getIntegerParam(ADShutterMode, &adShutterMode);
+        if (adShutterMode == ADShutterModeEPICS) {
+          ADDriver::setShutter(ADShutterOpen);
+        }
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
           "%s:%s:, StartAcquisition()\n", 
           driverName, functionName);
@@ -1408,6 +1424,10 @@ void AndorCCD::dataTask(void)
       }
     }
       
+    if (adShutterMode == ADShutterModeEPICS) {
+      ADDriver::setShutter(ADShutterClosed);
+    }
+
     //Now clear main thread flag
     mAcquiringData = 0;
     setIntegerParam(ADAcquire, 0);
