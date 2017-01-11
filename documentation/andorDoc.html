@@ -10,7 +10,7 @@
     <h1>
       areaDetector Andor driver</h1>
     <h2>
-      April 16, 2014</h2>
+      January 9, 2017</h2>
     <h2>
       Matthew Pearson, Oak Ridge National Laboratory</h2>
     <h2>
@@ -52,6 +52,7 @@
     <li>Set a region of interest (a smaller region can be read out faster)</li>
     <li>Set and monitor the CCD temperature</li>
     <li>Electron Multiplying (EM) Gain on supported detectors</li>
+    <li>Support for selecting between Full Vertical Binning (FVB) and Image readout modes</li>
   </ul>
   <p>
     The Andor module includes a separate driver to control the Andor Shamrock spectrographs.
@@ -82,9 +83,9 @@
     to the directory containing the Andor shareable libraries from the SDK must be added
     to the LD_LIBRARY_PATH environment variable when running the areaDetector IOC.</p>
   <p>
-    NOTE: When using the Shamrock spectrograph on Windows the following DLLs must actually be copied
-    from the SDK directory to the current working directory from which the IOC application
-    is being run, e.g. iocBoot/iocAndor.</p>
+    NOTE: When using the Shamrock spectrograph on Windows the following DLLs must actually
+    be copied from the SDK directory to the current working directory from which the
+    IOC application is being run, e.g. iocBoot/iocAndor.</p>
   <ul>
     <li>atmcd32d.dll</li>
     <li>ShamrockCIF.dll</li>
@@ -244,6 +245,7 @@
             <li>SIF</li>
             <li>EDF</li>
             <li>RAW</li>
+            <li>FITS</li>
             <li>SPE</li>
           </ul>
           All of the file formats except SPE are written by the Andor SDK. The SPE file format
@@ -453,8 +455,11 @@
         <td>
           Selects the Andor shutter mode. Choices are:
           <ul>
-            <li>Auto</li>
-            <li>Open</li>
+            <li>Full Auto</li>
+            <li>Always Open</li>
+            <li>Always Closed</li>
+            <li>Open for FVB</li>
+            <li>Open for Any</li>
           </ul>
         </td>
         <td>
@@ -601,15 +606,33 @@
       </tr>
       <tr>
         <td>
+          AndorBaselineClamp</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Enable or disable the baseline clamp option.</td>
+        <td>
+          ANDOR_BASELINE_CLAMP</td>
+        <td>
+          AndorBaselineClamp<br />
+          AndorBaselineClamp_RBV</td>
+        <td>
+          bo<br />
+          bi</td>
+      </tr>
+      <tr>
+        <td>
           AndorEMGain</td>
         <td>
           asynInt32</td>
         <td>
           R/W</td>
         <td>
-          Controls the Electron Multiplying (EM) Gain level on supported detectors. The valid range depends 
-          on the value of AndorEMGainMode and the detector temperature. For cameras that do not
-          support EM Gain, AndorEMGain has no effect.</td>
+          Controls the Electron Multiplying (EM) Gain level on supported detectors. The valid
+          range depends on the value of AndorEMGainMode and the detector temperature. For
+          cameras that do not support EM Gain, AndorEMGain has no effect.</td>
         <td>
           ANDOR_EM_GAIN</td>
         <td>
@@ -657,11 +680,10 @@
             <li>Disabled</li>
             <li>Enabled</li>
           </ul>
-          For cameras that do not support EM Gain, AndorEMGainAdvanced has no effect.
-          NOTE: Before using higher levels, you should ensure that light levels do not
-          exceed the regime of tens of photons per pixel, otherwise accelerated 
-          ageing of the sensor can occur.
-        </td>
+          For cameras that do not support EM Gain, AndorEMGainAdvanced has no effect. NOTE:
+          Before using higher levels, you should ensure that light levels do not exceed the
+          regime of tens of photons per pixel, otherwise accelerated ageing of the sensor
+          can occur. </td>
         <td>
           ANDOR_EM_GAIN_ADVANCED</td>
         <td>
@@ -670,6 +692,29 @@
         <td>
           bo<br />
           bi</td>
+      </tr>
+      <tr>
+        <td>
+          AndorReadOutMode</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Switch between the readout modes. Choices are:
+          <ul>
+            <li>Full Vertical Binning (FVB)</li>
+            <li>Image</li>
+          </ul>
+        </td>
+        <td>
+          ANDOR_READOUT_MODE</td>
+        <td>
+          AndorReadOutMode<br />
+          AndorReadOutMode_RBV</td>
+        <td>
+          mbbo<br />
+          mbbi</td>
       </tr>
     </tbody>
   </table>
@@ -936,6 +981,7 @@
       file writers do not save the calibration, and it is not possible to pass the calibration
       to other file plugins as an attribute because array attributes are not currently
       supported in areaDetector.</li>
+    <li>Single-Track, Multi-Track and Random-Track readout modes are not yet supported.</li>
   </ul>
 </body>
 </html>

@@ -36,6 +36,10 @@
 #include <epicsExport.h>
 #include "andorCCD.h"
 
+#define DRIVER_VERSION      2
+#define DRIVER_REVISION     5
+#define DRIVER_MODIFICATION 0
+
 static const char *driverName = "andorCCD";
 
 //Definitions of static class data members
@@ -71,9 +75,11 @@ const epicsInt32 AndorCCD::ARRandomTrack = 2;
 const epicsInt32 AndorCCD::ARSingleTrack = 3;
 const epicsInt32 AndorCCD::ARImage = 4;
 
-const epicsInt32 AndorCCD::AShutterAuto = 0;
-const epicsInt32 AndorCCD::AShutterOpen = 1;
-const epicsInt32 AndorCCD::AShutterClose = 2;
+const epicsInt32 AndorCCD::AShutterFullyAuto    = 0;
+const epicsInt32 AndorCCD::AShutterAlwaysOpen   = 1;
+const epicsInt32 AndorCCD::AShutterAlwaysClosed = 2;
+const epicsInt32 AndorCCD::AShutterOpenFVP      = 4;
+const epicsInt32 AndorCCD::AShutterOpenAny      = 5;
 
 const epicsInt32 AndorCCD::AFFTIFF = 0;
 const epicsInt32 AndorCCD::AFFBMP  = 1;
@@ -110,13 +116,19 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
              asynEnumMask, asynEnumMask,
              ASYN_CANBLOCK, 1, priority, stackSize),
-    mExiting(false), mShamrockId(shamrockID), mSPEDoc(0)
+    mExiting(false), mShamrockId(shamrockID), mSPEDoc(0), mInitOK(false)
 {
 
   int status = asynSuccess;
   int i;
   int binX=1, binY=1, minX=0, minY=0, sizeX, sizeY;
   char model[256];
+  char SDKVersion[256];
+  char tempString[256];
+  int serialNumber;
+  unsigned int firmwareVersion;
+  unsigned int firmwareBuild;
+  unsigned int uTemp;
   static const char *functionName = "AndorCCD";
 
   if (installPath == NULL)
@@ -139,6 +151,8 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   createParam(AndorEmGainModeString,              asynParamInt32, &AndorEmGainMode);
   createParam(AndorEmGainAdvancedString,          asynParamInt32, &AndorEmGainAdvanced);
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
+  createParam(AndorBaselineClampString,           asynParamInt32, &AndorBaselineClamp);
+  createParam(AndorReadOutModeString,             asynParamInt32, &AndorReadOutMode);
 
   // Create the epicsEvent for signaling to the status task when parameters should have changed.
   // This will cause it to do a poll immediately, rather than wait for the poll time period.
@@ -155,6 +169,18 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     return;
   }
 
+  // Initialize ADC enums
+  for (i=0; i<MAX_ADC_SPEEDS; i++) {
+    mADCSpeeds[i].EnumValue = i;
+    mADCSpeeds[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  }
+
+  // Initialize Pre-Amp enums
+  for (i=0; i<MAX_PREAMP_GAINS; i++) {
+    mPreAmpGains[i].EnumValue = i;
+    mPreAmpGains[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
+  }
+
   // Initialize camera
   try {
     printf("%s:%s: initializing camera\n",
@@ -163,6 +189,10 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     setStringParam(AndorMessage, "Camera successfully initialized.");
     checkStatus(GetDetector(&sizeX, &sizeY));
     checkStatus(GetHeadModel(model));
+    checkStatus(GetCameraSerialNumber(&serialNumber));
+    checkStatus(GetHardwareVersion(&uTemp, &uTemp, &uTemp, 
+                                   &uTemp, &firmwareVersion, &firmwareBuild));
+    checkStatus(GetVersionInfo(AT_SDKVersion, SDKVersion, sizeof(SDKVersion)));
     checkStatus(SetReadMode(ARImage));
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
     checkStatus(GetShutterMinTimes(&mMinShutterCloseTime, &mMinShutterOpenTime));
@@ -176,22 +206,18 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     return;
   }
   
-  // Initialize ADC enums
-  for (i=0; i<MAX_ADC_SPEEDS; i++) {
-    mADCSpeeds[i].EnumValue = i;
-    mADCSpeeds[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
-  } 
-
-  // Initialize Pre-Amp enums
-  for (i=0; i<MAX_PREAMP_GAINS; i++) {
-    mPreAmpGains[i].EnumValue = i;
-    mPreAmpGains[i].EnumString = (char *)calloc(MAX_ENUM_STRING_SIZE, sizeof(char));
-  } 
-  
 
   /* Set some default values for parameters */
   status =  setStringParam(ADManufacturer, "Andor");
   status |= setStringParam(ADModel, model);
+  epicsSnprintf(tempString, sizeof(tempString), "%u", serialNumber);
+  status |= setStringParam(ADSerialNumber, tempString);
+  epicsSnprintf(tempString, sizeof(tempString), "%d.%d", firmwareVersion, firmwareBuild);
+  status |= setStringParam(ADFirmwareVersion, tempString);
+  status |= setStringParam(ADSDKVersion, SDKVersion);
+  epicsSnprintf(tempString, sizeof(tempString), "%d.%d.%d", 
+                DRIVER_VERSION, DRIVER_REVISION, DRIVER_MODIFICATION);
+  setStringParam(NDDriverVersion,tempString);
   status |= setIntegerParam(ADSizeX, sizeX);
   status |= setIntegerParam(ADSizeY, sizeY);
   status |= setIntegerParam(ADBinX, 1);
@@ -219,9 +245,10 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   status |= setIntegerParam(AndorEmGainAdvanced, 0); 
   status |= setIntegerParam(AndorAdcSpeed, 0);
   status |= setIntegerParam(AndorShutterExTTL, 1);
-  status |= setIntegerParam(AndorShutterMode, AShutterAuto);
+  status |= setIntegerParam(AndorShutterMode, AShutterFullyAuto);
   status |= setDoubleParam(ADShutterOpenDelay, 0.);
   status |= setDoubleParam(ADShutterCloseDelay, 0.);
+  status |= setIntegerParam(AndorReadOutMode, ARImage);
 
   setupADCSpeeds();
   setupPreAmpGains();
@@ -272,6 +299,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
     return;
   }
   printf("CCD initialized OK!\n");
+  mInitOK = true;
 }
 
 /**
@@ -551,9 +579,17 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
              (function == ADBinX)         || (function == ADBinY)              ||
              (function == ADMinX)         || (function == ADMinY)              ||
              (function == ADSizeX)        || (function == ADSizeY)             ||
+<<<<<<< HEAD
              (function == ADTriggerMode)  || (function == AndorEmGain)         || 
              (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
              (function == AndorAdcSpeed)) {
+=======
+             (function == ADReverseX)     || (function == ADReverseY)          ||
+             (function == ADTriggerMode)  || (function == AndorEmGain)         || 
+             (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
+             (function == AndorAdcSpeed)  || (function == AndorPreAmpGain)     ||
+             (function == AndorReadOutMode)) {
+>>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
       status = setupAcquisition();
       if (function == AndorAdcSpeed) setupPreAmpGains();
       if (status != asynSuccess) setIntegerParam(function, oldValue);
@@ -584,6 +620,9 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if ((function == AndorShutterMode) ||
              (function == AndorShutterExTTL)) {
       status = setupShutter(-1);
+    }
+    else if (function == AndorBaselineClamp) {
+      checkStatus(SetBaselineClamp(value));
     }
     else {
       status = ADDriver::writeInt32(pasynUser, value);
@@ -641,19 +680,6 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     else if (function == ADAcquirePeriod) {
       mAcquirePeriod = (float)value;  
       status = setupAcquisition();
-    }
-    else if (function == ADGain) {
-      try {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s:%s:, SetPreAmpGain(%d)\n", 
-          driverName, functionName, (int)value);
-        checkStatus(SetPreAmpGain((int)value));
-      } catch (const std::string &e) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-          "%s:%s: %s\n",
-          driverName, functionName, e.c_str());
-        status = asynError;
-      }
     }
     else if (function == AndorAccumulatePeriod) {
       mAccumulatePeriod = (float)value;  
@@ -718,10 +744,19 @@ asynStatus AndorCCD::setupShutter(int command)
   double dTemp;
   int openTime, closeTime;
   int shutterExTTL;
+  int adShutterMode;
   int shutterMode;
   asynStatus status=asynSuccess;
   static const char *functionName = "setupShutter";
-  
+
+  getIntegerParam(ADShutterMode, &adShutterMode);
+  if (adShutterMode == ADShutterModeNone) return asynSuccess;
+  if ((adShutterMode == ADShutterModeEPICS) && (command != -1)) {
+    ADDriver::setShutter(command);
+    return asynSuccess;
+  }
+
+  /* We are using internal shutter mode */
   getDoubleParam(ADShutterOpenDelay, &dTemp);
   // Convert to ms
   openTime = (int)(dTemp * 1000.);
@@ -739,11 +774,11 @@ asynStatus AndorCCD::setupShutter(int command)
   getIntegerParam(AndorShutterExTTL, &shutterExTTL);
   
   if (command == ADShutterClosed) {
-    shutterMode = AShutterClose;
+    shutterMode = AShutterAlwaysClosed;
     setIntegerParam(ADShutterStatus, ADShutterClosed);
   }
   else if (command == ADShutterOpen) {
-    if (shutterMode == AShutterOpen) {
+    if (shutterMode == AShutterAlwaysOpen) {
       setIntegerParam(ADShutterStatus, ADShutterOpen);
     }
     // No need to change shutterMode, we leave it alone and it shutter
@@ -751,11 +786,12 @@ asynStatus AndorCCD::setupShutter(int command)
   }
 
   try {
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s:%s:, SetShutter(%d,%d,%d,%d)\n", 
-      driverName, functionName, shutterExTTL, shutterMode, closeTime, openTime);
-    checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime)); 
-
+    if (mCapabilities.ulFeatures & AC_FEATURES_SHUTTER) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s:, SetShutter(%d,%d,%d,%d)\n",
+        driverName, functionName, shutterExTTL, shutterMode, closeTime, openTime);
+      checkStatus(SetShutter(shutterExTTL, shutterMode, closeTime, openTime));
+    }
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
       "%s:%s: %s\n",
@@ -847,6 +883,8 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
     throw std::string("ERROR: Problem communicating with camera.");  
   } else if (returnStatus == DRV_LOAD_FIRMWARE_ERROR) {
     throw std::string("ERROR: Error loading firmware.");  
+  } else if (returnStatus == DRV_NOT_SUPPORTED) {
+    throw std::string("ERROR: Feature not supported.");
   } else {
     sprintf(message, "ERROR: Unknown error code=%d returned from Andor SDK.", returnStatus);
     throw std::string(message);
@@ -964,7 +1002,8 @@ asynStatus AndorCCD::setupAcquisition()
   int imageMode;
   int adcSpeed;
   int triggerMode;
-  int binX, binY, minX, minY, sizeX, sizeY, maxSizeX, maxSizeY;
+  int preAmpGain;
+  int binX, binY, minX, minY, sizeX, sizeY, reverseX, reverseY, maxSizeX, maxSizeY;
   float acquireTimeAct, acquirePeriodAct, accumulatePeriodAct;
   int FKmode = 4;
   int emGain;
@@ -972,8 +1011,15 @@ asynStatus AndorCCD::setupAcquisition()
   int emGainAdvanced;
   int FKOffset;
   AndorADCSpeed_t *pSpeed;
+  int readOutMode;
   static const char *functionName = "setupAcquisition";
   
+  if (!mInitOK) {
+    return asynDisabled;
+  }
+
+  // Get current readout mode
+  getIntegerParam(AndorReadOutMode, &readOutMode);
   getIntegerParam(ADImageMode, &imageMode);
   getIntegerParam(ADNumExposures, &numExposures);
   if (numExposures <= 0) {
@@ -1016,14 +1062,21 @@ asynStatus AndorCCD::setupAcquisition()
   getIntegerParam(ADMinY, &minY);
   getIntegerParam(ADSizeX, &sizeX);
   getIntegerParam(ADSizeY, &sizeY);
+  getIntegerParam(ADReverseX, &reverseX);
+  getIntegerParam(ADReverseY, &reverseY);
   getIntegerParam(ADMaxSizeX, &maxSizeX);
   getIntegerParam(ADMaxSizeY, &maxSizeY);
-  if (minX > (maxSizeX - 2*binX)) {
-    minX = maxSizeX - 2*binX;
+  if (readOutMode == ARFullVerticalBinning) {
+    // Set maximum binning but do not update parameter, this preserves ADBinY
+    // when going back to Image readout mode.
+    binY = maxSizeY;
+  }
+  if (minX > (maxSizeX - binX)) {
+    minX = maxSizeX - binX;
     setIntegerParam(ADMinX, minX);
   }
-  if (minY > (maxSizeY - 2*binY)) {
-    minY = maxSizeY - 2*binY;
+  if (minY > (maxSizeY - binY)) {
+    minY = maxSizeY - binY;
     setIntegerParam(ADMinY, minY);
   }
   if ((minX + sizeX) > maxSizeX) {
@@ -1041,12 +1094,19 @@ asynStatus AndorCCD::setupAcquisition()
   getIntegerParam(AndorAdcSpeed, &adcSpeed);
   pSpeed = &mADCSpeeds[adcSpeed];
   
+  getIntegerParam(AndorPreAmpGain, &preAmpGain);
+  
   // Unfortunately there does not seem to be a way to query the Andor SDK 
   // for the actual size of the image, so we must compute it.
   setIntegerParam(NDArraySizeX, sizeX/binX);
   setIntegerParam(NDArraySizeY, sizeY/binY);
   
   try {
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+      "%s:%s:, SetReadMode(%d)\n",
+      driverName, functionName, readOutMode);
+    checkStatus(SetReadMode(readOutMode));
+
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s:%s:, SetTriggerMode(%d)\n", 
       driverName, functionName, triggerMode);
@@ -1068,15 +1128,31 @@ asynStatus AndorCCD::setupAcquisition()
     checkStatus(SetHSSpeed(pSpeed->AmpIndex, pSpeed->HSSpeedIndex));
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-      "%s:%s:, SetImage(%d,%d,%d,%d,%d,%d)\n", 
-      driverName, functionName, binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY);
-    checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
+      "%s:%s:, SetPreAmpGain(%d)\n", 
+      driverName, functionName, preAmpGain);
+    checkStatus(SetPreAmpGain(preAmpGain));
+
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+      "%s:%s:, SetImageFlip(%d, %d)\n", 
+      driverName, functionName, reverseX, reverseY);
+    checkStatus(SetImageFlip(reverseX, reverseY));
+
+    if (readOutMode == ARImage) {
+      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s:, SetImage(%d,%d,%d,%d,%d,%d)\n",
+        driverName, functionName, binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY);
+      checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
+    }
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s:%s:, SetExposureTime(%f)\n", 
       driverName, functionName, mAcquireTime);
     checkStatus(SetExposureTime(mAcquireTime));
+<<<<<<< HEAD
    
+=======
+
+>>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     // Check if camera has EM gain capability before setting modes or EM gain
     if ((int)mCapabilities.ulEMGainCapability > 0) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
@@ -1084,21 +1160,33 @@ asynStatus AndorCCD::setupAcquisition()
         driverName, functionName, emGainMode);
       checkStatus(SetEMGainMode(emGainMode));
     }
+<<<<<<< HEAD
       
+=======
+
+>>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     if ((int)mCapabilities.ulEMGainCapability > 0) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s:%s:, SetEMGainAdvanced(%d)\n", 
         driverName, functionName, emGainAdvanced);
       checkStatus(SetEMAdvanced(emGainAdvanced));
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     if ((int)mCapabilities.ulEMGainCapability > 0) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s:%s:, SetEMCCDGain(%d)\n", 
         driverName, functionName, emGain);
       checkStatus(SetEMCCDGain(emGain));
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     switch (imageMode) {
       case ADImageSingle:
         if (numExposures == 1) {
@@ -1212,6 +1300,7 @@ void AndorCCD::dataTask(void)
   epicsInt32 imageCounter;
   epicsInt32 arrayCallbacks;
   epicsInt32 sizeX, sizeY;
+  int adShutterMode;
   NDDataType_t dataType;
   int itemp;
   at_32 firstImage, lastImage;
@@ -1245,6 +1334,10 @@ void AndorCCD::dataTask(void)
       try {
         status = setupAcquisition();
         if (status != asynSuccess) continue;
+        getIntegerParam(ADShutterMode, &adShutterMode);
+        if (adShutterMode == ADShutterModeEPICS) {
+          ADDriver::setShutter(ADShutterOpen);
+        }
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
           "%s:%s:, StartAcquisition()\n", 
           driverName, functionName);
@@ -1368,6 +1461,10 @@ void AndorCCD::dataTask(void)
       }
     }
       
+    if (adShutterMode == ADShutterModeEPICS) {
+      ADDriver::setShutter(ADShutterClosed);
+    }
+
     //Now clear main thread flag
     mAcquiringData = 0;
     setIntegerParam(ADAcquire, 0);
