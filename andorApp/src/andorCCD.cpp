@@ -890,7 +890,7 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
     sprintf(message, "ERROR: Unknown error code=%d returned from Andor SDK.", returnStatus);
     throw std::string(message);
   }
-  
+
   return 0;
 }
 
