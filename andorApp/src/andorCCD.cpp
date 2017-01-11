@@ -579,17 +579,11 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
              (function == ADBinX)         || (function == ADBinY)              ||
              (function == ADMinX)         || (function == ADMinY)              ||
              (function == ADSizeX)        || (function == ADSizeY)             ||
-<<<<<<< HEAD
-             (function == ADTriggerMode)  || (function == AndorEmGain)         || 
-             (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
-             (function == AndorAdcSpeed)) {
-=======
              (function == ADReverseX)     || (function == ADReverseY)          ||
              (function == ADTriggerMode)  || (function == AndorEmGain)         || 
              (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
              (function == AndorAdcSpeed)  || (function == AndorPreAmpGain)     ||
              (function == AndorReadOutMode)) {
->>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
       status = setupAcquisition();
       if (function == AndorAdcSpeed) setupPreAmpGains();
       if (status != asynSuccess) setIntegerParam(function, oldValue);
@@ -622,7 +616,14 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       status = setupShutter(-1);
     }
     else if (function == AndorBaselineClamp) {
-      checkStatus(SetBaselineClamp(value));
+      try {
+        checkStatus(SetBaselineClamp(value));
+      } catch (const std::string &e) {
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
+        status = asynError;
+      }
     }
     else {
       status = ADDriver::writeInt32(pasynUser, value);
@@ -889,7 +890,7 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
     sprintf(message, "ERROR: Unknown error code=%d returned from Andor SDK.", returnStatus);
     throw std::string(message);
   }
-
+  
   return 0;
 }
 
@@ -1148,11 +1149,7 @@ asynStatus AndorCCD::setupAcquisition()
       "%s:%s:, SetExposureTime(%f)\n", 
       driverName, functionName, mAcquireTime);
     checkStatus(SetExposureTime(mAcquireTime));
-<<<<<<< HEAD
-   
-=======
 
->>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     // Check if camera has EM gain capability before setting modes or EM gain
     if ((int)mCapabilities.ulEMGainCapability > 0) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
@@ -1160,33 +1157,21 @@ asynStatus AndorCCD::setupAcquisition()
         driverName, functionName, emGainMode);
       checkStatus(SetEMGainMode(emGainMode));
     }
-<<<<<<< HEAD
-      
-=======
 
->>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     if ((int)mCapabilities.ulEMGainCapability > 0) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s:%s:, SetEMGainAdvanced(%d)\n", 
         driverName, functionName, emGainAdvanced);
       checkStatus(SetEMAdvanced(emGainAdvanced));
     }
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     if ((int)mCapabilities.ulEMGainCapability > 0) {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s:%s:, SetEMCCDGain(%d)\n", 
         driverName, functionName, emGain);
       checkStatus(SetEMCCDGain(emGain));
     }
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> 0a4b1660479774f280ad7bf0b6ad76b0588927de
     switch (imageMode) {
       case ADImageSingle:
         if (numExposures == 1) {
