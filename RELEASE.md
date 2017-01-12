@@ -22,14 +22,19 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
-R2-5 (July XXX, 2016)
+R2-5 (January XXX, 2017)
 ----
 * Added support for Electron Multiplying (EM) Gain.  Thanks to Mike Dunning for this.
 * Add ability to set the BaselineClamp in the Andor SDK.  Thanks to Matt Pearson for this.
 * Enforce minimum values of ADShutterOpenDelay and ADShutterCloseDelay based on query of SDK.
 * Fix bug when setting MinX and MinY with binning.  There was an incorrect factor of 2 present.
   Thanks to Hinko Kocevar for this fix.
-* Add support for Full Vertical Binning (FVB) readout mode.
+* Implemented ReverseX and ReverseY.
+* Fixed bug with AndorPreAmpGain; previously it was not actually calling SetPreAmpGain().
+* Added support for SerialNumber, FirmwareVersion, SDKVersion, DriverVersion, and ADCoreVersion which
+  were added in ADCore R2-6. 
+* Added support for Full Vertical Binning (FVB) readout mode. Thanks to Hinko Kocevar for this.
+* Added support for EPICS shutter control.
 
 R2-4 (September 15, 2015)
 ----

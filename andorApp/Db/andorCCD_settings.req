@@ -4,6 +4,9 @@ $(P)$(R)AndorShutterMode
 $(P)$(R)AndorShutterExTTL
 $(P)$(R)PALFilePath
 $(P)$(R)AndorPreAmpGain
+$(P)$(R)AndorEMGain
+$(P)$(R)AndorEMGainMode
+$(P)$(R)AndorEMGainAdvanced
 $(P)$(R)AndorADCSpeed
 $(P)$(R)AndorReadOutMode
 file "ADBase_settings.req", P=$(P), R=$(R)
