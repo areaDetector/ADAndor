@@ -22,7 +22,7 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
-R2-5 (January XXX, 2017)
+R2-5 (February 19, 2017)
 ----
 * Added support for Electron Multiplying (EM) Gain.  Thanks to Mike Dunning for this.
 * Add ability to set the BaselineClamp in the Andor SDK.  Thanks to Matt Pearson for this.
