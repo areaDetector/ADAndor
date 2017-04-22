@@ -22,7 +22,7 @@
 #include <iocsh.h>
 #include <epicsExit.h>
 
-#include <tinyxml.h>
+#include <libxml/parser.h>
 #include <ADDriver.h>
 
 #ifdef _WIN32
@@ -1537,11 +1537,23 @@ void AndorCCD::saveDataFrame(int frameNumber)
 
 }
 
+xmlNode *xmlFindChildElement(xmlNode *parent, const char *name)
+{
+  xmlNode *node;
+  for (node = xmlFirstElementChild(parent); node; node = xmlNextElementSibling(parent)) {
+    if ((xmlStrEqual(node->name, (const xmlChar *)name))) {
+      return node;
+    }
+  }
+  return 0;
+}
+
 unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
 {
   NDArray *pArray = this->pArrays[0];
   NDArrayInfo arrayInfo;
   int nx, ny;
+  bool xmlError;
   int dataType;
   FILE *fp;
   size_t numWrite;
@@ -1550,11 +1562,10 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   char tempString[20];
   const char *dataTypeString;
   int i;
-  TiXmlNode *speFormatNode, *dataFormatNode, *calibrationsNode;
-  TiXmlNode *wavelengthMappingNode, *wavelengthNode;
-  TiXmlElement *dataBlockElement, *dataBlockElement2;
-  TiXmlElement *sensorInformationElement, *sensorMappingElement;
-  TiXmlText *wavelengthText;
+  xmlNode *speFormatElement, *dataFormatElement, *calibrationsElement;
+  xmlNode *wavelengthMappingElement, *wavelengthElement;
+  xmlNode *dataBlockElement, *dataBlockElement2;
+  xmlNode *sensorInformationElement, *sensorMappingElement;
   static const char *functionName="SaveAsSPE";
   
   if (!pArray) return DRV_NO_NEW_DATA;
@@ -1646,7 +1657,7 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
 
   // Create the XML data using SPETemplate.xml in the current directory as a template    
   if (mSPEDoc == 0) {
-    mSPEDoc = new TiXmlDocument("SPETemplate.xml");
+    mSPEDoc = xmlReadFile("SPETemplate.xml", NULL, 0);
     if (mSPEDoc == 0) {
       asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
         "%s::%s error opening SPETemplate.xml\n",
@@ -1654,42 +1665,70 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
       return DRV_GENERAL_ERRORS;
     }
   }
-  mSPEDoc->LoadFile();
-        
+  
+  // Assume XML parsing error
+  xmlError = true;
+      
   // Set the required values in the DataFormat element
-  speFormatNode = mSPEDoc->FirstChild("SpeFormat");
-  dataFormatNode = speFormatNode->FirstChild("DataFormat");
-  dataBlockElement = dataFormatNode->FirstChildElement("DataBlock");
-  dataBlockElement->SetAttribute("pixelFormat", dataTypeString);
+  speFormatElement = xmlDocGetRootElement(mSPEDoc);
+  if ((!xmlStrEqual(speFormatElement->name, (const xmlChar *)"SpeFormat"))) {
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: cannot find SpeFormat element\n", driverName, functionName);
+      return asynError;
+  }
+  dataFormatElement = xmlFindChildElement(speFormatElement, "DataFormat");
+  if (!dataFormatElement) goto done;
+  dataBlockElement = xmlFindChildElement(dataFormatElement, "DataBlock");
+  if (!dataBlockElement) goto done;
+  xmlSetProp(dataBlockElement, (const xmlChar*)"pixelFormat", (const xmlChar*)dataTypeString);
   sprintf(tempString, "%lu", (unsigned long)arrayInfo.totalBytes);
-  dataBlockElement->SetAttribute("size", tempString);
-  dataBlockElement->SetAttribute("stride", tempString);
-  dataBlockElement2 = dataBlockElement->FirstChildElement("DataBlock");
-  dataBlockElement2->SetAttribute("size", tempString);
+  xmlSetProp(dataBlockElement, (const xmlChar*)"size", (const xmlChar*)tempString);
+  xmlSetProp(dataBlockElement, (const xmlChar*)"stride", (const xmlChar*)tempString);
+  dataBlockElement2 = xmlFindChildElement(dataBlockElement, "DataBlock");
+  if (!dataBlockElement2) goto done;
+  xmlSetProp(dataBlockElement2, (const xmlChar*)"size", (const xmlChar*)tempString);
   sprintf(tempString, "%d", nx);
-  dataBlockElement2->SetAttribute("width", tempString);
+  xmlSetProp(dataBlockElement2, (const xmlChar*)"width", (const xmlChar*)tempString);
   sprintf(tempString, "%d", ny);
-  dataBlockElement2->SetAttribute("height", tempString);
+  xmlSetProp(dataBlockElement2, (const xmlChar*)"height", (const xmlChar*)tempString);
 
   // Set the required values in the Calibrations element
-  calibrationsNode = speFormatNode->FirstChild("Calibrations");
-  wavelengthMappingNode = calibrationsNode->FirstChild("WavelengthMapping");
-  wavelengthNode = wavelengthMappingNode->FirstChildElement("Wavelength");
-  wavelengthText = (wavelengthNode->FirstChild())->ToText();
-  wavelengthText->SetValue(calibrationString);
-  sensorInformationElement = calibrationsNode->FirstChildElement("SensorInformation");
+  calibrationsElement = xmlFindChildElement(speFormatElement, "Calibrations");
+  if (!calibrationsElement) goto done;
+  wavelengthMappingElement = xmlFindChildElement(calibrationsElement, "WavelengthMapping");
+  if (!wavelengthMappingElement) goto done;
+  wavelengthElement = xmlFindChildElement(wavelengthMappingElement, "Wavelength");
+  if (!wavelengthElement) goto done;
+  xmlNodeSetContent(wavelengthElement, (const xmlChar*)calibrationString);
+  sensorInformationElement = xmlFindChildElement(calibrationsElement, "SensorInformation");
+  if (!sensorInformationElement) goto done;
   sprintf(tempString, "%d", nx);
-  sensorInformationElement->SetAttribute("width", tempString);
+  xmlSetProp(sensorInformationElement, (const xmlChar*)"width", (const xmlChar*)tempString);
   sprintf(tempString, "%d", ny);
-  sensorInformationElement->SetAttribute("height", tempString);
-  sensorMappingElement = calibrationsNode->FirstChildElement("SensorMapping");
+  xmlSetProp(sensorInformationElement, (const xmlChar*)"height", (const xmlChar*)tempString);
+  sensorMappingElement = xmlFindChildElement(calibrationsElement, "SensorMapping");
   sprintf(tempString, "%d", nx);
-  sensorMappingElement->SetAttribute("width", tempString);
+  xmlSetProp(sensorMappingElement, (const xmlChar*)"width", (const xmlChar*)tempString);
   sprintf(tempString, "%d", ny);
-  sensorMappingElement->SetAttribute("height", tempString);
-
-  mSPEDoc->SaveFile(fp);
+  xmlSetProp(sensorMappingElement, (const xmlChar*)"height", (const xmlChar*)tempString);
+  xmlError = false;
   
+done:
+  if (xmlError) {
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
+      "%s::%s XML parsing error\n", driverName, functionName);
+  }  
+  else {
+    int nChars = xmlDocDump(fp, mSPEDoc);
+    if (nChars < 0) {
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
+        "%s::%s error calling xmlDocDump\n", driverName, functionName);
+    }
+    else {
+      asynPrint(pasynUserSelf, ASYN_TRACEIO_DRIVER, 
+        "%s::%s xmlDocDump wrote %d bytes\n", driverName, functionName, nChars);
+    }
+  }
   // Close the file
   fclose(fp);
   free(calibration);
