@@ -22,6 +22,11 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
+R2-6 (May XXX, 2017)
+----
+* Changed from using TinyXml to libxml2.  This is used when saving SPE files.  This change was made
+  because ADCore no longer included TinyXml and libxml2 is now available for all platforms in ADSupport.
+
 R2-5 (February 19, 2017)
 ----
 * Added support for Electron Multiplying (EM) Gain.  Thanks to Mike Dunning for this.
