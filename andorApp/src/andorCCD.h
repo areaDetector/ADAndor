@@ -12,7 +12,8 @@
 #ifndef ANDORCCD_H
 #define ANDORCCD_H
 
-#include "tinyxml.h"
+#include <libxml/parser.h>
+
 #include "ADDriver.h"
 #include "SPEHeader.h"
 
@@ -211,7 +212,7 @@ class AndorCCD : public ADDriver {
   
   // SPE file header
   tagCSMAHEAD *mSPEHeader;
-  TiXmlDocument *mSPEDoc;
+  xmlDocPtr mSPEDoc;
 
   // Camera init status
   bool mInitOK;
