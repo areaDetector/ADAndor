@@ -1,14 +1,14 @@
 
 file {
-	name="/home/epics/devel/areaDetector-2-5/ADAndor/andorApp/op/adl/Andor.adl"
-	version=030107
+	name="/home/epics/devel/areaDetector-3-1/ADAndor/andorApp/op/adl/Andor.adl"
+	version=030109
 }
 display {
 	object {
 		x=540
 		y=40
 		width=715
-		height=1000
+		height=1020
 	}
 	clr=14
 	bclr=4
@@ -1610,7 +1610,7 @@ composite {
 		x=360
 		y=735
 		width=350
-		height=60
+		height=110
 	}
 	"composite name"=""
 	"composite file"="ADAttrFile.adl"
@@ -1694,7 +1694,7 @@ composite {
 composite {
 	object {
 		x=360
-		y=800
+		y=850
 		width=350
 		height=60
 	}
@@ -1703,7 +1703,7 @@ composite {
 		composite {
 			object {
 				x=482
-				y=802
+				y=852
 				width=107
 				height=21
 			}
@@ -1712,7 +1712,7 @@ composite {
 				composite {
 					object {
 						x=482
-						y=802
+						y=852
 						width=107
 						height=21
 					}
@@ -1721,7 +1721,7 @@ composite {
 						rectangle {
 							object {
 								x=482
-								y=802
+								y=852
 								width=107
 								height=21
 							}
@@ -1734,7 +1734,7 @@ composite {
 				text {
 					object {
 						x=515
-						y=802
+						y=852
 						width=40
 						height=20
 					}
@@ -1749,7 +1749,7 @@ composite {
 		rectangle {
 			object {
 				x=360
-				y=800
+				y=850
 				width=350
 				height=60
 			}
@@ -1761,7 +1761,7 @@ composite {
 		text {
 			object {
 				x=373
-				y=829
+				y=879
 				width=150
 				height=20
 			}
@@ -1774,7 +1774,7 @@ composite {
 		"related display" {
 			object {
 				x=530
-				y=829
+				y=879
 				width=70
 				height=20
 			}
@@ -2024,7 +2024,7 @@ text {
 composite {
 	object {
 		x=360
-		y=865
+		y=915
 		width=350
 		height=100
 	}
@@ -2033,7 +2033,7 @@ composite {
 		rectangle {
 			object {
 				x=482
-				y=867
+				y=917
 				width=107
 				height=21
 			}
@@ -2044,7 +2044,7 @@ composite {
 		text {
 			object {
 				x=505
-				y=868
+				y=918
 				width=60
 				height=20
 			}
@@ -2057,7 +2057,7 @@ composite {
 		rectangle {
 			object {
 				x=360
-				y=865
+				y=915
 				width=350
 				height=100
 			}
@@ -2069,7 +2069,7 @@ composite {
 		"text update" {
 			object {
 				x=596
-				y=920
+				y=970
 				width=61
 				height=18
 			}
@@ -2085,7 +2085,7 @@ composite {
 		"text entry" {
 			object {
 				x=503
-				y=919
+				y=969
 				width=60
 				height=20
 			}
@@ -2100,7 +2100,7 @@ composite {
 		text {
 			object {
 				x=382
-				y=919
+				y=969
 				width=110
 				height=20
 			}
@@ -2113,7 +2113,7 @@ composite {
 		menu {
 			object {
 				x=503
-				y=894
+				y=944
 				width=60
 				height=20
 			}
@@ -2126,7 +2126,7 @@ composite {
 		text {
 			object {
 				x=432
-				y=894
+				y=944
 				width=60
 				height=20
 			}
@@ -2139,7 +2139,7 @@ composite {
 		"text update" {
 			object {
 				x=596
-				y=895
+				y=945
 				width=61
 				height=18
 			}
@@ -2155,7 +2155,7 @@ composite {
 		text {
 			object {
 				x=433
-				y=944
+				y=994
 				width=60
 				height=20
 			}
@@ -2168,7 +2168,7 @@ composite {
 		"text update" {
 			object {
 				x=503
-				y=948
+				y=998
 				width=180
 				height=12
 			}
