@@ -22,10 +22,12 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
-R2-6 (May XXX, 2017)
+R2-6 (July 4, 2017)
 ----
 * Changed from using TinyXml to libxml2.  This is used when saving SPE files.  This change was made
-  because ADCore no longer included TinyXml and libxml2 is now available for all platforms in ADSupport.
+  because ADCore R3-0 no longer includes TinyXml and libxml2 is now available for all platforms in ADSupport.
+* Fixed medm screen layout for ADCore R3-0.
+
 
 R2-5 (February 19, 2017)
 ----
