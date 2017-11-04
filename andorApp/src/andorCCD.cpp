@@ -153,6 +153,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   createParam(AndorAdcSpeedString,                asynParamInt32, &AndorAdcSpeed);
   createParam(AndorBaselineClampString,           asynParamInt32, &AndorBaselineClamp);
   createParam(AndorReadOutModeString,             asynParamInt32, &AndorReadOutMode);
+  createParam(AndorFrameTransferModeString,       asynParamInt32, &AndorFrameTransferMode);
 
   // Create the epicsEvent for signaling to the status task when parameters should have changed.
   // This will cause it to do a poll immediately, rather than wait for the poll time period.
@@ -249,6 +250,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
   status |= setDoubleParam(ADShutterOpenDelay, 0.);
   status |= setDoubleParam(ADShutterCloseDelay, 0.);
   status |= setIntegerParam(AndorReadOutMode, ARImage);
+  status |= setIntegerParam(AndorFrameTransferMode, 0);
 
   setupADCSpeeds();
   setupPreAmpGains();
@@ -574,16 +576,16 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
         } 
       }
     }
-    else if ((function == ADNumExposures) || (function == ADNumImages)         ||
-             (function == ADImageMode)                                         ||
-             (function == ADBinX)         || (function == ADBinY)              ||
-             (function == ADMinX)         || (function == ADMinY)              ||
-             (function == ADSizeX)        || (function == ADSizeY)             ||
-             (function == ADReverseX)     || (function == ADReverseY)          ||
-             (function == ADTriggerMode)  || (function == AndorEmGain)         || 
-             (function == AndorEmGainMode)|| (function == AndorEmGainAdvanced) ||
-             (function == AndorAdcSpeed)  || (function == AndorPreAmpGain)     ||
-             (function == AndorReadOutMode)) {
+    else if ((function == ADNumExposures)   || (function == ADNumImages)            ||
+             (function == ADImageMode)                                              ||
+             (function == ADBinX)           || (function == ADBinY)                 ||
+             (function == ADMinX)           || (function == ADMinY)                 ||
+             (function == ADSizeX)          || (function == ADSizeY)                ||
+             (function == ADReverseX)       || (function == ADReverseY)             ||
+             (function == ADTriggerMode)    || (function == AndorEmGain)            || 
+             (function == AndorEmGainMode)  || (function == AndorEmGainAdvanced)    ||
+             (function == AndorAdcSpeed)    || (function == AndorPreAmpGain)        ||
+             (function == AndorReadOutMode) || (function == AndorFrameTransferMode)) {
       status = setupAcquisition();
       if (function == AndorAdcSpeed) setupPreAmpGains();
       if (status != asynSuccess) setIntegerParam(function, oldValue);
@@ -1006,6 +1008,7 @@ asynStatus AndorCCD::setupAcquisition()
   int FKOffset;
   AndorADCSpeed_t *pSpeed;
   int readOutMode;
+  int frameTransferMode;
   static const char *functionName = "setupAcquisition";
   
   if (!mInitOK) {
@@ -1094,6 +1097,8 @@ asynStatus AndorCCD::setupAcquisition()
   // for the actual size of the image, so we must compute it.
   setIntegerParam(NDArraySizeX, sizeX/binX);
   setIntegerParam(NDArraySizeY, sizeY/binY);
+
+  getIntegerParam(AndorFrameTransferMode, &frameTransferMode);
   
   try {
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
@@ -1164,6 +1169,11 @@ asynStatus AndorCCD::setupAcquisition()
         driverName, functionName, emGain);
       checkStatus(SetEMCCDGain(emGain));
     }
+
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+      "%s:%s:, SetFrameTransferMode(%d)\n",
+      driverName, functionName, frameTransferMode);
+    checkStatus(SetFrameTransferMode(frameTransferMode));
 
     switch (imageMode) {
       case ADImageSingle:

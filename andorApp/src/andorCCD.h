@@ -35,6 +35,7 @@
 #define AndorAdcSpeedString                "ANDOR_ADC_SPEED"
 #define AndorBaselineClampString           "ANDOR_BASELINE_CLAMP"
 #define AndorReadOutModeString             "ANDOR_READOUT_MODE"
+#define AndorFrameTransferModeString       "ANDOR_FT_MODE"
 
 /**
  * Structure defining an ADC speed for the ADAndor driver.
@@ -97,7 +98,8 @@ class AndorCCD : public ADDriver {
   int AndorAdcSpeed;
   int AndorBaselineClamp;
   int AndorReadOutMode;
-  #define LAST_ANDOR_PARAM AndorReadOutMode
+  int AndorFrameTransferMode;
+  #define LAST_ANDOR_PARAM AndorFrameTransferMode
 
  private:
 
