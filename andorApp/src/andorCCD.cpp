@@ -1414,14 +1414,10 @@ void AndorCCD::dataTask(void)
             /* Get any attributes that have been defined for this driver */        
             this->getAttributes(pArray->pAttributeList);
             /* Call the NDArray callback */
-            /* Must release the lock here, or we can get into a deadlock, because we can
-             * block on the plugin lock, and the plugin can be calling us */
-            this->unlock();
             asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
                  "%s:%s:, calling array callbacks\n", 
                  driverName, functionName);
             doCallbacksGenericPointer(pArray, NDArrayData, 0);
-            this->lock();
             // Save the current frame for use with the SPE file writer which needs the data
             if (this->pArrays[0]) this->pArrays[0]->release();
             this->pArrays[0] = pArray;
