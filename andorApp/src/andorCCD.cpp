@@ -668,7 +668,14 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       status = setupShutter(-1);
     }
     else if (function == AndorBaselineClamp) {
-      checkStatus(SetBaselineClamp(value));
+      try {
+        checkStatus(SetBaselineClamp(value));
+      } catch (const std::string &e) {
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
+        status = asynError;
+      }
     }
     else {
       status = ADDriver::writeInt32(pasynUser, value);
