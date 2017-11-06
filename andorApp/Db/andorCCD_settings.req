@@ -10,6 +10,7 @@ $(P)$(R)AndorEMGainAdvanced
 $(P)$(R)AndorADCSpeed
 $(P)$(R)AndorReadOutMode
 $(P)$(R)AndorFTMode
+$(P)$(R)AndorVSPeriod
 file "ADBase_settings.req", P=$(P), R=$(R)
 file "NDFile_settings.req", P=$(P), R=$(R)
 

@@ -20,6 +20,7 @@
 #define MAX_ENUM_STRING_SIZE 26
 #define MAX_ADC_SPEEDS 16
 #define MAX_PREAMP_GAINS 16
+#define MAX_VS_PERIODS 16
 
 #define AndorCoolerParamString             "ANDOR_COOLER"
 #define AndorTempStatusMessageString       "ANDOR_TEMP_STAT"
@@ -36,6 +37,7 @@
 #define AndorBaselineClampString           "ANDOR_BASELINE_CLAMP"
 #define AndorReadOutModeString             "ANDOR_READOUT_MODE"
 #define AndorFrameTransferModeString       "ANDOR_FT_MODE"
+#define AndorVerticalShiftPeriodString     "ANDOR_VS_PERIOD"
 
 /**
  * Structure defining an ADC speed for the ADAndor driver.
@@ -60,6 +62,16 @@ typedef struct {
   char *EnumString;
   int EnumValue;
 } AndorPreAmpGain_t;
+
+/*
+ * Structure defining a Vertical Shift Period for the ADAndor driver.
+ */
+typedef struct {
+  float Period;
+  int Index;
+  char *EnumString;
+  int EnumValue;
+} AndorVSPeriod_t;
 
 /**
  * Driver for Andor CCD cameras using version 2 of their SDK; inherits from ADDriver class in ADCore.
@@ -99,7 +111,8 @@ class AndorCCD : public ADDriver {
   int AndorBaselineClamp;
   int AndorReadOutMode;
   int AndorFrameTransferMode;
-  #define LAST_ANDOR_PARAM AndorFrameTransferMode
+  int AndorVerticalShiftPeriod;
+  #define LAST_ANDOR_PARAM AndorVerticalShiftPeriod
 
  private:
 
@@ -109,6 +122,7 @@ class AndorCCD : public ADDriver {
   void saveDataFrame(int frameNumber);
   void setupADCSpeeds();
   void setupPreAmpGains();
+  void setupVerticalShiftPeriods();
   unsigned int SaveAsSPE(char *fullFileName);
   /**
    * Additional image mode to those in ADImageMode_t
@@ -194,6 +208,13 @@ class AndorCCD : public ADDriver {
   int mTotalPreAmpGains;
   int mNumPreAmpGains;
   AndorPreAmpGain_t mPreAmpGains[MAX_PREAMP_GAINS];
+
+  // Vertical Shift Period parameters
+  int mTotalVSPeriods;
+  int mNumVSPeriods;
+  int mVSIndex;
+  float mVSPeriod;
+  AndorVSPeriod_t mVSPeriods[MAX_VS_PERIODS];
 
   //Shutter control parameters
   float mAcquireTime;
