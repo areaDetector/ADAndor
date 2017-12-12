@@ -125,7 +125,7 @@ extern "C" int shamrockConfig(const char *portName, int shamrockId, const char *
  * \param[in] stackSize The size of the stack for the EPICS port thread. 0=use asyn default.
  */
 shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, int priority, int stackSize)
-    : asynPortDriver(portName, MAX_ADDR, NUM_SR_PARAMS, 
+    : asynPortDriver(portName, MAX_ADDR,
             asynInt32Mask | asynFloat64Mask | asynFloat32ArrayMask | asynDrvUserMask, 
             asynInt32Mask | asynFloat64Mask | asynFloat32ArrayMask,
             ASYN_CANBLOCK | ASYN_MULTIDEVICE, 1, priority, stackSize),
