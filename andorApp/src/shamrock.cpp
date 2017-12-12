@@ -20,6 +20,7 @@
 
 #include <asynPortDriver.h>
 
+#include "atmcdLXd.h"
 #include <ShamrockCIF.h>
 
 #include <epicsExport.h>
@@ -140,6 +141,8 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
     float pixelWidth;
     int i;
     int numFlipperStatus;
+    int width, height;
+    float xSize, ySize;
 
     createParam(SRWavelengthString,       asynParamFloat64,   &SRWavelength_);
     createParam(SRMinWavelengthString,    asynParamFloat64,   &SRMinWavelength_);
@@ -166,6 +169,32 @@ shamrock::shamrock(const char *portName, int shamrockID, const char *iniPath, in
             driverName, functionName, numDevices);
         return;
     }
+
+    //Get Detector dimensions
+    error = GetDetector(&width, &height);
+    if (error != DRV_SUCCESS) {
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s:%s:  GetDetector() status = %d\n",
+            driverName, functionName, error);
+        return;
+    }
+
+    //Sets the number of pixels for calibration purposes
+    error = ShamrockSetNumberPixels(shamrockId_, width);
+    status = checkError(error, functionName, "ShamrockSetNumberPixels");
+
+    //Get Detector pixel size
+    error = GetPixelSize(&xSize, &ySize);
+    if (error != DRV_SUCCESS) {
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s:%s:  GetPixelSize() status = %d\n",
+            driverName, functionName, error);
+        return;
+    }
+
+    //Set the pixel width in microns for calibration purposes.
+    error = ShamrockSetPixelWidth(shamrockId_, xSize);
+    status = checkError(error, functionName, "ShamrockSetPixelWidth");
     
     // Determine the number of pixels on the attached CCD and the pixel size
     error = ShamrockGetNumberPixels(shamrockId_, &numPixels_);
