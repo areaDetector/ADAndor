@@ -48,11 +48,12 @@
     <li>Support for all of the Andor shutter modes</li>
     <li>Support for reading the detectors with 16-bit or 32-bit depth</li>
     <li>Saving files using the Andor SDK and/or with the standard areaDetector plugins</li>
-    <li>Change the ADC sampling speed (0.05MHz and 2.5MHz on the iKon)</li>
+    <li>Change the ADC sampling speed (0.05MHz and 2.5MHz on the iKon) and the Vertical Shift Period</li>
     <li>Set a region of interest (a smaller region can be read out faster)</li>
     <li>Set and monitor the CCD temperature</li>
     <li>Electron Multiplying (EM) Gain on supported detectors</li>
     <li>Support for selecting between Full Vertical Binning (FVB) and Image readout modes</li>
+    <li>Support for Frame Transfer mode</li>
   </ul>
   <p>
     The Andor module includes a separate driver to control the Andor Shamrock spectrographs.
@@ -712,6 +713,56 @@
         <td>
           AndorReadOutMode<br />
           AndorReadOutMode_RBV</td>
+        <td>
+          mbbo<br />
+          mbbi</td>
+      </tr>
+      <tr>
+        <td>
+          AndorFTMode</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Set Frame Transfer mode. Choices are:
+          <ul>
+            <li>Disabled</li>
+            <li>Enabled</li>
+          </ul>
+          Note: Only available on supported CCDs.
+        </td>
+        <td>
+          ANDOR_FT_MODE</td>
+        <td>
+          AndorFTMode<br />
+          AndorFTMode_RBV</td>
+        <td>
+          bo<br />
+          bi</td>
+      </tr>
+      <tr>
+        <td>
+          AndorVSPeriod</td>
+        <td>
+          asynInt32</td>
+        <td>
+          R/W</td>
+        <td>
+          Sets Vetical Shift Period, in units of microseconds per pixel shift.<br/>
+          Choices are constructed at runtime. For example, the choices for an iDus are:
+          <ul>
+            <li>4.25 us</li>
+            <li>8.25 us</li>
+            <li>16.25 us</li>
+            <li>32.25 us</li>
+            <li>64.25 us</li>
+          </ul>
+        <td>
+          ANDOR_VS_PERIOD</td>
+        <td>
+          AndorVSPeriod<br />
+          AndorVSPeriod_RBV</td>
         <td>
           mbbo<br />
           mbbi</td>
