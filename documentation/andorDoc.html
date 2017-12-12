@@ -94,6 +94,22 @@
   <p>
     This is a rather strange requirement of the Andor Shamrock SDK, which will hopefully
     be fixed by them in a future release.</p>
+  <p>
+    NOTE: When using SDK version >= 2.102.30000.0 on Linux one must make sure that
+    libUSBI2C-[ARCH].so.[VERSION] is installed as part of support into libUSBI2C.so and libUSBI2C.so.2.
+  </p>
+  <p>
+    Also libd2xx_table.so might be needed to get Shamrock communicating. See andorSupport/ftdi_table.c for more.
+  </p>
+  <p>
+    Compile with:
+  </p>
+  <p><pre>
+    $ gcc -fpic -shared -Wl,-soname,libd2xx_table.so -o libd2xx_table.so ftdi_table.c
+  </pre></p>
+  <p>
+    Place the libd2xx_table.so into the folder with the rest of SDK support libraries.
+  </p>
   <h2 id="StandardNotes" style="text-align: left">
     Implementation of standard driver parameters</h2>
   <p>
