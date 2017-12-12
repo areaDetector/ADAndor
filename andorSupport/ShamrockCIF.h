@@ -1,4 +1,6 @@
+#ifndef __linux__
 #pragma hdrstop
+#endif
 
 #define SHAMROCK_COMMUNICATION_ERROR 20201
 #define SHAMROCK_SUCCESS 20202
