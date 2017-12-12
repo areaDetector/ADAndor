@@ -1,4 +1,4 @@
-/* #pragma hdrstop */
+#pragma hdrstop
 
 #define SHAMROCK_COMMUNICATION_ERROR 20201
 #define SHAMROCK_SUCCESS 20202
@@ -10,8 +10,8 @@
 #define SHAMROCK_NOT_INITIALIZED 20275
 #define SHAMROCK_NOT_AVAILABLE 20292
 
-#define SHAMROCK_ACCESSORYMIN 1
-#define SHAMROCK_ACCESSORYMAX 2
+#define SHAMROCK_ACCESSORYMIN 0
+#define SHAMROCK_ACCESSORYMAX 1
 #define SHAMROCK_FILTERMIN 1
 #define SHAMROCK_FILTERMAX 6
 #define SHAMROCK_TURRETMIN 1
@@ -66,6 +66,7 @@ unsigned int WINAPI ShamrockGetNumberDevices(int *nodevices);
 unsigned int WINAPI ShamrockGetFunctionReturnDescription(int error,char *description, int MaxDescStrLen);
 //sdkeeprom functions
 unsigned int WINAPI ShamrockGetSerialNumber(int device,char *serial);
+unsigned int WINAPI ShamrockEepromSetOpticalParams(int device, float FocalLength, float AngularDeviation, float FocalTilt);
 unsigned int WINAPI ShamrockEepromGetOpticalParams(int device,float *FocalLength,float *AngularDeviation,float *FocalTilt);
 //sdkgrating functions
 unsigned int WINAPI ShamrockSetGrating(int device,int grating);
@@ -100,6 +101,10 @@ unsigned int WINAPI ShamrockAutoSlitReset(int device, int index);
 unsigned int WINAPI ShamrockAutoSlitIsPresent(int device, int index, int *present);
 unsigned int WINAPI ShamrockSetAutoSlitCoefficients(int device, int index, int x1, int y1, int x2, int y2);
 unsigned int WINAPI ShamrockGetAutoSlitCoefficients(int device, int index, int &x1, int &y1, int &x2, int &y2);
+
+// new new Slit functions.
+unsigned int WINAPI ShamrockSetSlitZeroPosition(int device, int index, int offset);
+unsigned int WINAPI ShamrockGetSlitZeroPosition(int device, int index, int *offset);
 
 ///// Deprecated Slit Functions
 // Deprecated Input Slit Functions
@@ -138,6 +143,9 @@ unsigned int WINAPI ShamrockGetFlipperMirror(int device, int flipper, int * port
 unsigned int WINAPI ShamrockFlipperMirrorReset(int device, int flipper);
 unsigned int WINAPI ShamrockFlipperMirrorIsPresent(int device, int flipper, int *present);
 unsigned int WINAPI ShamrockGetCCDLimits(int device, int port, float *Low, float *High);
+unsigned int WINAPI ShamrockSetFlipperMirrorPosition(int device, int flipper, int position);
+unsigned int WINAPI ShamrockGetFlipperMirrorPosition(int device, int flipper, int *position);
+unsigned int WINAPI ShamrockGetFlipperMirrorMaxPosition(int device, int flipper, int *max);
 
 // Deprecated
 unsigned int WINAPI ShamrockSetPort(int device,int port);
@@ -164,6 +172,12 @@ unsigned int WINAPI ShamrockGetPixelWidth(int device, float* Width);
 unsigned int WINAPI ShamrockGetNumberPixels(int device, int* NumberPixels);
 unsigned int WINAPI ShamrockGetCalibration(int device, float* CalibrationValues, int NumberPixels);
 unsigned int WINAPI ShamrockGetPixelCalibrationCoefficients(int device, float* A, float* B, float* C, float* D);
+
+//SDK iris functions
+unsigned int WINAPI ShamrockIrisIsPresent(int device, int iris, int *present);
+unsigned int WINAPI ShamrockSetIris(int device, int iris, int value);
+unsigned int WINAPI ShamrockGetIris(int device, int iris, int *value);
+
 #ifdef __cplusplus
 }
 #endif
