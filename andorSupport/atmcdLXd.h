@@ -115,6 +115,7 @@ typedef struct ANDORCAPS
 		at_u32 ulPCICard;
 		at_u32 ulEMGainCapability;
 		at_u32 ulFTReadModes;
+		at_u32 ulFeatures2;
 } AndorCapabilities;
 	
 
@@ -165,6 +166,7 @@ unsigned int GetAvailableCameras(at_32 * totalCameras);
 unsigned int GetBackground(at_32 * arr, at_u32 size);
 unsigned int GetBaselineClamp(int * state);
 unsigned int GetBitDepth(int channel, int * depth);
+unsigned int GetBitsPerPixel(int readout_index, int index, int * value);
 unsigned int GetCameraEventStatus(at_u32 * camStatus);
 unsigned int GetCameraHandle(at_32 cameraIndex, at_32 * cameraHandle);
 unsigned int GetCameraInformation(int index, at_32 * information);
@@ -209,6 +211,7 @@ unsigned int GetDICameraInfo(void * info);
 unsigned int GetEMAdvanced(int * state);
 unsigned int GetEMCCDGain(int * gain);
 unsigned int GetEMGainRange(int * low, int * high);
+unsigned int GetESDEventStatus(at_u32 * camStatus);
 unsigned int GetExternalTriggerTermination(at_u32 * puiTermination);
 unsigned int GetFastestRecommendedVSSpeed(int * index, float * speed);
 unsigned int GetFIFOUsage(int * FIFOusage);
@@ -275,6 +278,7 @@ unsigned int GetPhysicalDMAAddress(at_u32 * Address1, at_u32 * Address2);
 unsigned int GetPixelSize(float * xSize, float * ySize);
 unsigned int GetPreAmpGain(int index, float * gain);
 unsigned int GetPreAmpGainText(int index, char * name, int length);
+unsigned int GetCurrentPreAmpGain(int * index, char * name, int length);
 unsigned int GetDualExposureTimes(float * exposure1, float * exposure2);
 unsigned int GetQE(char * sensor, float wavelength, unsigned int mode, float * QE);
 unsigned int GetReadOutTime(float * ReadOutTime);
@@ -329,6 +333,7 @@ unsigned int Merge(const at_32 * arr, at_32 nOrder, at_32 nPoint, at_32 nPixel, 
 unsigned int OutAuxPort(int port, int state);
 unsigned int PrepareAcquisition();
 unsigned int SaveAsBmp(const char * path, const char * palette, at_32 ymin, at_32 ymax);
+unsigned int SaveAsCalibratedSif(char * path, int x_data_type, int x_unit, float * x_cal, float rayleighWavelength);
 unsigned int SaveAsCommentedSif(char * path, char * comment);
 unsigned int SaveAsEDF(char * szPath, int iMode);
 unsigned int SaveAsFITS(char * szFileTitle, int typ);
@@ -346,12 +351,14 @@ unsigned int SetAccumulationCycleTime(float time);
 unsigned int SetAcquisitionMode(int mode);
 unsigned int SetSensorPortMode(int mode);
 unsigned int SelectSensorPort(int port);
+unsigned int SelectDualSensorPort(int port);
 unsigned int SetAcquisitionType(int typ);
 unsigned int SetADChannel(int channel);
 unsigned int SetAdvancedTriggerModeState(int iState);
 unsigned int SetBackground(at_32 * arr, at_u32 size);
 unsigned int SetBaselineClamp(int state);
 unsigned int SetBaselineOffset(int offset);
+unsigned int SetBitsPerPixel(int state);
 unsigned int SetCameraLinkMode(int mode);
 unsigned int SetCameraStatusEnable(unsigned long Enable);
 unsigned int SetChargeShifting(unsigned int NumberRows, unsigned int NumberRepeats);
@@ -400,6 +407,7 @@ unsigned int SetDDGVariableGateStep(int mode, double p1, double p2);
 unsigned int SetDelayGenerator(int board, short address, int typ);
 unsigned int SetDMAParameters(int MaxImagesPerDMA, float SecondsPerDMA);
 // unsigned int SetDriverEvent(HANDLE driverEvent);
+// unsigned int SetESDEvent(HANDLE esdEvent);
 unsigned int SetEMAdvanced(int state);
 unsigned int SetEMCCDGain(int gain);
 unsigned int SetEMClockCompensation(int EMClockCompensationFlag);
@@ -410,8 +418,8 @@ unsigned int SetFanMode(int mode);
 unsigned int SetFastExtTrigger(int mode);
 unsigned int SetFastKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin);
 unsigned int SetFastKineticsEx(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
-unsigned int SetSuperKinetics(int exposedRows, int seriesLength, float time, int mode, int hbin, int vbin, int offset);
-unsigned int SetTimeScan(int rows, int tracks, int mode);
+unsigned int SetFastKineticsStorageMode(int mode);
+unsigned int SetFastKineticsTimeScanMode(int rows, int tracks, int mode);
 unsigned int SetFilterMode(int mode);
 unsigned int SetFilterParameters(int width, float sensitivity, int range, float accept, int smooth, int noise);
 unsigned int SetFKVShiftSpeed(int index);
@@ -431,6 +439,7 @@ unsigned int SetImageFlip(int iHFlip, int iVFlip);
 unsigned int SetImageRotate(int iRotate);
 unsigned int SetIsolatedCropMode(int active, int cropheight, int cropwidth, int vbin, int hbin);
 unsigned int SetIsolatedCropModeEx(int active, int cropheight, int cropwidth, int vbin, int hbin, int cropleft, int cropbottom);
+unsigned int SetIsolatedCropModeType(int type);
 unsigned int SetKineticCycleTime(float time);
 unsigned int SetMCPGain(int gain);
 unsigned int SetMCPGating(int gating);
@@ -498,6 +507,7 @@ unsigned int WaitForAcquisitionTimeOut(int iTimeOutMs);
 unsigned int WhiteBalance(unsigned short * wRed, unsigned short * wGreen, unsigned short * wBlue, float * fRelR, float * fRelB, WhiteBalanceInfo * info);
 
 unsigned int OA_Initialize(const char * const pcFilename, unsigned int uiFileNameLen);
+unsigned int OA_IsPreSetModeAvailable(const char * const pcModeName);
 unsigned int OA_EnableMode(const char * const pcModeName);
 unsigned int OA_GetModeAcqParams(const char * const pcModeName, char * const pcListOfParams);
 unsigned int OA_GetUserModeNames(char * pcListOfModes);
@@ -626,6 +636,7 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define DRV_BINNING_ERROR 20099
 #define DRV_INVALID_AMPLIFIER 20100
 #define DRV_INVALID_COUNTCONVERT_MODE 20101
+#define DRV_USB_INTERRUPT_ENDPOINT_TIMEOUT 20102
 
 #define DRV_ERROR_NOCAMERA 20990
 #define DRV_NOT_SUPPORTED 20991
@@ -672,6 +683,7 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define DRV_OA_MODE_DOES_NOT_EXIST 20193
 #define DRV_OA_CAMERA_NOT_SUPPORTED 20194
 #define DRV_OA_FAILED_TO_GET_MODE 20195
+#define DRV_OA_CAMERA_NOT_AVAILABLE 20196
 
 #define DRV_PROCESSING_FAILED 20211
 
@@ -682,8 +694,7 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define AC_ACQMODE_FRAMETRANSFER 16
 #define AC_ACQMODE_FASTKINETICS 32
 #define AC_ACQMODE_OVERLAP 64
-#define AC_ACQMODE_SUPERKINETICS 128
-#define AC_ACQMODE_TIMESCAN 256
+#define AC_ACQMODE_TDI 0x80
 
 #define AC_READMODE_FULLIMAGE 1
 #define AC_READMODE_SUBIMAGE 2
@@ -735,6 +746,8 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define AC_CAMERATYPE_ALTAF 27
 #define AC_CAMERATYPE_IKONXL 28
 #define AC_CAMERATYPE_RES1 29
+#define AC_CAMERATYPE_ISTAR_SCMOS 30
+#define AC_CAMERATYPE_IKONLR 31
 
 #define AC_PIXELMODE_8BIT 1
 #define AC_PIXELMODE_14BIT 2
@@ -775,6 +788,9 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define AC_SETFUNCTION_PRESCANS 0x4000000
 #define AC_SETFUNCTION_GATEWIDTHSTEP 0x8000000
 #define AC_SETFUNCTION_EXTENDED_CROP_MODE 0x10000000
+#define AC_SETFUNCTION_SUPERKINETICS 0x20000000
+#define AC_SETFUNCTION_TIMESCAN 0x40000000
+#define AC_SETFUNCTION_CROPMODETYPE 0x80000000
 
 // Deprecated for AC_SETFUNCTION_MCPGAIN
 #define AC_SETFUNCTION_GAIN 8
@@ -840,6 +856,9 @@ unsigned int PostProcessDataAveraging(at_32 * pInputImage, at_32 * pOutputImage,
 #define AC_EMGAIN_12BIT 2
 #define AC_EMGAIN_LINEAR12 4
 #define AC_EMGAIN_REAL12 8
+
+#define AC_FEATURES2_ESD_EVENTS 1
+#define AC_FEATURES2_DUAL_PORT_CONFIGURATION 2
 
 #ifdef __cplusplus
 }
