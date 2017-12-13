@@ -387,6 +387,40 @@ record(mbbi, "$(P)$(R)AndorReadOutMode_RBV")
    field(SCAN, "I/O Intr")
 }
 
+# Frame Transfer Mode
+record(bo, "$(P)$(R)AndorFTMode")
+{
+    field(PINI, "1")
+    field(DTYP, "asynInt32")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_FT_MODE")
+}
+
+record(bi, "$(P)$(R)AndorFTMode_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_FT_MODE")
+    field(SCAN, "I/O Intr")
+}
+
+# The Vertical Shift Period enum values are constructed at run-time based on camera capabilities
+record(mbbo, "$(P)$(R)AndorVSPeriod")
+{
+    field(PINI, "1")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_VS_PERIOD")
+}
+
+record(mbbi, "$(P)$(R)AndorVSPeriod_RBV")
+{
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_VS_PERIOD")
+   field(SCAN, "I/O Intr")
+}
+
 #Records in ADBase that do not apply to Andor
 
 record(mbbo, "$(P)$(R)ColorMode")

@@ -22,6 +22,11 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
+RX-X ()
+----
+* Added support for Frame Transfer mode.
+* Added support for setting the Vertical Shift Period.
+
 R2-6 (July 4, 2017)
 ----
 * Changed from using TinyXml to libxml2.  This is used when saving SPE files.  This change was made
