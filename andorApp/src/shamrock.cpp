@@ -20,7 +20,11 @@
 
 #include <asynPortDriver.h>
 
+#ifdef _WIN32
+#include "ATMCD32D.h"
+#else
 #include "atmcdLXd.h"
+#endif
 #include <ShamrockCIF.h>
 
 #include <epicsExport.h>
