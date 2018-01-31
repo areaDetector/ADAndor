@@ -304,6 +304,7 @@ asynStatus shamrock::getStatus()
     
     error = ShamrockGetCalibration(shamrockId_, calibration_, numPixels_);
     status = checkError(error, functionName, "ShamrockGetCalibration");
+    if (status) return asynError;
     setDoubleParam(0, SRMinWavelength_, calibration_[0]);
     setDoubleParam(0, SRMaxWavelength_, calibration_[numPixels_-1]);
     // We need to find a C/C++ library to do 3'rd order polynomial fit
