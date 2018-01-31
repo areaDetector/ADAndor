@@ -1,12 +1,12 @@
 
 file {
-	name="/local/DPbin/epics/epics_2015-03-31/synApps_5_8/support/areaDetector-2-1/ADAndor-R2-3beta/andorApp/op/adl/Shamrock.adl"
-	version=030107
+	name="/home/epics/devel/areaDetector-3-2/ADAndor/andorApp/op/adl/Shamrock.adl"
+	version=030109
 }
 display {
 	object {
-		x=84
-		y=89
+		x=156
+		y=62
 		width=765
 		height=400
 	}
@@ -89,9 +89,9 @@ display {
 }
 rectangle {
 	object {
-		x=5
+		x=0
 		y=4
-		width=705
+		width=765
 		height=25
 	}
 	"basic attribute" {
@@ -100,9 +100,9 @@ rectangle {
 }
 text {
 	object {
-		x=158
+		x=0
 		y=5
-		width=384
+		width=765
 		height=25
 	}
 	"basic attribute" {
@@ -136,9 +136,9 @@ rectangle {
 }
 text {
 	object {
-		x=101
+		x=145
 		y=38
-		width=159
+		width=70
 		height=20
 	}
 	"basic attribute" {
@@ -159,6 +159,7 @@ text {
 		clr=54
 		bclr=4
 	}
+	format="string"
 	limits {
 	}
 }
@@ -221,9 +222,9 @@ text {
 }
 text {
 	object {
-		x=5
+		x=35
 		y=95
-		width=130
+		width=100
 		height=20
 	}
 	"basic attribute" {
@@ -257,9 +258,9 @@ rectangle {
 }
 text {
 	object {
-		x=481
+		x=535
 		y=38
-		width=159
+		width=50
 		height=20
 	}
 	"basic attribute" {
@@ -321,6 +322,7 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -338,6 +340,7 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -454,6 +457,7 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -514,6 +518,7 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -577,9 +582,9 @@ rectangle {
 }
 text {
 	object {
-		x=481
+		x=505
 		y=213
-		width=159
+		width=110
 		height=20
 	}
 	"basic attribute" {
@@ -600,273 +605,265 @@ rectangle {
 		fill="outline"
 	}
 }
-composite {
+text {
 	object {
 		x=10
-		y=180
-		width=330
-		height=118
+		y=205
+		width=70
+		height=20
 	}
-	"composite name"=""
-	children {
-		text {
-			object {
-				x=10
-				y=205
-				width=70
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Grating"
-			align="horiz. right"
-		}
-		text {
-			object {
-				x=40
-				y=230
-				width=10
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="1"
-			align="horiz. right"
-		}
-		text {
-			object {
-				x=40
-				y=255
-				width=10
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="2"
-			align="horiz. right"
-		}
-		text {
-			object {
-				x=40
-				y=278
-				width=10
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="3"
-			align="horiz. right"
-		}
-		"text update" {
-			object {
-				x=95
-				y=230
-				width=60
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)GratingExists1"
-				clr=54
-				bclr=2
-			}
-			clrmod="alarm"
-			align="horiz. centered"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=94
-				y=255
-				width=60
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)GratingExists2"
-				clr=54
-				bclr=2
-			}
-			clrmod="alarm"
-			align="horiz. centered"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=95
-				y=280
-				width=60
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)GratingExists3"
-				clr=54
-				bclr=2
-			}
-			clrmod="alarm"
-			align="horiz. centered"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=170
-				y=230
-				width=80
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)MinWavelength1"
-				clr=54
-				bclr=4
-			}
-			align="horiz. right"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=260
-				y=230
-				width=80
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)MaxWavelength1"
-				clr=54
-				bclr=4
-			}
-			align="horiz. right"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=170
-				y=255
-				width=80
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)MinWavelength2"
-				clr=54
-				bclr=4
-			}
-			align="horiz. right"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=260
-				y=255
-				width=80
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)MaxWavelength2"
-				clr=54
-				bclr=4
-			}
-			align="horiz. right"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=170
-				y=280
-				width=80
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)MinWavelength3"
-				clr=54
-				bclr=4
-			}
-			align="horiz. right"
-			limits {
-			}
-		}
-		"text update" {
-			object {
-				x=260
-				y=280
-				width=80
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)MaxWavelength3"
-				clr=54
-				bclr=4
-			}
-			align="horiz. right"
-			limits {
-			}
-		}
-		text {
-			object {
-				x=95
-				y=205
-				width=60
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Exists"
-			align="horiz. right"
-		}
-		text {
-			object {
-				x=207
-				y=205
-				width=40
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Min."
-			align="horiz. right"
-		}
-		text {
-			object {
-				x=285
-				y=205
-				width=40
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Max."
-			align="horiz. right"
-		}
-		text {
-			object {
-				x=180
-				y=180
-				width=160
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Wavelength range"
-			align="horiz. right"
-		}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Grating"
+	align="horiz. right"
+}
+text {
+	object {
+		x=40
+		y=230
+		width=10
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="1"
+	align="horiz. right"
+}
+text {
+	object {
+		x=40
+		y=255
+		width=10
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="2"
+	align="horiz. right"
+}
+text {
+	object {
+		x=40
+		y=278
+		width=10
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="3"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=95
+		y=230
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)GratingExists1"
+		clr=54
+		bclr=2
+	}
+	clrmod="alarm"
+	align="horiz. centered"
+	format="string"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=94
+		y=255
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)GratingExists2"
+		clr=54
+		bclr=2
+	}
+	clrmod="alarm"
+	align="horiz. centered"
+	format="string"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=95
+		y=280
+		width=60
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)GratingExists3"
+		clr=54
+		bclr=2
+	}
+	clrmod="alarm"
+	align="horiz. centered"
+	format="string"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=170
+		y=230
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MinWavelength1"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=260
+		y=230
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MaxWavelength1"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=170
+		y=255
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MinWavelength2"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=260
+		y=255
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MaxWavelength2"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=170
+		y=280
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MinWavelength3"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=260
+		y=280
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MaxWavelength3"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
 	}
 }
 text {
 	object {
-		x=150
+		x=95
+		y=205
+		width=60
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Exists"
+	align="horiz. right"
+}
+text {
+	object {
+		x=207
+		y=205
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Min."
+	align="horiz. right"
+}
+text {
+	object {
+		x=285
+		y=205
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Max."
+	align="horiz. right"
+}
+text {
+	object {
+		x=180
+		y=180
+		width=160
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Wavelength range"
+	align="horiz. right"
+}
+text {
+	object {
+		x=160
 		y=145
-		width=70
+		width=60
 		height=20
 	}
 	"basic attribute" {
@@ -947,9 +944,9 @@ rectangle {
 }
 text {
 	object {
-		x=13
+		x=33
 		y=349
-		width=70
+		width=50
 		height=20
 	}
 	"basic attribute" {
@@ -983,6 +980,7 @@ menu {
 		clr=54
 		bclr=4
 	}
+	format="string"
 	limits {
 	}
 }
@@ -999,9 +997,9 @@ rectangle {
 }
 text {
 	object {
-		x=76
+		x=101
 		y=306
-		width=200
+		width=150
 		height=20
 	}
 	"basic attribute" {
@@ -1022,6 +1020,7 @@ text {
 		clr=54
 		bclr=4
 	}
+	format="string"
 	limits {
 	}
 }
@@ -1040,9 +1039,9 @@ menu {
 }
 text {
 	object {
-		x=13
+		x=23
 		y=372
-		width=70
+		width=60
 		height=20
 	}
 	"basic attribute" {
@@ -1078,6 +1077,7 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -1095,14 +1095,15 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
 text {
 	object {
-		x=151
+		x=171
 		y=329
-		width=60
+		width=40
 		height=20
 	}
 	"basic attribute" {

@@ -1,12 +1,12 @@
 
 file {
-	name="/home/epics/devel/areaDetector-3-1/ADAndor/andorApp/op/adl/Andor.adl"
+	name="/home/epics/devel/areaDetector-3-2/ADAndor/andorApp/op/adl/Andor.adl"
 	version=030109
 }
 display {
 	object {
-		x=540
-		y=40
+		x=318
+		y=39
 		width=715
 		height=1020
 	}
@@ -89,9 +89,9 @@ display {
 }
 rectangle {
 	object {
-		x=100
+		x=0
 		y=4
-		width=500
+		width=715
 		height=25
 	}
 	"basic attribute" {
@@ -100,9 +100,9 @@ rectangle {
 }
 text {
 	object {
-		x=158
+		x=0
 		y=5
-		width=384
+		width=715
 		height=25
 	}
 	"basic attribute" {
@@ -156,9 +156,9 @@ rectangle {
 }
 text {
 	object {
-		x=467
+		x=510
 		y=258
-		width=157
+		width=70
 		height=20
 	}
 	"basic attribute" {
@@ -570,6 +570,7 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -683,6 +684,7 @@ text {
 	}
 	clrmod="alarm"
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -911,6 +913,7 @@ text {
 		bclr=4
 	}
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -927,6 +930,7 @@ text {
 		bclr=4
 	}
 	align="horiz. centered"
+	format="string"
 	limits {
 	}
 }
@@ -1331,6 +1335,7 @@ text {
 		bclr=2
 	}
 	clrmod="alarm"
+	format="string"
 	limits {
 	}
 }
@@ -1615,177 +1620,144 @@ composite {
 	"composite name"=""
 	"composite file"="ADAttrFile.adl"
 }
-composite {
+rectangle {
+	object {
+		x=135
+		y=937
+		width=90
+		height=21
+	}
+	"basic attribute" {
+		clr=2
+	}
+}
+text {
+	object {
+		x=140
+		y=937
+		width=80
+		height=20
+	}
+	"basic attribute" {
+		clr=54
+	}
+	textix="PAL File"
+	align="horiz. centered"
+}
+rectangle {
 	object {
 		x=5
 		y=935
 		width=350
 		height=60
 	}
-	"composite name"=""
-	children {
-		rectangle {
-			object {
-				x=135
-				y=937
-				width=90
-				height=21
-			}
-			"basic attribute" {
-				clr=2
-			}
-		}
-		text {
-			object {
-				x=140
-				y=937
-				width=80
-				height=20
-			}
-			"basic attribute" {
-				clr=54
-			}
-			textix="PAL File"
-			align="horiz. centered"
-		}
-		rectangle {
-			object {
-				x=5
-				y=935
-				width=350
-				height=60
-			}
-			"basic attribute" {
-				clr=14
-				fill="outline"
-			}
-		}
-		"text entry" {
-			object {
-				x=65
-				y=965
-				width=280
-				height=20
-			}
-			control {
-				chan="$(P)$(R)PALFilePath"
-				clr=14
-				bclr=51
-			}
-			format="string"
-			limits {
-			}
-		}
-		text {
-			object {
-				x=18
-				y=964
-				width=40
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Path"
-			align="horiz. right"
-		}
+	"basic attribute" {
+		clr=14
+		fill="outline"
 	}
+}
+"text entry" {
+	object {
+		x=65
+		y=965
+		width=280
+		height=20
+	}
+	control {
+		chan="$(P)$(R)PALFilePath"
+		clr=14
+		bclr=51
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=18
+		y=964
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Path"
+	align="horiz. right"
 }
 composite {
 	object {
-		x=360
-		y=850
-		width=350
-		height=60
+		x=482
+		y=852
+		width=107
+		height=21
 	}
 	"composite name"=""
 	children {
-		composite {
+		rectangle {
 			object {
 				x=482
 				y=852
 				width=107
 				height=21
 			}
-			"composite name"=""
-			children {
-				composite {
-					object {
-						x=482
-						y=852
-						width=107
-						height=21
-					}
-					"composite name"=""
-					children {
-						rectangle {
-							object {
-								x=482
-								y=852
-								width=107
-								height=21
-							}
-							"basic attribute" {
-								clr=2
-							}
-						}
-					}
-				}
-				text {
-					object {
-						x=515
-						y=852
-						width=40
-						height=20
-					}
-					"basic attribute" {
-						clr=54
-					}
-					textix="File"
-					align="horiz. centered"
-				}
-			}
-		}
-		rectangle {
-			object {
-				x=360
-				y=850
-				width=350
-				height=60
-			}
 			"basic attribute" {
-				clr=14
-				fill="outline"
+				clr=2
 			}
-		}
-		text {
-			object {
-				x=373
-				y=879
-				width=150
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Driver File I/O"
-			align="horiz. right"
-		}
-		"related display" {
-			object {
-				x=530
-				y=879
-				width=70
-				height=20
-			}
-			display[0] {
-				name="NDFile.adl"
-				args="P=$(P),R=$(R)"
-			}
-			clr=14
-			bclr=51
 		}
 	}
+}
+text {
+	object {
+		x=515
+		y=852
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=54
+	}
+	textix="File"
+	align="horiz. centered"
+}
+rectangle {
+	object {
+		x=360
+		y=850
+		width=350
+		height=60
+	}
+	"basic attribute" {
+		clr=14
+		fill="outline"
+	}
+}
+text {
+	object {
+		x=373
+		y=879
+		width=150
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Driver File I/O"
+	align="horiz. right"
+}
+"related display" {
+	object {
+		x=530
+		y=879
+		width=70
+		height=20
+	}
+	display[0] {
+		name="NDFile.adl"
+		args="P=$(P),R=$(R)"
+	}
+	clr=14
+	bclr=51
 }
 text {
 	object {
@@ -1841,6 +1813,7 @@ menu {
 		clr=54
 		bclr=4
 	}
+	format="string"
 	limits {
 	}
 }
@@ -1882,6 +1855,7 @@ text {
 		clr=54
 		bclr=4
 	}
+	format="string"
 	limits {
 	}
 }
@@ -1951,6 +1925,7 @@ text {
 		clr=54
 		bclr=4
 	}
+	format="string"
 	limits {
 	}
 }
@@ -1992,6 +1967,7 @@ text {
 		clr=54
 		bclr=4
 	}
+	format="string"
 	limits {
 	}
 }
@@ -2021,167 +1997,157 @@ text {
 	textix="EM Gain Adv."
 	align="horiz. right"
 }
-composite {
+rectangle {
+	object {
+		x=482
+		y=917
+		width=107
+		height=21
+	}
+	"basic attribute" {
+		clr=2
+	}
+}
+text {
+	object {
+		x=505
+		y=918
+		width=60
+		height=20
+	}
+	"basic attribute" {
+		clr=54
+	}
+	textix="Cooler"
+	align="horiz. centered"
+}
+rectangle {
 	object {
 		x=360
 		y=915
 		width=350
 		height=100
 	}
-	"composite name"=""
-	children {
-		rectangle {
-			object {
-				x=482
-				y=917
-				width=107
-				height=21
-			}
-			"basic attribute" {
-				clr=2
-			}
-		}
-		text {
-			object {
-				x=505
-				y=918
-				width=60
-				height=20
-			}
-			"basic attribute" {
-				clr=54
-			}
-			textix="Cooler"
-			align="horiz. centered"
-		}
-		rectangle {
-			object {
-				x=360
-				y=915
-				width=350
-				height=100
-			}
-			"basic attribute" {
-				clr=14
-				fill="outline"
-			}
-		}
-		"text update" {
-			object {
-				x=596
-				y=970
-				width=61
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)TemperatureActual"
-				clr=54
-				bclr=4
-			}
-			align="horiz. centered"
-			limits {
-			}
-		}
-		"text entry" {
-			object {
-				x=503
-				y=969
-				width=60
-				height=20
-			}
-			control {
-				chan="$(P)$(R)Temperature"
-				clr=14
-				bclr=51
-			}
-			limits {
-			}
-		}
-		text {
-			object {
-				x=382
-				y=969
-				width=110
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Temperature"
-			align="horiz. right"
-		}
-		menu {
-			object {
-				x=503
-				y=944
-				width=60
-				height=20
-			}
-			control {
-				chan="$(P)$(R)AndorCooler"
-				clr=14
-				bclr=51
-			}
-		}
-		text {
-			object {
-				x=432
-				y=944
-				width=60
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Cooler"
-			align="horiz. right"
-		}
-		"text update" {
-			object {
-				x=596
-				y=945
-				width=61
-				height=18
-			}
-			monitor {
-				chan="$(P)$(R)AndorCooler_RBV"
-				clr=54
-				bclr=4
-			}
-			align="horiz. centered"
-			limits {
-			}
-		}
-		text {
-			object {
-				x=433
-				y=994
-				width=60
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Status"
-			align="horiz. right"
-		}
-		"text update" {
-			object {
-				x=503
-				y=998
-				width=180
-				height=12
-			}
-			monitor {
-				chan="$(P)$(R)AndorTempStatus_RBV"
-				clr=54
-				bclr=2
-			}
-			clrmod="alarm"
-			format="string"
-			limits {
-			}
-		}
+	"basic attribute" {
+		clr=14
+		fill="outline"
+	}
+}
+"text update" {
+	object {
+		x=596
+		y=970
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)TemperatureActual"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=503
+		y=969
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)Temperature"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+text {
+	object {
+		x=382
+		y=969
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Temperature"
+	align="horiz. right"
+}
+menu {
+	object {
+		x=503
+		y=944
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)AndorCooler"
+		clr=14
+		bclr=51
+	}
+}
+text {
+	object {
+		x=432
+		y=944
+		width=60
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Cooler"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=596
+		y=945
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)AndorCooler_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=433
+		y=994
+		width=60
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Status"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=503
+		y=998
+		width=180
+		height=12
+	}
+	monitor {
+		chan="$(P)$(R)AndorTempStatus_RBV"
+		clr=54
+		bclr=2
+	}
+	clrmod="alarm"
+	format="string"
+	limits {
 	}
 }
 "text entry" {
