@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 0
-x 84
-y 89
+x 156
+y 62
 w 765
 h 400
 font "helvetica-medium-r-18.0"
@@ -30,9 +30,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 5
+x 0
 y 4
-w 704
+w 764
 h 24
 lineColor index 2
 fill
@@ -46,9 +46,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 158
+x 0
 y 5
-w 384
+w 765
 h 25
 font "helvetica-medium-r-8.0"
 fontAlign "center"
@@ -96,9 +96,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 101
+x 145
 y 38
-w 159
+w 70
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "center"
@@ -126,7 +126,7 @@ fastUpdate
 fgColor index 54
 bgColor index 4
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -209,9 +209,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 5
+x 35
 y 95
-w 130
+w 100
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "right"
@@ -259,9 +259,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 481
+x 535
 y 38
-w 159
+w 50
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "center"
@@ -348,7 +348,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -374,7 +374,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -557,7 +557,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -652,7 +652,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -783,9 +783,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 481
+x 505
 y 213
-w 159
+w 110
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "center"
@@ -810,20 +810,6 @@ lineColor index 14
 fillColor index 14
 lineWidth 0
 endObjectProperties
-
-# (Group)
-object activeGroupClass
-beginObjectProperties
-major 4
-minor 0
-release 0
-x 10
-y 180
-w 330
-h 118
-
-beginGroup
-
 
 # (Static Text)
 object activeXTextClass
@@ -920,7 +906,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -946,7 +932,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -972,7 +958,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -1205,20 +1191,15 @@ value {
 }
 endObjectProperties
 
-endGroup
-
-endObjectProperties
-
-
 # (Static Text)
 object activeXTextClass
 beginObjectProperties
 major 4
 minor 0
 release 0
-x 150
+x 160
 y 145
-w 70
+w 60
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "right"
@@ -1338,9 +1319,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 13
+x 33
 y 349
-w 70
+w 50
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "right"
@@ -1368,7 +1349,7 @@ fastUpdate
 fgColor index 54
 bgColor index 4
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -1397,9 +1378,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 76
+x 101
 y 306
-w 200
+w 150
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "center"
@@ -1427,7 +1408,7 @@ fastUpdate
 fgColor index 54
 bgColor index 4
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -1440,9 +1421,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 13
+x 23
 y 372
-w 70
+w 60
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "right"
@@ -1491,7 +1472,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -1517,7 +1498,7 @@ fgColor index 54
 fgAlarm
 bgColor index 2
 autoHeight
-format decimal
+format "string"
 nullColor index 32
 useHexPrefix
 objType "controls"
@@ -1530,9 +1511,9 @@ beginObjectProperties
 major 4
 minor 0
 release 0
-x 151
+x 171
 y 329
-w 60
+w 40
 h 20
 font "helvetica-medium-r-8.0"
 fontAlign "right"
@@ -1562,24 +1543,6 @@ controlPv "$(P)$(R)Grating"
 indicatorPv "$(P)$(R)Grating"
 font "helvetica-medium-r-10.0"
 endObjectProperties
-# (Group)
-object activeGroupClass
-beginObjectProperties
-major 4
-minor 0
-release 0
-x 10
-y 180
-w 330
-h 118
-
-beginGroup
-
-
-endGroup
-
-endObjectProperties
-
 
 # (Menu Button)
 object activeMenuButtonClass
