@@ -22,10 +22,16 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
-RX-X ()
+R2-7 (January 31, 2018)
 ----
-* Added support for Frame Transfer mode.
-* Added support for setting the Vertical Shift Period.
+* Added support for Frame Transfer mode.  Thanks to Michael Dunning for this.
+* Added support for setting the Vertical Shift Period. Thanks to Michael Dunning for this.
+* Upgraded the Andor SDK version used to 2.102.3 on Linux. Thanks to Hinko Kocevar for this.
+* Fixed medm adl files to improve the autoconversion to other display manager files.
+* Added op/Makefile to automatically convert adl files to edl, ui, and opi files.
+* Updated the edl, ui, and opi autoconvert directories to contain the conversions
+  from the most recent adl files.
+
 
 R2-6 (July 4, 2017)
 ----
