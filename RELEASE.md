@@ -22,6 +22,12 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
+R2-8 (July XXX, 2018)
+----
+* Added support for new PVs in ADCore R3-3 in opi files (NumQueuedArrays, EmptyFreeList, etc.)
+* Changed configure/RELEASE files for compatibility with areaDetector R3-3.
+* Improved op/*/autoconvert/* files with better medm files and better converters.
+
 R2-7 (January 31, 2018)
 ----
 * Added support for Frame Transfer mode.  Thanks to Michael Dunning for this.
