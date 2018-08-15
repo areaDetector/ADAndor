@@ -20,7 +20,7 @@ DBD += andorCCDSupport.dbd
 DBD += shamrockSupport.dbd
 
 ifdef XML2_INCLUDE
-  USR_INCLUDES += $(addprefix -I $(XML2_INCLUDE))
+  USR_INCLUDES += $(addprefix -I, $(XML2_INCLUDE))
 endif
 
 include $(ADCORE)/ADApp/commonLibraryMakefile
