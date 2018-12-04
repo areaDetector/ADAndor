@@ -101,6 +101,8 @@ static void exitHandler(void *drvPvt);
   * \param[in] installPath The path to the Andor directory containing the detector INI files, etc.
   *            This can be specified as an empty string ("") for new detectors that don't use the INI
   *            files on Windows, but must be a valid path on Linux.
+  * \param[in] cameraID The index number of the desired camera.
+  *            0 is the first camera in the system. 
   * \param[in] shamrockID The index number of the Shamrock spectrograph, if installed.
   *            0 is the first Shamrock in the system.  Ignored if there are no Shamrocks.  
   * \param[in] maxBuffers The maximum number of NDArray buffers that the NDArrayPool for this driver is 
@@ -110,7 +112,7 @@ static void exitHandler(void *drvPvt);
   * \param[in] priority The thread priority for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
   * \param[in] stackSize The stack size for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
   */
-AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID,
+AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraID, int shamrockID,
                    int maxBuffers, size_t maxMemory, int priority, int stackSize)
 
   : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
@@ -191,6 +193,17 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int shamrockID
 
   // Initialize camera
   try {
+    epicsInt32 numCameras;
+    checkStatus(GetAvailableCameras(&numCameras));
+    if (cameraID < numCameras) {
+      epicsInt32 cameraHandle;
+      checkStatus(GetCameraHandle(cameraID, &cameraHandle));
+      checkStatus(SetCurrentCamera(cameraHandle));
+    } else {
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+        "%s::%s error selecting camera %d, only %d cameras in system\n",
+        driverName, functionName, cameraID, numCameras);
+    }
     printf("%s:%s: initializing camera\n",
       driverName, functionName);
     checkStatus(Initialize(mInstallPath));
@@ -1841,11 +1854,11 @@ static void andorDataTaskC(void *drvPvt)
   * \param[in] stackSize The stack size for the asyn port driver thread
   */
 extern "C" {
-int andorCCDConfig(const char *portName, const char *installPath, int shamrockID,
+int andorCCDConfig(const char *portName, const char *installPath, int cameraID, int shamrockID,
                    int maxBuffers, size_t maxMemory, int priority, int stackSize)
 {
   /*Instantiate class.*/
-  new AndorCCD(portName, installPath, shamrockID, maxBuffers, maxMemory, priority, stackSize);
+  new AndorCCD(portName, installPath, cameraID, shamrockID, maxBuffers, maxMemory, priority, stackSize);
   return(asynSuccess);
 }
 
@@ -1855,24 +1868,26 @@ int andorCCDConfig(const char *portName, const char *installPath, int shamrockID
 /* andorCCDConfig */
 static const iocshArg andorCCDConfigArg0 = {"Port name", iocshArgString};
 static const iocshArg andorCCDConfigArg1 = {"installPath", iocshArgString};
-static const iocshArg andorCCDConfigArg2 = {"shamrockID", iocshArgInt};
-static const iocshArg andorCCDConfigArg3 = {"maxBuffers", iocshArgInt};
-static const iocshArg andorCCDConfigArg4 = {"maxMemory", iocshArgInt};
-static const iocshArg andorCCDConfigArg5 = {"priority", iocshArgInt};
-static const iocshArg andorCCDConfigArg6 = {"stackSize", iocshArgInt};
+static const iocshArg andorCCDConfigArg2 = {"cameraID", iocshArgInt};
+static const iocshArg andorCCDConfigArg3 = {"shamrockID", iocshArgInt};
+static const iocshArg andorCCDConfigArg4 = {"maxBuffers", iocshArgInt};
+static const iocshArg andorCCDConfigArg5 = {"maxMemory", iocshArgInt};
+static const iocshArg andorCCDConfigArg6 = {"priority", iocshArgInt};
+static const iocshArg andorCCDConfigArg7 = {"stackSize", iocshArgInt};
 static const iocshArg * const andorCCDConfigArgs[] =  {&andorCCDConfigArg0,
                                                        &andorCCDConfigArg1,
                                                        &andorCCDConfigArg2,
                                                        &andorCCDConfigArg3,
                                                        &andorCCDConfigArg4,
                                                        &andorCCDConfigArg5,
-                                                       &andorCCDConfigArg6};
+                                                       &andorCCDConfigArg6,
+                                                       &andorCCDConfigArg7};
 
 static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 7, andorCCDConfigArgs};
 static void configAndorCCDCallFunc(const iocshArgBuf *args)
 {
     andorCCDConfig(args[0].sval, args[1].sval, args[2].ival, args[3].ival, 
-                   args[4].ival, args[5].ival, args[6].ival);
+                   args[4].ival, args[5].ival, args[6].ival, args[7].ival);
 }
 
 static void andorCCDRegister(void)
