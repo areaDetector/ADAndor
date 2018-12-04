@@ -79,7 +79,7 @@ typedef struct {
  */
 class AndorCCD : public ADDriver {
  public:
-  AndorCCD(const char *portName, const char *installPath, int shamrockID, 
+  AndorCCD(const char *portName, const char *installPath, int cameraID, int shamrockID, 
            int maxBuffers, size_t maxMemory, int priority, int stackSize);
   virtual ~AndorCCD();
 
