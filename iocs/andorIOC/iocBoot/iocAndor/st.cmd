@@ -15,9 +15,9 @@ epicsEnvSet("CBUFFS", "500")
 # The search path for database files
 epicsEnvSet("EPICS_DB_INCLUDE_PATH", "$(ADCORE)/db")
 
-# andorCCDConfig(const char *portName, const char *installPath, int shamrockID,
+# andorCCDConfig(const char *portName, const char *installPath, int cameraID, int shamrockID,
 #                int maxBuffers, size_t maxMemory, int priority, int stackSize)
-#andorCCDConfig("$(PORT)", "/usr/local/etc/andor/", 0, 0, 0, 0 ,0)
+#andorCCDConfig("$(PORT)", "/usr/local/etc/andor/", 0, 0, 0, 0, 0 ,0)
 andorCCDConfig("$(PORT)", "", 0, 0, 0, 0, 0)
 
 dbLoadRecords("$(ADANDOR)/db/andorCCD.template",   "P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
