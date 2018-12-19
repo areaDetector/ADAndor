@@ -192,11 +192,11 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
 
   // Initialize camera
   try {
-    epicsInt32 numCameras;
+    at_32 numCameras;
     checkStatus(GetAvailableCameras(&numCameras));
     bool cameraFound = false;
     for (i=0; i<numCameras; i++) {
-      epicsInt32 cameraHandle = -1;
+      at_32 cameraHandle = -1;
       checkStatus(GetCameraHandle(i, &cameraHandle));
       checkStatus(SetCurrentCamera(cameraHandle));
       printf("%s:%s: initializing camera with handle %d\n", driverName, functionName, cameraHandle);
