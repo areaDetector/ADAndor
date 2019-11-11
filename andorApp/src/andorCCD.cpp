@@ -1902,7 +1902,7 @@ static const iocshArg * const andorCCDConfigArgs[] =  {&andorCCDConfigArg0,
                                                        &andorCCDConfigArg6,
                                                        &andorCCDConfigArg7};
 
-static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 7, andorCCDConfigArgs};
+static const iocshFuncDef configAndorCCD = {"andorCCDConfig", 8, andorCCDConfigArgs};
 static void configAndorCCDCallFunc(const iocshArgBuf *args)
 {
     andorCCDConfig(args[0].sval, args[1].sval, args[2].ival, args[3].ival, 
