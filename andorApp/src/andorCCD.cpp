@@ -360,11 +360,11 @@ AndorCCD::~AndorCCD()
   this->lock();
   printf("%s::%s Shutdown and freeing up memory...\n", driverName, functionName);
   try {
-	int acquireStatus;
-	checkStatus(GetStatus(&acquireStatus));
-	if (acquireStatus == DRV_ACQUIRING)
+    int acquireStatus;
+    checkStatus(GetStatus(&acquireStatus));
+    if (acquireStatus == DRV_ACQUIRING)
       checkStatus(AbortAcquisition());
-	epicsEventSignal(dataEvent);
+    epicsEventSignal(dataEvent);
     checkStatus(FreeInternalMemory());
     checkStatus(ShutDown());
   } catch (const std::string &e) {
@@ -374,7 +374,7 @@ AndorCCD::~AndorCCD()
   }
   this->unlock();
   while (mExited < 2)
-	  epicsThreadSleep(0.2);
+      epicsThreadSleep(0.2);
 }
 
 
@@ -825,59 +825,59 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
               "%s:%s: error, status=%d function=%d, value=%f\n",
               driverName, functionName, status, function, value);
     else
-		asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
-			"%s:%s: function=%d, value=%f\n",
-			driverName, functionName, function, value);
-	return status;
+        asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
+            "%s:%s: function=%d, value=%f\n",
+            driverName, functionName, function, value);
+    return status;
 }
 
 /* Called if tracks acquisition mode is being used.
    Sets up the track defintion. */
 void AndorCCD::setupTrackDefn(int minX, int sizeX, int binX)
 {
-	static const char *functionName = "setupTrackDefn";
-	if (mMultiTrack.size() == 0)
-	{
-		asynPrint(this->pasynUserSelf, ASYN_TRACE_WARNING,
-			"%s:%s: A track defintion must be set to use tracks mode\n",
-			driverName, functionName);
-		return;
-	}
+    static const char *functionName = "setupTrackDefn";
+    if (mMultiTrack.size() == 0)
+    {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_WARNING,
+            "%s:%s: A track defintion must be set to use tracks mode\n",
+            driverName, functionName);
+        return;
+    }
 
-	static const int ValuesPerTrack = 6;
-	std::vector<int> TrackDefn(mMultiTrack.size() * 6);
-	setIntegerParam(NDArraySizeY, mMultiTrack.DataHeight());
-	for (size_t TrackNo = 0; TrackNo < mMultiTrack.size(); TrackNo++)
-	{
-		/*
-		Each track must be defined by a group of six integers.
-			- The top and bottom positions of the tracks.
-			- The left and right positions for the area of interest within each track
-			- The horizontal and vertical binning for each track. */
-		TrackDefn[TrackNo * 6 + 0] = mMultiTrack.TrackStart(TrackNo);
-		TrackDefn[TrackNo * 6 + 1] = mMultiTrack.TrackEnd(TrackNo)-1;
-		TrackDefn[TrackNo * 6 + 2] = minX + 1;
-		TrackDefn[TrackNo * 6 + 3] = minX + sizeX;
-		TrackDefn[TrackNo * 6 + 4] = binX;
-		TrackDefn[TrackNo * 6 + 5] = mMultiTrack.TrackBin(TrackNo);
-	}
-	checkStatus(SetCustomTrackHBin(binX));
-	checkStatus(SetComplexImage(int(TrackDefn.size() / ValuesPerTrack), &TrackDefn[0]));
+    static const int ValuesPerTrack = 6;
+    std::vector<int> TrackDefn(mMultiTrack.size() * 6);
+    setIntegerParam(NDArraySizeY, mMultiTrack.DataHeight());
+    for (size_t TrackNo = 0; TrackNo < mMultiTrack.size(); TrackNo++)
+    {
+        /*
+        Each track must be defined by a group of six integers.
+            - The top and bottom positions of the tracks.
+            - The left and right positions for the area of interest within each track
+            - The horizontal and vertical binning for each track. */
+        TrackDefn[TrackNo * 6 + 0] = mMultiTrack.TrackStart(TrackNo);
+        TrackDefn[TrackNo * 6 + 1] = mMultiTrack.TrackEnd(TrackNo)-1;
+        TrackDefn[TrackNo * 6 + 2] = minX + 1;
+        TrackDefn[TrackNo * 6 + 3] = minX + sizeX;
+        TrackDefn[TrackNo * 6 + 4] = binX;
+        TrackDefn[TrackNo * 6 + 5] = mMultiTrack.TrackBin(TrackNo);
+    }
+    checkStatus(SetCustomTrackHBin(binX));
+    checkStatus(SetComplexImage(int(TrackDefn.size() / ValuesPerTrack), &TrackDefn[0]));
 }
 
 /* Called to set tracks definition parameters.
    Sets up the track defintion. */
 asynStatus AndorCCD::writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements)
 {
-	static const char *functionName = "writeInt32Array";
-	asynStatus status = asynSuccess;
-	try {
+    static const char *functionName = "writeInt32Array";
+    asynStatus status = asynSuccess;
+    try {
         status = mMultiTrack.writeInt32Array(pasynUser, value, nElements);
-		if (status != asynError)
-			setupAcquisition();
-		else
+        if (status != asynError)
+            setupAcquisition();
+        else
             status = ADDriver::writeInt32Array(pasynUser, value, nElements);
-	}
+    }
     catch (const std::string &e) {
         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
         "%s:%s: %s\n",
@@ -1036,7 +1036,7 @@ unsigned int AndorCCD::checkStatus(unsigned int returnStatus)
   } else if (returnStatus == DRV_NOT_SUPPORTED) {
     throw std::string("ERROR: Feature not supported.");
   } else if (returnStatus == DRV_RANDOM_TRACK_ERROR) {
-	throw std::string("ERROR: Invalid combination of tracks");
+    throw std::string("ERROR: Invalid combination of tracks");
   } else {
     sprintf(message, "ERROR: Unknown error code=%d returned from Andor SDK.", returnStatus);
     throw std::string(message);
@@ -1088,8 +1088,8 @@ void AndorCCD::statusTask(void)
       forcedFastPolls = 5;
     }
 
-	if (mExiting) break;
-	this->lock();
+    if (mExiting) break;
+    this->lock();
 
     try {
       //Only read these if we are not acquiring data
@@ -1143,8 +1143,8 @@ void AndorCCD::statusTask(void)
         
   } //End of loop
   asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
-	  "%s:%s: Status thread exiting ...\n",
-	  driverName, functionName);
+      "%s:%s: Status thread exiting ...\n",
+      driverName, functionName);
 
   mExited++;
 }
@@ -1258,8 +1258,8 @@ asynStatus AndorCCD::setupAcquisition()
   // for the actual size of the image, so we must compute it.
   setIntegerParam(NDArraySizeX, sizeX/binX);
   if (readOutMode != ARRandomTrack)
-	  // The data height dimension is set by setupTrackDefn for multi-track mode.
-	setIntegerParam(NDArraySizeY, sizeY/binY);
+      // The data height dimension is set by setupTrackDefn for multi-track mode.
+    setIntegerParam(NDArraySizeY, sizeY/binY);
 
   getIntegerParam(AndorFrameTransferMode, &frameTransferMode);
 
@@ -1272,8 +1272,8 @@ asynStatus AndorCCD::setupAcquisition()
       "%s:%s:, SetReadMode(%d)\n",
       driverName, functionName, readOutMode);
     checkStatus(SetReadMode(readOutMode));
-	if (readOutMode == ARRandomTrack)
-		setupTrackDefn(minX, sizeX, binX);
+    if (readOutMode == ARRandomTrack)
+        setupTrackDefn(minX, sizeX, binX);
 
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
       "%s:%s:, SetTriggerMode(%d)\n", 
@@ -1344,15 +1344,15 @@ asynStatus AndorCCD::setupAcquisition()
       driverName, functionName, frameTransferMode);
     checkStatus(SetFrameTransferMode(frameTransferMode));
 
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-		"%s:%s:, SetVSSpeed(%d)\n",
-		driverName, functionName, verticalShiftPeriod);
-	checkStatus(SetVSSpeed(verticalShiftPeriod));
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s:, SetVSSpeed(%d)\n",
+        driverName, functionName, verticalShiftPeriod);
+    checkStatus(SetVSSpeed(verticalShiftPeriod));
 
-	asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-		"%s:%s:, SetVSAmplitude(%d)\n",
-		driverName, functionName, verticalShiftAmplitude);
-	checkStatus(SetVSAmplitude(verticalShiftAmplitude));
+    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s:, SetVSAmplitude(%d)\n",
+        driverName, functionName, verticalShiftAmplitude);
+    checkStatus(SetVSAmplitude(verticalShiftAmplitude));
 
     switch (imageMode) {
       case ADImageSingle:
@@ -1491,8 +1491,8 @@ void AndorCCD::dataTask(void)
     //Wait for event from main thread to signal that data acquisition has started.
     this->unlock();
     status = epicsEventWait(dataEvent);
-	if (mExiting)
-		break;
+    if (mExiting)
+        break;
     asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
       "%s:%s:, got data event\n", 
       driverName, functionName);
@@ -1547,7 +1547,7 @@ void AndorCCD::dataTask(void)
           driverName, functionName);
         this->unlock();
         checkStatus(WaitForAcquisition());
-		this->lock();
+        this->lock();
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
           "%s:%s:, WaitForAcquisition has returned.\n",
           driverName, functionName);
@@ -1618,14 +1618,14 @@ void AndorCCD::dataTask(void)
           callParamCallbacks();
         }
       } catch (const std::string &e) {
-		  if (!mExiting)
-		  {
-			  asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-				  "%s:%s: %s\n",
-				  driverName, functionName, e.c_str());
-			  errorString = const_cast<char *>(e.c_str());
-			  setStringParam(AndorMessage, errorString);
-		  }
+          if (!mExiting)
+          {
+              asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s:%s: %s\n",
+                  driverName, functionName, e.c_str());
+              errorString = const_cast<char *>(e.c_str());
+              setStringParam(AndorMessage, errorString);
+          }
       }
     }
       
