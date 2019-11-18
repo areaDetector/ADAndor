@@ -4,6 +4,7 @@
 
 include "ADBase.template"
 include "NDFile.template"
+include "CCDMultiTrack.template"
 
 # These are the records that we modify from NDFile.template
 record(mbbo, "$(P)$(R)FileFormat")
@@ -371,8 +372,10 @@ record(mbbo, "$(P)$(R)AndorReadOutMode")
    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_READOUT_MODE")
    field(ZRST, "FVB")
    field(ZRVL, "0")
-   field(ONST, "Image")
-   field(ONVL, "4")
+   field(TWST, "Random Track")
+   field(TWVL, "2")
+   field(FRST, "Image")
+   field(FRVL, "4")
    field(VAL,  "4")
 }
 
@@ -382,8 +385,10 @@ record(mbbi, "$(P)$(R)AndorReadOutMode_RBV")
    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_READOUT_MODE")
    field(ZRST, "FVB")
    field(ZRVL, "0")
-   field(ONST, "Image")
-   field(ONVL, "4")
+   field(TWST, "Random Track")
+   field(TWVL, "2")
+   field(FRST, "Image")
+   field(FRVL, "4")
    field(SCAN, "I/O Intr")
 }
 
@@ -421,6 +426,40 @@ record(mbbi, "$(P)$(R)AndorVSPeriod_RBV")
    field(SCAN, "I/O Intr")
 }
 
+record(mbbo, "$(P)$(R)AndorVSAmplitude")
+{
+   field(PINI, "1")
+   field(DTYP, "asynInt32")
+   field(ZRST, "Normal")
+   field(ZRVL, "0")
+   field(ONST, "+1")
+   field(ONVL, "1")
+   field(TWST, "+2")
+   field(TWVL, "2")
+   field(THST, "+3")
+   field(THVL, "3")
+   field(FRST, "+4")
+   field(FRVL, "4")
+   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_VS_AMPLITUDE")
+   field(VAL,  "0")
+}
+
+record(mbbi, "$(P)$(R)AndorVSAmplitude_RBV")
+{
+   field(DTYP, "asynInt32")
+   field(ZRST, "Normal")
+   field(ZRVL, "0")
+   field(ONST, "+1")
+   field(ONVL, "1")
+   field(TWST, "+2")
+   field(TWVL, "2")
+   field(THST, "+3")
+   field(THVL, "3")
+   field(FRST, "+4")
+   field(FRVL, "4")
+   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ANDOR_VS_AMPLITUDE")
+   field(SCAN, "I/O Intr")
+}
 #Records in ADBase that do not apply to Andor
 
 record(mbbo, "$(P)$(R)ColorMode")
