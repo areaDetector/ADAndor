@@ -11,6 +11,7 @@ $(P)$(R)AndorADCSpeed
 $(P)$(R)AndorReadOutMode
 $(P)$(R)AndorFTMode
 $(P)$(R)AndorVSPeriod
+$(P)$(R)AndorVSAmplitude
 file "ADBase_settings.req", P=$(P), R=$(R)
 file "NDFile_settings.req", P=$(P), R=$(R)
-
+file "CCDMultiTrack_settings.req", P=$(P), R=$(R)
