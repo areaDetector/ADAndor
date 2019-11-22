@@ -54,11 +54,11 @@ R2-5 (February 19, 2017)
 * Fix bug when setting MinX and MinY with binning.  There was an incorrect factor of 2 present.
   Thanks to Hinko Kocevar for this fix.
 * Implemented ReverseX and ReverseY.
-* Fixed bug with AndorPreAmpGain; previously it was not actually calling SetPreAmpGain().
+* Fixed bug with AndorPreAmpGain; previously it was not actually calling SetPreAmpGain(). Previously the ADBase record Gain was used to set the Andor specific PreAmpGain, so to retain the previous default behaviour of x2 PreAmpGain make sure that AndorPreAmpGain is set to 2.0.
 * Added support for SerialNumber, FirmwareVersion, SDKVersion, DriverVersion, and ADCoreVersion which
   were added in ADCore R2-6. 
 * Added support for Full Vertical Binning (FVB) readout mode. Thanks to Hinko Kocevar for this.
-* Added support for EPICS shutter control.
+* Added support for EPICS shutter control. Note: To ensure the camera shutter opens and closes, make sure the ShutterMode is set to Detector and that AndorShutterMode is set to Fully Auto.
 
 R2-4 (September 15, 2015)
 ----
