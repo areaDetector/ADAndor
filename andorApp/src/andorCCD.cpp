@@ -115,7 +115,7 @@ static void exitHandler(void *drvPvt);
 AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSerial, int shamrockID,
                    int maxBuffers, size_t maxMemory, int priority, int stackSize)
 
-  : ADDriver(portName, 1, NUM_ANDOR_DET_PARAMS, maxBuffers, maxMemory, 
+  : ADDriver(portName, 1, 0, maxBuffers, maxMemory, 
              asynEnumMask, asynEnumMask,
              ASYN_CANBLOCK, 1, priority, stackSize),
     mExiting(false), mExited(0), mShamrockId(shamrockID), mMultiTrack(this), mSPEDoc(0), mInitOK(false)
@@ -1478,10 +1478,11 @@ void AndorCCD::dataTask(void)
   epicsTimeStamp startTime;
   NDArray *pArray;
   int autoSave;
+  int readOutMode;
   static const char *functionName = "dataTask";
 
   printf("%s:%s: Data thread started...\n", driverName, functionName);
-  
+
   this->lock();
 
   while(!mExiting) {
@@ -1504,6 +1505,7 @@ void AndorCCD::dataTask(void)
         status = setupAcquisition();
         if (status != asynSuccess) continue;
         getIntegerParam(ADShutterMode, &adShutterMode);
+        getIntegerParam(AndorReadOutMode, &readOutMode);
         if (adShutterMode == ADShutterModeEPICS) {
           ADDriver::setShutter(ADShutterOpen);
         }
@@ -1576,6 +1578,8 @@ void AndorCCD::dataTask(void)
             dims[0] = sizeX;
             dims[1] = sizeY;
             pArray = this->pNDArrayPool->alloc(nDims, dims, dataType, 0, NULL);
+            if (readOutMode == ARRandomTrack)
+                mMultiTrack.storeTrackAttributes(pArray->pAttributeList);
             // Read the oldest array
             // Is there still an image available?
             status = GetNumberNewImages(&firstImage, &lastImage);

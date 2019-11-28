@@ -102,9 +102,6 @@ private:
     bool flipperMirrorIsPresent_[MAX_FLIPPER_MIRRORS];
 };
 
-/** Number of asynPortDriver parameters this driver supports. */
-#define NUM_SR_PARAMS ((int)(&LAST_SR_PARAM - &FIRST_SR_PARAM + 1))
-
 /** Configuration function to configure one spectrograph.
  *
  * This function need to be called once for each spectrography to be used by the IOC. A call to this
