@@ -4,15 +4,17 @@
  * @author Matthew Pearson
  * @date June 2009
  *
- * Updated Dec 2011 for Asyn 4-17 and areaDetector 1-7 
+ * Updated Dec 2011 for Asyn 4-17 and areaDetector 1-7
  *
  * Major updates to get callbacks working, etc. by Mark Rivers Feb. 2011
+ * Updated by Peter Heesterman to support multi-track operation Oct. 2019
  */
 
 #ifndef ANDORCCD_H
 #define ANDORCCD_H
 
 #include <libxml/parser.h>
+#include <CCDMultiTrack.h>
 
 #include "ADDriver.h"
 #include "SPEHeader.h"
@@ -38,6 +40,7 @@
 #define AndorReadOutModeString             "ANDOR_READOUT_MODE"
 #define AndorFrameTransferModeString       "ANDOR_FT_MODE"
 #define AndorVerticalShiftPeriodString     "ANDOR_VS_PERIOD"
+#define AndorVerticalShiftAmplitudeString  "ANDOR_VS_AMPLITUDE"
 
 /**
  * Structure defining an ADC speed for the ADAndor driver.
@@ -86,8 +89,9 @@ class AndorCCD : public ADDriver {
   /* These are the methods that we override from ADDriver */
   virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
   virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
+  virtual asynStatus writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements);
   virtual void report(FILE *fp, int details);
-  virtual asynStatus readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[], 
+  virtual asynStatus readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[],
                               size_t nElements, size_t *nIn);
 
   // Should be private, but are called from C so must be public
@@ -96,7 +100,7 @@ class AndorCCD : public ADDriver {
 
  protected:
   int AndorCoolerParam;
-  #define FIRST_ANDOR_PARAM AndorCoolerParam
+#define FIRST_ANDOR_PARAM AndorCoolerParam
   int AndorTempStatusMessage;
   int AndorMessage;
   int AndorShutterMode;
@@ -112,7 +116,8 @@ class AndorCCD : public ADDriver {
   int AndorReadOutMode;
   int AndorFrameTransferMode;
   int AndorVerticalShiftPeriod;
-  #define LAST_ANDOR_PARAM AndorVerticalShiftPeriod
+  int AndorVerticalShiftAmplitude;
+#define LAST_ANDOR_PARAM AndorVerticalShiftAmplitude
 
  private:
 
@@ -121,13 +126,14 @@ class AndorCCD : public ADDriver {
   asynStatus setupShutter(int command);
   void saveDataFrame(int frameNumber);
   void setupADCSpeeds();
+  void setupTrackDefn(int minX, int sizeX, int binX);
   void setupPreAmpGains();
   void setupVerticalShiftPeriods();
   unsigned int SaveAsSPE(char *fullFileName);
   /**
    * Additional image mode to those in ADImageMode_t
    */
-   static const epicsInt32 AImageFastKinetics;
+  static const epicsInt32 AImageFastKinetics;
 
   /**
    * List of acquisiton modes.
@@ -197,7 +203,8 @@ class AndorCCD : public ADDriver {
   unsigned int mAcquiringData;
   char *mInstallPath;
   bool mExiting;
-  
+  int mExited;
+
   /**
    * ADC speed parameters
    */
@@ -222,17 +229,19 @@ class AndorCCD : public ADDriver {
   float mAccumulatePeriod;
   int mMinShutterOpenTime;
   int mMinShutterCloseTime;
-  
+
   // Shamrock spectrometer ID
   int mShamrockId;
 
   // AndorCapabilities structure
   AndorCapabilities mCapabilities;
 
+  CCDMultiTrack mMultiTrack;
+
   // EM Gain parameters 
   int mEmGainRangeLow;
   int mEmGainRangeHigh;
-  
+
   // SPE file header
   tagCSMAHEAD *mSPEHeader;
   xmlDocPtr mSPEDoc;
@@ -241,7 +250,4 @@ class AndorCCD : public ADDriver {
   bool mInitOK;
 };
 
-#define NUM_ANDOR_DET_PARAMS ((int)(&LAST_ANDOR_PARAM - &FIRST_ANDOR_PARAM + 1))
-
 #endif //ANDORCCD_H
-
