@@ -24,6 +24,7 @@ Release Notes
 =============
 R2-9 (December XXX, 2019)
 ----
+* This release **requires** ADCore R3-9 or later, because it uses the CCDMultiTrack support.
 * Added new cameraSerial argument to the constructor and to andorCCDConfig to specify the camera serial number.
   This will require changing the startup script if more than 2 arguments were passed to andorCCDConfigure.
   (Hinko Kocevar).
