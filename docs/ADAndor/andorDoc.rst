@@ -1,5 +1,5 @@
-areaDetector Andor driver
-=========================
+ADAndor
+=======
 
 :author: Matthew Pearson, Oak Ridge National Laboratory and
          Mark Rivers, University of Chicago
@@ -425,7 +425,7 @@ those in asynNDArrayDriver.h and ADDriver.h.
   * - AndorVSPeriod
     - asynInt32
     - R/W
-    - Sets Vetical Shift Period, in units of microseconds per pixel shift.<br/>
+    - Sets Vetical Shift Period, in units of microseconds per pixel shift. |br|
       Choices are constructed at runtime. For example, the choices for an iDus are: |hr|
       4.25 us |br|
       8.25 us |br|
