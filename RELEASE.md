@@ -22,6 +22,19 @@ files respectively, in the configure/ directory of the appropriate release of th
 
 Release Notes
 =============
+R2-9 (December XXX, 2019)
+----
+* Added new cameraSerial argument to the constructor and to andorCCDConfig to specify the camera serial number.
+  This will require changing the startup script if more than 2 arguments were passed to andorCCDConfigure.
+  (Hinko Kocevar).
+* Added support for VSAmplitude.  (Peter Heesterman)
+* Added support for MultiTrack readout.  Added "Random Track" to AndorReadoutMode. (Peter Heesterman).
+* Fixed bug which caused hang when exiting. (Peter Heesterman).
+* Fixed shutter bug.  setupShutter() was not being called when ADShutterMode changed (Mark Koennecke)
+* Converted documentation from HTML to ReST. (Stuart Wilkins, Mark Rivers)
+* Fixed error in src/Makefile for XML2.
+
+
 R2-8 (July 1, 2018)
 ----
 * Added support for new PVs in ADCore R3-3 in opi files (NumQueuedArrays, EmptyFreeList, etc.)
