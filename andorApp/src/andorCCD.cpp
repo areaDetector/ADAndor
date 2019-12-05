@@ -38,7 +38,7 @@
 #include "andorCCD.h"
 
 #define DRIVER_VERSION      2
-#define DRIVER_REVISION     8
+#define DRIVER_REVISION     9
 #define DRIVER_MODIFICATION 0
 
 static const char *driverName = "andorCCD";
@@ -705,7 +705,8 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if (function == ADShutterControl) {
       status = setupShutter(value);
     }
-    else if ((function == AndorShutterMode) ||
+    else if ((function == ADShutterMode) ||
+             (function == AndorShutterMode) ||
              (function == AndorShutterExTTL)) {
       status = setupShutter(-1);
     }
