@@ -106,7 +106,7 @@ Implementation of standard driver parameters
 The following table describes how the Andor driver implements some of
 the standard driver parameters.
 
-.. |br| raw:: html
+..  |br| raw:: html
 
     <br>
 
@@ -122,20 +122,23 @@ the standard driver parameters.
     - Description
   * - ADTriggerMode
     - $(P)$(R)TriggerMode, $(P)$(R)TriggerMode_RBV
-    - Sets the trigger mode for the detector. Options are: |br|
-      Internal |br|
-      External |br|
-      External Start |br|
-      External Exposure |br|
-      External FVP |br|
-      Software |br|
+    - Sets the trigger mode for the detector. Options are:
+
+      - Internal
+      - External
+      - External Start
+      - External Exposure
+      - External FVP
+      - Software
   * - ADImageMode
     - $(P)$(R)ImageMode, $(P)$(R)ImageMode_RBV
-    - Sets the image mode for the detector. Options are: |br|
-      Single |br|
-      Multiple |br|
-      Continuous |br|
-      Fast Kinetics |br|
+    - Sets the image mode for the detector. Options are:
+
+      - Single
+      - Multiple
+      - Continuous
+      - Fast Kinetics
+
       The relation of ImageMode to the Andor acquisition modes are given in the table
       below.
   * - ADNumExposures
@@ -154,15 +157,18 @@ the standard driver parameters.
     - Sets the pre-amp gain of the detector. For the Andor driver the Gain is treated
       as an integer index into the supported gain table of the specific detector. The
       list of supported gains for the detector gain be found by typing "asynReport 1,ANDOR"
-      at the IOC prompt. For example, on the iKon-M the relationship is: |br|
-      Gain=0 Andor gain=1.0 |br|
-      Gain=1 Andor gain=2.0 |br|
-      Gain=2 Andor gain=4.0 |br|
+      at the IOC prompt. For example, on the iKon-M the relationship is:
+
+      - Gain=0 Andor gain=1.0
+      - Gain=1 Andor gain=2.0
+      - Gain=2 Andor gain=4.0
   * - NDDataType
     - $(P)$(R)DataType, $(P)$(R)DataType_RBV
-    - Sets data type for reading out the detector. Allowed values are: |br|
-      UInt16 |br|
-      UInt32 |br|
+    - Sets data type for reading out the detector. Allowed values are:
+
+      - UInt16
+      - UInt32
+
       UInt16 can be used when reading out a 16-bit detector with NumExposures=1, (i.e.
       without accumulations), or when one can be sure that multiple accumulations will
       not overflow 16 bits. UInt32 should be used for 32-bit detectors or when multiple
@@ -175,14 +181,16 @@ the standard driver parameters.
     - Reads the actual temperature of the CCD
   * - NDFileFormat
     - $(P)$(R)FileFormat, $(P)$(R)FileFormat_RBV
-    - Selects the file format for saving files with the Andor driver. Choices are: |br|
-      TIFF |br|
-      BMP |br|
-      SIF |br|
-      EDF |br|
-      RAW |br|
-      FITS |br|
-      SPE |br|
+    - Selects the file format for saving files with the Andor driver. Choices are:
+
+      - TIFF
+      - BMP
+      - SIF
+      - EDF
+      - RAW
+      - FITS
+      - SPE
+
       All of the file formats except SPE are written by the Andor SDK. The SPE file format
       is written directly by the driver. It uses version 3.0 of the SPE format, which
       includes XML metadata after the image data. Only the SPE format is able to save
@@ -197,7 +205,6 @@ modes, and the meaning of NumExposures and NumImages.
   :widths: 10 15 15 15 15 15 15
 
   * -
-    -
     - Relationship of ImageMode to the Andor acquisition modes, and the meaning of NumExposures
       and NumImages.
   * - ImageMode
@@ -255,81 +262,53 @@ those in asynNDArrayDriver.h and ADDriver.h.
 .. cssclass:: table-bordered table-striped table-hover
 .. flat-table::
   :header-rows: 2
-  :widths: 5 5 5 70 5 5 5
+  :widths: 70 10 10 10
 
-  * -
-    -
-    - Parameter Definitions in andorCCD.h and EPICS Record Definitions in andorCCD.template
-  * - Parameter index variable
-    - asyn interface
-    - Access
-    - Description
+  * - Parameter Definitions in andorCCD.h and EPICS Record Definitions in andorCCD.template
+  * - Description
     - drvInfo string
     - EPICS record name
     - EPICS record type
-  * - AndorCoolerParam
-    - asynInt32
-    - R/W
-    - Turn the CCD cooler on and off
+  * - Turn the CCD cooler on and off
     - ANDOR_COOLER
     - AndorCooler, AndorCooler_RBV
     - bo, bi
-  * - AndorTempStatusMessage
-    - asynOctet
-    - R/O
-    - Temperature status message.
+  * - Temperature status message.
     - ANDOR_TEMP_STAT
     - AndorTempStatus_RBV
     - waveform
-  * - AndorMessage
-    - asynOctet
-    - R/O
-    - Other status message.
+  * - Other status message.
     - ANDOR_MESSAGE
     - AndorMessage_RBV
     - waveform
-  * - AndorShutterMode
-    - asynInt32
-    - R/W
-    - Selects the Andor shutter mode. Choices are: |br|
-      Full Auto |br|
-      Always Open |br|
-      Always Closed |br|
-      Open for FVB |br|
-      Open for Any |br|
+  * - Selects the Andor shutter mode. Choices are:
+      Full Auto
+      Always Open
+      Always Closed
+      Open for FVB
+      Open for Any
     - ANDOR_SHUTTER_MODE
     - AndorShutterMode
     - mbbo
-  * - AndorShutterExTTL
-    - asynInt32
-    - R/W
-    - Selects the TTL polarity of an external shutter. Choices are: |br|
-      Low To Open |br|
-      High To Open |br|
+  * - Selects the TTL polarity of an external shutter. Choices are:
+      Low To Open
+      High To Open
     - ANDOR_SHUTTER_EXTTL
     - AndorShutterExTTL
     - bo
-  * - AndorPALFileName
-    - asynOctet
-    - R/W
-    - Path and Filename of pallette file (used for TIFF and BMP file colours) (255 chars
+  * - Path and Filename of pallette file (used for TIFF and BMP file colours) (255 chars
       max).
     - ANDOR_PAL_FILE_PATH
     - PALFilePath
     - waveform
-  * - AndorAdcSpeed
-    - asynInt32
-    - R/W
-    - Switch between the slow (low noise) ADC and the fast ADC. Choices are: |br|
-      0.05 MHz |br|
-      2.5 MHz |br|
+  * - Switch between the slow (low noise) ADC and the fast ADC. Choices are:
+
+      - 0.05 MHz
+      - 2.5 MHz
     - ANDOR_ADC_SPEED
     - AndorADCSpeed, AndorADCSpeed_RBV
     - mbbo, mbbi
-  * - AndorAccumulatePeriod
-    - asynFloat64
-    - R/W
-    - Controls the period between accumulations when ImageMode=Single or Multiple and
+  * - Controls the period between accumulations when ImageMode=Single or Multiple and
       NumExposures&gt;1. NOTE: Some Andor detectors (including the iKon) only support
       a single period when doing multiple accumulations in kinetic series mode. For these
       cameras ANDOR_ACCUMULATE_PERIOD has no effect, ACQUIRE_PERIOD determines the time
@@ -338,100 +317,77 @@ those in asynNDArrayDriver.h and ADDriver.h.
     - ANDOR_ACCUMULATE_PERIOD
     - AndorAccumulatePeriod, AndorAccumulatePeriod_RBV
     - ao, ai
-  * - AndorAccumulatePeriodActual
-    - asynFloat64
-    - R/O
-    - Reads the actual value of AndorAccumulatePeriod, which may differ from the requested
+  * - Reads the actual value of AndorAccumulatePeriod, which may differ from the requested
       value due to timing limitations of the detector.
     - ANDOR_ACCUMULATE_PERIOD_ACTUAL
     - AndorAccumulatePeriodActual
     - ai
-  * - AndorAcquireTimeActual
-    - asynFloat64
-    - R/O
-    - Reads the actual value of ADAcquireTime, which may differ from the requested value
+  * - Reads the actual value of ADAcquireTime, which may differ from the requested value
       due to timing limitations of the detector.
     - ANDOR_ACQUIRE_TIME_ACTUAL
     - AndorAcquireTimeActual
     - ai
-  * - AndorAcquirePeriodActual
-    - asynFloat64
-    - R/O
-    - Reads the actual value of ADAcquirePeriod, which may differ from the requested value
+  * - Reads the actual value of ADAcquirePeriod, which may differ from the requested value
       due to timing limitations of the detector.
     - ANDOR_ACQUIRE_PERIOD_ACTUAL
     - AndorAcquirePeriodActual
     - ai
-  * - AndorBaselineClamp
-    - asynInt32
-    - R/W
-    - Enable or disable the baseline clamp option.
+  * - Enable or disable the baseline clamp option.
     - ANDOR_BASELINE_CLAMP
     - AndorBaselineClamp, AndorBaselineClamp_RBV
     - bo, bi
-  * - AndorEMGain
-    - asynInt32
-    - R/W
-    - Controls the Electron Multiplying (EM) Gain level on supported detectors. The valid
+  * - Controls the Electron Multiplying (EM) Gain level on supported detectors. The valid
       range depends on the value of AndorEMGainMode and the detector temperature. For
       cameras that do not support EM Gain, AndorEMGain has no effect.
     - ANDOR_EM_GAIN
     - AndorEMGain, AndorEMGain_RBV
     - ao, ai
-  * - AndorEMGainMode
-    - asynInt32
-    - R/W
-    - Sets the EM Gain mode on supported detectors. Choices are: |br|
-      8 bit DAC |br|
-      12 bit DAC |br|
-      Linear Mode |br|
-      Real EM Gain |br|
+  * - Sets the EM Gain mode on supported detectors. Choices are:
+
+      - 8 bit DAC
+      - 12 bit DAC
+      - Linear Mode
+      - Real EM Gain
+
       For cameras that do not support EM Gain, AndorEMGainMode has no effect.
     - ANDOR_EM_GAIN_MODE
     - AndorEMGainMode, AndorEMGainMode_RBV
     - mbbo, mbbi
-  * - AndorEMGainAdvanced
-    - asynInt32
-    - R/W
-    - Enables access to higher EM Gain levels. Choices are: |br|
-      Disabled |br|
-      Enabled |br|
-      For cameras that do not support EM Gain, AndorEMGainAdvanced has no effect. NOTE:
-      Before using higher levels, you should ensure that light levels do not exceed the
+  * - Enables access to higher EM Gain levels. Choices are:
+
+      - Disabled
+      - Enabled
+
+      For cameras that do not support EM Gain, AndorEMGainAdvanced has no effect. |br|
+      NOTE: Before using higher levels, you should ensure that light levels do not exceed the
       regime of tens of photons per pixel, otherwise accelerated ageing of the sensor
       can occur.
     - ANDOR_EM_GAIN_ADVANCED
     - AndorEMGainAdvanced, AndorEMGainAdvanced_RBV
     - bo, bi
-  * - AndorReadOutMode
-    - asynInt32
-    - R/W
-    - Switch between the readout modes. Choices are: |br|
-      Full Vertical Binning (FVB) |br|
-      Image |br|
+  * - Switch between the readout modes. Choices are:
+      Full Vertical Binning (FVB)
+      Image
     - ANDOR_READOUT_MODE
     - AndorReadOutMode, AndorReadOutMode_RBV
     - mbbo, mbbi
-  * - AndorFTMode
-    - asynInt32
-    - R/W
-    - Set Frame Transfer mode. Choices are: |br|
-      Disabled |br|
-      Enabled |br|
+  * - Set Frame Transfer mode. Choices are:
+  
+      - Disabled
+      - Enabled
+
       Note: Only available on supported CCDs.
     - ANDOR_FT_MODE
     - AndorFTMode, AndorFTMode_RBV
     - bo, bi
-  * - AndorVSPeriod
-    - asynInt32
-    - R/W
-    - Sets Vetical Shift Period, in units of microseconds per pixel shift. |br|
-      Choices are constructed at runtime. For example, the choices for an iDus are: |hr|
-      4.25 us |br|
-      8.25 us |br|
-      16.25 us |br|
-      32.25 us |br|
-      64.25 us |br|
+  * - Sets Vertical Shift Period, in units of microseconds per pixel shift. 
+      Choices are constructed at runtime. For example, the choices for an iDus are:
+
+      - 4.25 us
+      - 8.25 us
+      - 16.25 us
+      - 32.25 us
+      - 64.25 us
     - ANDOR_VS_PERIOD
     - AndorVSPeriod, AndorVSPeriod_RBV
     - mbbo, mbbi
@@ -453,77 +409,50 @@ wavelength, and slit sizes.
 .. cssclass:: table-bordered table-striped table-hover
 .. flat-table::
   :header-rows: 2
-  :widths: 5 5 5 70 5 5 5
+  :widths: 70 10 10 10
 
   * -
     -
     - Parameter Definitions in shamrock.cpp and EPICS Record Definitions in shamrock.template
-  * - Parameter index variable
-    - asyn interface
-    - Access
-    - Description
+  * - Description
     - drvInfo string
     - EPICS record name
     - EPICS record type
-  * - SRGrating
-    - asynInt32
-    - R/W
-    - Selects the grating to use
+  * - Selects the grating to use
     - SR_GRATING
     - Grating, Grating_RBV
     - mbbo, mbbi
-  * - SRGratingExists
-    - asynInt32
-    - R/O
-    - Flag indicating if a grating is present
+  * - Flag indicating if a grating is present
     - SR_GRATING_EXISTS
     - GratingExists[N], N=1-3
     - bi
-  * - SRWavelength
-    - asynFloat64
-    - R/W
-    - Selects the central wavelength
+  * - Selects the central wavelength
     - SR_WAVELENGTH
     - Wavelength, Wavelength_RBV
     - ao, ai
-  * - SRMinWavelength
-    - asynFloat64
-    - R/O
-    - The minimum wavelength of the current configuration (ADDR=0) or the minimum wavelength
+  * - The minimum wavelength of the current configuration (ADDR=0) or the minimum wavelength
       of grating N (N=1-3)
     - SR_MIN_WAVELENGTH
     - MinWavelength, MinWavelength[N], N=1-3
     - ai
-  * - SRMaxWavelength
-    - asynFloat64
-    - R/O
-    - The maximum wavelength of the current configuration or the maximum wavelength of
+  * - The maximum wavelength of the current configuration or the maximum wavelength of
       grating N (N=1-3)
     - SR_MAX_WAVELENGTH
     - MaxWavelength, MaxWavelength[N], N=1-3
     - ai
-  * - SRSlitSize
-    - asynFloat64
-    - R/W
-    - The size of slit N, N=1-4. The slits are numbered as follows: |br|
-      1. Input slit side |br|
-      2. Input slit direct |br|
-      3. Output slit side |br|
-      4. Output slit direct |br|
+  * - The size of slit N, N=1-4. The slits are numbered as follows:
+      1. Input slit side
+      2. Input slit direct
+      3. Output slit side
+      4. Output slit direct
     - SR_SLIT_SIZE
     - SlitSize[N], N=1-4, SlitSize[N]_RBV
     - ao, ai
-  * - SRSlitExists
-    - asynInt32
-    - R/O
-    - Flag indicating if a slit is present
+  * - Flag indicating if a slit is present
     - SR_SLIT_EXISTS
     - SlitExists[N], N=1-4
     - bi
-  * - SRCalibration
-    - asynFloat32Array
-    - R/O
-    - Array containing the wavelength calibration of each X pixel of the detector in nm.
+  * - Array containing the wavelength calibration of each X pixel of the detector in nm.
     - SR_CALIBRATION
     - Calibration
     - bi
