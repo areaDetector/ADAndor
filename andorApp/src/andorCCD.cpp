@@ -175,6 +175,14 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
     return;
   }
 
+    // Use this to signal the writeInt32 function that acquisition has started.
+  this->acquireEvent = epicsEventMustCreate(epicsEventEmpty);
+  if (!this->acquireEvent) {
+    printf("%s:%s epicsEventCreate failure for acquire event\n", driverName, functionName);
+    return;
+  }
+
+
   // Initialize ADC enums
   for (i=0; i<MAX_ADC_SPEEDS; i++) {
     mADCSpeeds[i].EnumValue = i;
@@ -627,16 +635,15 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     asynStatus status = asynSuccess;
     static const char *functionName = "writeInt32";
 
-    //Set in param lib so the user sees a readback straight away. Save a backup in case of errors.
+    // Save a backup in case of errors.
     getIntegerParam(function, &oldValue);
-    status = setIntegerParam(function, value);
 
     if (function == ADAcquire) {
       getIntegerParam(ADStatus, &adstatus);
       if (value && (adstatus == ADStatusIdle)) {
         try {
           mAcquiringData = 1;
-          //We send an event at the bottom of this function.
+          // We send an event at the bottom of this function.
         } catch (const std::string &e) {
           asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
             "%s:%s: %s\n",
@@ -724,31 +731,45 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       status = ADDriver::writeInt32(pasynUser, value);
     }
 
-    //For a successful write, clear the error message.
-    setStringParam(AndorMessage, " ");
+    /* Send a signal to the poller task which will make it do a poll, and switch to the fast poll rate */
+    epicsEventSignal(statusEvent);
+
+    /* Send our dataEvent and wait for acquisition to start */
+    if (function == ADAcquire && mAcquiringData) {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:%s:, Sending dataEvent to dataTask ...\n",
+        driverName, functionName);
+        // Signal the data readout thread
+        epicsEventSignal(dataEvent);
+        // Wait for event to tell us acquisition has started
+        this -> unlock();
+        epicsUInt32 eventStatus = epicsEventWait(acquireEvent);
+        if (eventStatus == epicsEventWaitOK) {
+          asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
+          "%s:%s: Received acquire event from data thread\n",
+          driverName, functionName);
+        }
+        this -> lock();
+    }
+
+    // Set parameter here in case of acquisition event
+    status = setIntegerParam(function, value);
 
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
 
-    /* Send a signal to the poller task which will make it do a poll, and switch to the fast poll rate */
-    epicsEventSignal(statusEvent);
-
-    if (mAcquiringData) {
-      asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-        "%s:%s:, Sending dataEvent to dataTask ...\n", 
-        driverName, functionName);
-      //Also signal the data readout thread
-      epicsEventSignal(dataEvent);
-    }
-
-    if (status)
+    if (status) {
         asynPrint(pasynUser, ASYN_TRACE_ERROR,
               "%s:%s: error, status=%d function=%d, value=%d\n",
               driverName, functionName, status, function, value);
-    else
+    }
+    else {
         asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
               "%s:%s: function=%d, value=%d\n",
               driverName, functionName, function, value);
+        /* For a successful write, clear the error message. */
+        setStringParam(AndorMessage, " ");
+    }
     return status;
 }
 
@@ -1515,13 +1536,16 @@ void AndorCCD::dataTask(void)
           driverName, functionName);
         checkStatus(StartAcquisition());
         acquiring = 1;
+        asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
+          "%s:%s: Acquisition started\n",
+          driverName, functionName);
       } catch (const std::string &e) {
         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
           "%s:%s: %s\n",
           driverName, functionName, e.c_str());
         continue;
       }
-      //Read some parameters
+      // Read some parameters
       getIntegerParam(NDDataType, &itemp); dataType = (NDDataType_t)itemp;
       getIntegerParam(NDAutoSave, &autoSave);
       getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
@@ -1531,6 +1555,8 @@ void AndorCCD::dataTask(void)
       setIntegerParam(ADNumImagesCounter, 0);
       setIntegerParam(ADNumExposuresCounter, 0);
       callParamCallbacks();
+      // Send event to signal acquisition has started
+      epicsEventSignal(acquireEvent);
     } else {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, 
         "%s:%s:, Data thread is running but main thread thinks we are not acquiring.\n", 
