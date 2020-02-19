@@ -627,16 +627,18 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     asynStatus status = asynSuccess;
     static const char *functionName = "writeInt32";
 
-    //Set in param lib so the user sees a readback straight away. Save a backup in case of errors.
+    // Set in param lib so the user sees a readback straight away. Save a backup in case of errors.
     getIntegerParam(function, &oldValue);
     status = setIntegerParam(function, value);
 
     if (function == ADAcquire) {
       getIntegerParam(ADStatus, &adstatus);
+      // Temporarily set ADAcquire back to 0 until Acquisition is started by dataTask
+      status = setIntegerParam(ADAcquire, 0);
       if (value && (adstatus == ADStatusIdle)) {
         try {
           mAcquiringData = 1;
-          //We send an event at the bottom of this function.
+          // We send an event at the bottom of this function.
         } catch (const std::string &e) {
           asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
             "%s:%s: %s\n",
@@ -724,9 +726,6 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       status = ADDriver::writeInt32(pasynUser, value);
     }
 
-    //For a successful write, clear the error message.
-    setStringParam(AndorMessage, " ");
-
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
 
@@ -737,18 +736,22 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s:%s:, Sending dataEvent to dataTask ...\n", 
         driverName, functionName);
-      //Also signal the data readout thread
+      // Also signal the data readout thread
       epicsEventSignal(dataEvent);
     }
 
-    if (status)
+    if (status) {
         asynPrint(pasynUser, ASYN_TRACE_ERROR,
               "%s:%s: error, status=%d function=%d, value=%d\n",
               driverName, functionName, status, function, value);
-    else
+    }
+    else {
         asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
               "%s:%s: function=%d, value=%d\n",
               driverName, functionName, function, value);
+        /* For a successful write, clear the error message. */
+        setStringParam(AndorMessage, " ");
+    }
     return status;
 }
 
@@ -1515,13 +1518,16 @@ void AndorCCD::dataTask(void)
           driverName, functionName);
         checkStatus(StartAcquisition());
         acquiring = 1;
+        asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
+          "%s:%s: Acquisition started\n",
+          driverName, functionName);
       } catch (const std::string &e) {
         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
           "%s:%s: %s\n",
           driverName, functionName, e.c_str());
         continue;
       }
-      //Read some parameters
+      // Read some parameters
       getIntegerParam(NDDataType, &itemp); dataType = (NDDataType_t)itemp;
       getIntegerParam(NDAutoSave, &autoSave);
       getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
@@ -1530,6 +1536,9 @@ void AndorCCD::dataTask(void)
       // Reset the counters
       setIntegerParam(ADNumImagesCounter, 0);
       setIntegerParam(ADNumExposuresCounter, 0);
+      callParamCallbacks();
+      // Set ADAcquire to 1
+      setIntegerParam(ADAcquire, 1);
       callParamCallbacks();
     } else {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, 
