@@ -1490,7 +1490,7 @@ void AndorCCD::dataTask(void)
     
     errorString = NULL;
 
-    //Wait for event from main thread to signal that data acquisition has started.
+    // Wait for event from main thread to signal that data acquisition has started.
     this->unlock();
     status = epicsEventWait(dataEvent);
     if (mExiting)
@@ -1500,7 +1500,7 @@ void AndorCCD::dataTask(void)
       driverName, functionName);
     this->lock();
 
-    //Sanity check that main thread thinks we are acquiring data
+    // Sanity check that main thread thinks we are acquiring data
     if (mAcquiringData) {
       try {
         status = setupAcquisition();
@@ -1521,7 +1521,7 @@ void AndorCCD::dataTask(void)
           driverName, functionName, e.c_str());
         continue;
       }
-      //Read some parameters
+      // Read some parameters
       getIntegerParam(NDDataType, &itemp); dataType = (NDDataType_t)itemp;
       getIntegerParam(NDAutoSave, &autoSave);
       getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
@@ -1638,14 +1638,14 @@ void AndorCCD::dataTask(void)
       ADDriver::setShutter(ADShutterClosed);
     }
 
-    //Now clear main thread flag
+    // Now clear main thread flag
     mAcquiringData = 0;
     setIntegerParam(ADAcquire, 0);
     //setIntegerParam(ADStatus, 0); //Dont set this as the status thread sets it.
 
     /* Call the callbacks to update any changes */
     callParamCallbacks();
-  } //End of loop
+  } // End of loop
   mExited++;
   this->unlock();
 }
@@ -1934,7 +1934,7 @@ done:
 }
 
 
-//C utility functions to tie in with EPICS
+// C utility functions to tie in with EPICS
 
 static void andorStatusTaskC(void *drvPvt)
 {
