@@ -358,31 +358,36 @@ void AndorCCD::setupPreAmpGains()
   char *enumStrings[MAX_PREAMP_GAINS];
   int enumValues[MAX_PREAMP_GAINS];
   int enumSeverities[MAX_PREAMP_GAINS];
+  static const char *functionName = "setupPreAmpGains";
   
   mNumPreAmpGains = 0;
   getIntegerParam(AndorAdcSpeed, &adcSpeed);
   pSpeed = &mADCSpeeds[adcSpeed];
 
-  for (i=0; i<mTotalPreAmpGains; i++) {
-    checkStatus(IsPreAmpGainAvailable(pSpeed->ADCIndex, pSpeed->AmpIndex, pSpeed->HSSpeedIndex, 
-                i, &isAvailable));
-    if (isAvailable) {
-      checkStatus(GetPreAmpGain(i, &gain));
-      epicsSnprintf(pGain->EnumString, MAX_ENUM_STRING_SIZE, "%.2f", gain);
-      pGain->EnumValue = i;
-      pGain->Gain = gain;
-      mNumPreAmpGains++;
-      if (mNumPreAmpGains >= MAX_PREAMP_GAINS) break;
-      pGain++;
+  try{
+    for (i=0; i<mTotalPreAmpGains; i++) {
+      checkStatus(IsPreAmpGainAvailable(pSpeed->ADCIndex, pSpeed->AmpIndex, pSpeed->HSSpeedIndex, 
+                  i, &isAvailable));
+      if (isAvailable) {
+        checkStatus(GetPreAmpGain(i, &gain));
+        epicsSnprintf(pGain->EnumString, MAX_ENUM_STRING_SIZE, "%.2f", gain);
+        pGain->EnumValue = i;
+        pGain->Gain = gain;
+        mNumPreAmpGains++;
+        if (mNumPreAmpGains >= MAX_PREAMP_GAINS) break;
+        pGain++;
+      }
     }
+    for (i=0; i<mNumPreAmpGains; i++) {
+      enumStrings[i] = mPreAmpGains[i].EnumString;
+      enumValues[i] = mPreAmpGains[i].EnumValue;
+      enumSeverities[i] = 0;
+    }
+    doCallbacksEnum(enumStrings, enumValues, enumSeverities, 
+                    mNumPreAmpGains, AndorPreAmpGain, 0);
+  } catch (const std::string &e) {
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "%s:%s: %s\n", driverName, functionName, e.c_str());
   }
-  for (i=0; i<mNumPreAmpGains; i++) {
-    enumStrings[i] = mPreAmpGains[i].EnumString;
-    enumValues[i] = mPreAmpGains[i].EnumValue;
-    enumSeverities[i] = 0;
-  }
-  doCallbacksEnum(enumStrings, enumValues, enumSeverities, 
-                  mNumPreAmpGains, AndorPreAmpGain, 0);
 }
 
 asynStatus AndorCCD::readEnum(asynUser *pasynUser, char *strings[], int values[], int severities[], 
