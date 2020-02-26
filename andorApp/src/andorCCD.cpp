@@ -634,6 +634,7 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     if (function == ADAcquire) {
       getIntegerParam(ADStatus, &adstatus);
       if (value && (adstatus == ADStatusIdle)) {
+        // Start the acqusition here, then send an event to the dataTask at the end of this function
         try {
           // Set up acquisition
           mAcquiringData = 1;
