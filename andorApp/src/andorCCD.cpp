@@ -241,6 +241,13 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
     checkStatus(GetFastestRecommendedVSSpeed(&mVSIndex, &mVSPeriod));
     mCapabilities.ulSize = sizeof(mCapabilities);
     checkStatus(GetCapabilities(&mCapabilities));
+
+    /* Get current temperature */
+    float temperature;
+    checkStatus(GetTemperatureF(&temperature));
+    printf("%s:%s: current temperature is %f\n", driverName, functionName, temperature);
+    setDoubleParam(ADTemperature, temperature);
+
     callParamCallbacks();
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
@@ -771,6 +778,10 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     int minTemp = 0;
     int maxTemp = 0;
 
+    /* Store the old value */
+    epicsFloat64 oldValue;
+    getDoubleParam(function, &oldValue);
+
     /* Set the parameter and readback in the parameter library.  */
     status = setDoubleParam(function, value);
 
@@ -791,16 +802,21 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
         "%s:%s:, Setting temperature value %f\n", 
         driverName, functionName, value);
       try {
+        /* Check requested temperature is within our range */
+        checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
           "%s:%s:, CCD Min Temp: %d, Max Temp %d\n", 
           driverName, functionName, minTemp, maxTemp);
-        checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
-        if ((static_cast<int>(value) > minTemp) & (static_cast<int>(value) < maxTemp)) {
+        if ((static_cast<int>(value) >= minTemp) & (static_cast<int>(value) <= maxTemp)) {
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
             "%s:%s:, SetTemperature(%d)\n", 
             driverName, functionName, static_cast<int>(value));
           checkStatus(SetTemperature(static_cast<int>(value)));
         } else {
+          /* Requested temperature is out of range */
+          status = setDoubleParam(function, oldValue);
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "Requested temperature out of range\n");
           setStringParam(AndorMessage, "Temperature is out of range.");
           callParamCallbacks();
           status = asynError;
@@ -816,24 +832,24 @@ asynStatus AndorCCD::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
              (function == ADShutterCloseDelay)) {             
       status = setupShutter(-1);
     }
-      
     else {
       status = ADDriver::writeFloat64(pasynUser, value);
     }
 
-    //For a successful write, clear the error message.
-    setStringParam(AndorMessage, " ");
-
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
-    if (status)
+    if (status) {
         asynPrint(pasynUser, ASYN_TRACE_ERROR,
               "%s:%s: error, status=%d function=%d, value=%f\n",
               driverName, functionName, status, function, value);
-    else
+    }
+    else {
         asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
             "%s:%s: function=%d, value=%f\n",
             driverName, functionName, function, value);
+        /* For a successful write, clear the error message. */
+        setStringParam(AndorMessage, " ");
+    }
     return status;
 }
 
