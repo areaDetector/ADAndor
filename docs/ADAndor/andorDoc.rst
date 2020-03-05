@@ -500,8 +500,16 @@ documentation <../areaDetectorDoxygenHTML/shamrock_8cpp.html>`__ and in the
 documentation for the constructor for the `shamrock
 class <../areaDetectorDoxygenHTML/classshamrock.html>`__.
 
+Example st.cmd startup file
+---------------------------
+
+.. toctree::
+   :hidden:
+   
+   st_cmd.rst
+
 There an example IOC boot directory and startup script
-:doc:`st_cmd` provided with
+:ref:`st.cmd <ADAndor_st_cmd_example>` provided with
 areaDetector.
 
 MEDM screens
