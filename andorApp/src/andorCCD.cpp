@@ -318,9 +318,9 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
     return;
   }
 
-  //Define the polling periods for the status thread.
-  mPollingPeriod = 0.2; //seconds
-  mFastPollingPeriod = 0.05; //seconds
+  // Define the polling periods for the status thread.
+  mPollingPeriod = 0.2; // seconds
+  mFastPollingPeriod = 0.05; // seconds
 
   mAcquiringData = 0;
   
@@ -639,16 +639,33 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     asynStatus status = asynSuccess;
     static const char *functionName = "writeInt32";
 
-    //Set in param lib so the user sees a readback straight away. Save a backup in case of errors.
+    // Set in param lib so the user sees a readback straight away. Save a backup in case of errors.
     getIntegerParam(function, &oldValue);
     status = setIntegerParam(function, value);
 
     if (function == ADAcquire) {
       getIntegerParam(ADStatus, &adstatus);
       if (value && (adstatus == ADStatusIdle)) {
+        // Start the acqusition here, then send an event to the dataTask at the end of this function
         try {
+          // Set up acquisition
           mAcquiringData = 1;
-          //We send an event at the bottom of this function.
+          status = setupAcquisition();
+          if (status != asynSuccess) throw std::string("Setup acquisition failed");
+          // Open the shutter if we control it
+          int adShutterMode;
+          getIntegerParam(ADShutterMode, &adShutterMode);
+          if (adShutterMode == ADShutterModeEPICS) {
+            ADDriver::setShutter(ADShutterOpen);
+          }
+          // Start acquisition
+          asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
+            "%s:%s:, StartAcquisition()\n", 
+            driverName, functionName);
+          checkStatus(StartAcquisition());
+          // Reset the counters
+          setIntegerParam(ADNumImagesCounter, 0);
+          setIntegerParam(ADNumExposuresCounter, 0);
         } catch (const std::string &e) {
           asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
             "%s:%s: %s\n",
@@ -736,9 +753,6 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       status = ADDriver::writeInt32(pasynUser, value);
     }
 
-    //For a successful write, clear the error message.
-    setStringParam(AndorMessage, " ");
-
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
 
@@ -749,7 +763,7 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
         "%s:%s:, Sending dataEvent to dataTask ...\n", 
         driverName, functionName);
-      //Also signal the data readout thread
+      // Also signal the data readout thread
       epicsEventSignal(dataEvent);
     }
 
@@ -761,6 +775,8 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
         asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
               "%s:%s: function=%d, value=%d\n",
               driverName, functionName, function, value);
+        // For a successful write, clear the error message.
+        setStringParam(AndorMessage, " ");
     return status;
 }
 
@@ -1084,7 +1100,7 @@ void AndorCCD::statusTask(void)
   printf("%s:%s: Status thread started...\n", driverName, functionName);
   while(!mExiting) {
 
-    //Read timeout for polling freq.
+    // Read timeout for polling freq.
     this->lock();
     if (forcedFastPolls > 0) {
       timeout = mFastPollingPeriod;
@@ -1103,10 +1119,10 @@ void AndorCCD::statusTask(void)
       asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
         "%s:%s: Got status event\n",
         driverName, functionName);
-      //We got an event, rather than a timeout.  This is because other software
-      //knows that data has arrived, or device should have changed state (parameters changed, etc.).
-      //Force a minimum number of fast polls, because the device status
-      //might not have changed in the first few polls
+      // We got an event, rather than a timeout.  This is because other software
+      // knows that data has arrived, or device should have changed state (parameters changed, etc.).
+      // Force a minimum number of fast polls, because the device status
+      // might not have changed in the first few polls
       forcedFastPolls = 5;
     }
 
@@ -1114,17 +1130,17 @@ void AndorCCD::statusTask(void)
     this->lock();
 
     try {
-      //Only read these if we are not acquiring data
+      // Only read these if we are not acquiring data
       if (!mAcquiringData) {
-        //Read cooler status
+        // Read cooler status
         checkStatus(IsCoolerOn(&value));
         status = setIntegerParam(AndorCoolerParam, value);
-        //Read temperature of CCD
+        // Read temperature of CCD
         checkStatus(GetTemperatureF(&temperature));
         status = setDoubleParam(ADTemperatureActual, temperature);
       }
 
-      //Read detector status (idle, acquiring, error, etc.)
+      // Read detector status (idle, acquiring, error, etc.)
       checkStatus(GetStatus(&value));
       uvalue = static_cast<unsigned int>(value);
       if (uvalue == ASIdle) {
@@ -1163,7 +1179,7 @@ void AndorCCD::statusTask(void)
     callParamCallbacks();
     this->unlock();
         
-  } //End of loop
+  } // End of loop
   asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
       "%s:%s: Status thread exiting ...\n",
       driverName, functionName);
@@ -1511,7 +1527,7 @@ void AndorCCD::dataTask(void)
     
     errorString = NULL;
 
-    //Wait for event from main thread to signal that data acquisition has started.
+    // Wait for event from main thread to signal that data acquisition has started.
     this->unlock();
     status = epicsEventWait(dataEvent);
     if (mExiting)
@@ -1521,41 +1537,23 @@ void AndorCCD::dataTask(void)
       driverName, functionName);
     this->lock();
 
-    //Sanity check that main thread thinks we are acquiring data
+    // Sanity check that main thread thinks we are acquiring data
     if (mAcquiringData) {
-      try {
-        status = setupAcquisition();
-        if (status != asynSuccess) continue;
-        getIntegerParam(ADShutterMode, &adShutterMode);
-        getIntegerParam(AndorReadOutMode, &readOutMode);
-        if (adShutterMode == ADShutterModeEPICS) {
-          ADDriver::setShutter(ADShutterOpen);
-        }
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
-          "%s:%s:, StartAcquisition()\n", 
-          driverName, functionName);
-        checkStatus(StartAcquisition());
-        acquiring = 1;
-      } catch (const std::string &e) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-          "%s:%s: %s\n",
-          driverName, functionName, e.c_str());
-        continue;
-      }
-      //Read some parameters
+      // Read some parameters
+      getIntegerParam(ADShutterMode, &adShutterMode);
+      getIntegerParam(AndorReadOutMode, &readOutMode);
       getIntegerParam(NDDataType, &itemp); dataType = (NDDataType_t)itemp;
       getIntegerParam(NDAutoSave, &autoSave);
       getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
       getIntegerParam(NDArraySizeX, &sizeX);
       getIntegerParam(NDArraySizeY, &sizeY);
-      // Reset the counters
-      setIntegerParam(ADNumImagesCounter, 0);
-      setIntegerParam(ADNumExposuresCounter, 0);
-      callParamCallbacks();
+      // Set acquiring to 1
+      acquiring = 1;
     } else {
       asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, 
         "%s:%s:, Data thread is running but main thread thinks we are not acquiring.\n", 
         driverName, functionName);
+      // Set acquiring to 0
       acquiring = 0;
     }
 
@@ -1654,19 +1652,20 @@ void AndorCCD::dataTask(void)
           }
       }
     }
-      
+    
+    // Close the shutter if we are controlling it
     if (adShutterMode == ADShutterModeEPICS) {
       ADDriver::setShutter(ADShutterClosed);
     }
 
-    //Now clear main thread flag
+    // Now clear main thread flag
     mAcquiringData = 0;
     setIntegerParam(ADAcquire, 0);
     //setIntegerParam(ADStatus, 0); //Dont set this as the status thread sets it.
 
     /* Call the callbacks to update any changes */
     callParamCallbacks();
-  } //End of loop
+  } // End of loop
   mExited++;
   this->unlock();
 }
@@ -1955,7 +1954,7 @@ done:
 }
 
 
-//C utility functions to tie in with EPICS
+// C utility functions to tie in with EPICS
 
 static void andorStatusTaskC(void *drvPvt)
 {
