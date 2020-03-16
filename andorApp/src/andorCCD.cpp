@@ -362,6 +362,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
 AndorCCD::~AndorCCD() 
 {
   static const char *functionName = "~AndorCCD";
+  asynStatus status;
 
   mExiting = true;
   this->lock();
@@ -378,9 +379,10 @@ AndorCCD::~AndorCCD()
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
       "%s:%s: %s\n",
       driverName, functionName, e.c_str());
+      status = asynError;
   }
   this->unlock();
-  while (mExited < 2)
+  while (mExited < 2 and status != asynError)
       epicsThreadSleep(0.2);
 }
 
