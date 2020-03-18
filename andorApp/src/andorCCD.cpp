@@ -244,10 +244,22 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
 
     /* Get current temperature */
     float temperature;
-    checkStatus(GetTemperatureF(&temperature));
-    printf("%s:%s: current temperature is %f\n", driverName, functionName, temperature);
-    setDoubleParam(ADTemperature, temperature);
-
+    int coolerStatus;
+    int maxTemp = 0;
+    int minTemp = 0;
+    checkStatus(IsCoolerOn(&coolerStatus));
+    if (coolerStatus){
+      checkStatus(GetTemperatureF(&temperature));
+      checkStatus(GetTemperatureRange(&minTemp, &maxTemp));
+      printf("%s:%s: current temperature is %f\n", driverName, functionName, temperature);
+      if (static_cast<int>(temperature) < minTemp) {
+        setDoubleParam(ADTemperature, minTemp);
+      } else if (static_cast<int>(temperature) < maxTemp) {
+        setDoubleParam(ADTemperature, maxTemp);
+      } else {
+        setDoubleParam(ADTemperature, temperature);
+      }
+    }
     callParamCallbacks();
   } catch (const std::string &e) {
     asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
