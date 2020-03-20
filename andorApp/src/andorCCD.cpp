@@ -254,7 +254,7 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
       printf("%s:%s: current temperature is %f\n", driverName, functionName, temperature);
       if (static_cast<int>(temperature) < minTemp) {
         setDoubleParam(ADTemperature, minTemp);
-      } else if (static_cast<int>(temperature) < maxTemp) {
+      } else if (static_cast<int>(temperature) > maxTemp) {
         setDoubleParam(ADTemperature, maxTemp);
       } else {
         setDoubleParam(ADTemperature, temperature);
