@@ -394,7 +394,7 @@ AndorCCD::~AndorCCD()
       status = asynError;
   }
   this->unlock();
-  while (mExited < 2 and status != asynError)
+  while ((mExited < 2) && (status != asynError))
       epicsThreadSleep(0.2);
 }
 
