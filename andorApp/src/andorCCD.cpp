@@ -906,8 +906,16 @@ void AndorCCD::setupTrackDefn(int minX, int sizeX, int binX)
             - The top and bottom positions of the tracks.
             - The left and right positions for the area of interest within each track
             - The horizontal and vertical binning for each track. */
-        TrackDefn[TrackNo * 6 + 0] = mMultiTrack.TrackStart(TrackNo);
-        TrackDefn[TrackNo * 6 + 1] = mMultiTrack.TrackEnd(TrackNo);
+        /*
+        Andor use 1-based exclusive co-ordinates.
+        e.g. from SDK manual:
+        1 2 1 1024 1 1
+        3 4 1 1024 1 1
+        5 6 1 1024 1 1
+        7 8 1 1024 1 1
+        9 10 1 1024 1 1 */
+        TrackDefn[TrackNo * 6 + 0] = mMultiTrack.TrackStart(TrackNo) + 1;
+        TrackDefn[TrackNo * 6 + 1] = mMultiTrack.TrackEnd(TrackNo) + 2; // CCDMultiTrack uses 0-based inlcusive co-ordinates.
         TrackDefn[TrackNo * 6 + 2] = minX + 1;
         TrackDefn[TrackNo * 6 + 3] = minX + sizeX;
         TrackDefn[TrackNo * 6 + 4] = binX;
