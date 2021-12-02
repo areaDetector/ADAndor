@@ -175,6 +175,13 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
     return;
   }
 
+  // Use this to signal the data acquisition task that the detector status has been updated.
+  this->idleEvent = epicsEventMustCreate(epicsEventEmpty);
+  if (!this->idleEvent) {
+    printf("%s:%s epicsEventCreate failure for idle event\n", driverName, functionName);
+    return;
+  }
+  
   // Initialize ADC enums
   for (i=0; i<MAX_ADC_SPEEDS; i++) {
     mADCSpeeds[i].EnumValue = i;
@@ -687,6 +694,12 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
           status = asynError;
         }
       }
+      else if (value && (adstatus != ADStatusIdle)) {
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s::%s STATUS CONFLICT, acquire flag switched on before detector was ready for it! \n", driverName, functionName);
+        status = asynError;
+      }
+
       if (!value && (adstatus != ADStatusIdle)) {
         try {
           asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW, 
@@ -1113,6 +1126,7 @@ void AndorCCD::statusTask(void)
 {
   int value = 0;
   float temperature;
+  unsigned int prev_uvalue = 0;
   unsigned int uvalue = 0;
   unsigned int status = 0;
   double timeout = 0.0;
@@ -1197,6 +1211,15 @@ void AndorCCD::statusTask(void)
       setStringParam(AndorMessage, e.c_str());
     }
 
+      // Signal the data acquisition thread when the detector status has been updated from 'Acquire' to 'Idle'
+    if ((prev_uvalue == ASAcquiring) && (uvalue == ASIdle)) {
+      epicsEventSignal(idleEvent);
+    }
+    
+    // Update the previous status record with the new detector status value 
+    if (prev_uvalue != uvalue) {
+      prev_uvalue = uvalue;
+    }
     /* Call the callbacks to update any changes */
     callParamCallbacks();
     this->unlock();
@@ -1680,13 +1703,33 @@ void AndorCCD::dataTask(void)
       ADDriver::setShutter(ADShutterClosed);
     }
 
-    // Now clear main thread flag
-    mAcquiringData = 0;
-    setIntegerParam(ADAcquire, 0);
-    //setIntegerParam(ADStatus, 0); //Dont set this as the status thread sets it.
 
-    /* Call the callbacks to update any changes */
+
+    // Update the detector status before the next acquisition gets triggered
+    epicsEventSignal(statusEvent);
+
+    // Wait to receive an event confirming that the detector status has been updated to 'Idle'
+    // (without it, the next acquisition may be triggered before the detector status is updated
+    //  --> see writeInt32 loop hole on line 773)
+    this->unlock();
+    status = epicsEventWait(idleEvent);
+    if (status == epicsEventWaitOK) {
+      asynPrint(pasynUserSelf, ASYN_TRACE_FLOW,
+        "%s:%s: Got idle transition event\n", driverName, functionName);
+    }
+    if (mExiting)
+      break;
+    this->lock();
+
+    // Switch the aquisition flag off
+    setIntegerParam(ADAcquire, 0);
+
+    // Call the callbacks to update any changes related to the data task
     callParamCallbacks();
+
+    // Now clear the main thread flag
+    mAcquiringData = 0;
+
   } // End of loop
   mExited++;
   this->unlock();
