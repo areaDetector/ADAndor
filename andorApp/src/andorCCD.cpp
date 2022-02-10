@@ -1409,10 +1409,13 @@ asynStatus AndorCCD::setupAcquisition()
         driverName, functionName, verticalShiftPeriod);
     checkStatus(SetVSSpeed(verticalShiftPeriod));
 
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-        "%s:%s:, SetVSAmplitude(%d)\n",
-        driverName, functionName, verticalShiftAmplitude);
-    checkStatus(SetVSAmplitude(verticalShiftAmplitude));
+    if ((mCapabilities.ulSetFunctions & AC_SETFUNCTION_VSAMPLITUDE) != 0)
+    {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+          "%s:%s:, SetVSAmplitude(%d)\n",
+          driverName, functionName, verticalShiftAmplitude);
+        checkStatus(SetVSAmplitude(verticalShiftAmplitude));
+    }
 
     switch (imageMode) {
       case ADImageSingle:
