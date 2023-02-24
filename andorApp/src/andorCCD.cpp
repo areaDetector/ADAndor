@@ -1686,7 +1686,13 @@ void AndorCCD::dataTask(void)
     // Now clear main thread flag
     mAcquiringData = 0;
     setIntegerParam(ADAcquire, 0);
-    //setIntegerParam(ADStatus, 0); //Dont set this as the status thread sets it.
+    // Wait for the status thread to set ADStatus to something other than ADStatusAcquire
+    while (1) {
+      epicsInt32 acquireStatus;
+      getIntegerParam(ADStatus, &acquireStatus);
+      if (acquireStatus != ADStatusAcquire) break;
+      epicsThreadSleep(0.01);
+    }
 
     /* Call the callbacks to update any changes */
     callParamCallbacks();
