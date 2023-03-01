@@ -1683,18 +1683,21 @@ void AndorCCD::dataTask(void)
       ADDriver::setShutter(ADShutterClosed);
     }
 
-    // Now clear main thread flag
+
+    // Wait for the status thread to set ADStatus to something other than Acquiring
+    while (1) {
+      epicsInt32 acquireStatus;
+      getIntegerParam(ADStatus,&acquireStatus);
+      if (acquireStatus!=ADStatusAcquire)  break;
+      // Allow other threads to update ADStatusAcquire
+      this->unlock();
+      epicsThreadSleep(0.01);
+      this->lock();
+    }
+
+    // Now clear main thread flag. W
     mAcquiringData = 0;
     setIntegerParam(ADAcquire, 0);
-    // Wait for detector to actually stop acquiring
-    while (1) {
-      int value;
-      unsigned int uvalue;
-      checkStatus(GetStatus(&value));
-      uvalue = static_cast<unsigned int>(value);
-      if (uvalue != ASAcquiring) break;
-      epicsThreadSleep(0.01);
-    }
 
     /* Call the callbacks to update any changes */
     callParamCallbacks();
