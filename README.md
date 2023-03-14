@@ -9,5 +9,5 @@ using Version 2 of the Andor Software Development Kit (SDK).
 
 
 Additional information:
-* [Documentation](https://areadetector.github.io/master/ADAndor/andorDoc.html)
+* [Documentation](https://areadetector.github.io/areaDetector/ADAndor/andorDoc.html)
 * [Release notes](RELEASE.md)
