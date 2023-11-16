@@ -1538,7 +1538,6 @@ void AndorCCD::dataTask(void)
   size_t dims[2];
   int nDims = 2;
   int i;
-  epicsTimeStamp startTime;
   NDArray *pArray;
   int autoSave;
   int readOutMode;
@@ -1618,7 +1617,6 @@ void AndorCCD::dataTask(void)
           setIntegerParam(ADNumImagesCounter, numImagesCounter);
           // If array callbacks are enabled then read data into NDArray, do callbacks
           if (arrayCallbacks) {
-            epicsTimeGetCurrent(&startTime);
             // Allocate an NDArray
             dims[0] = sizeX;
             dims[1] = sizeY;
@@ -1649,8 +1647,8 @@ void AndorCCD::dataTask(void)
             }
             /* Put the frame number and time stamp into the buffer */
             pArray->uniqueId = imageCounter;
-            pArray->timeStamp = startTime.secPastEpoch + startTime.nsec / 1.e9;
             updateTimeStamp(&pArray->epicsTS);
+            pArray->timeStamp = pArray->epicsTS.secPastEpoch + pArray->epicsTS.nsec / 1.e9;
             /* Get any attributes that have been defined for this driver */        
             this->getAttributes(pArray->pAttributeList);
             /* Call the NDArray callback */
