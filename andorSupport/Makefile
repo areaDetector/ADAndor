@@ -28,7 +28,7 @@ else ifeq ($(OS_CLASS), Linux)
   LIB_INSTALLS_Linux += ../os/linux-x86_64/libshamrockcif.so.2
   LIB_INSTALLS_Linux += ../os/linux-x86_64/libshamrockcif.so
 
-  else
+  else ifeq ($(ARCH_CLASS), x86)
   LIB_INSTALLS_Linux += ../os/linux-x86/libandor.so.2
   LIB_INSTALLS_Linux += ../os/linux-x86/libandor.so
   LIB_INSTALLS_Linux += ../os/linux-x86/libshamrockcif.so.2
