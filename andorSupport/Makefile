@@ -21,20 +21,21 @@ else ifeq (windows-x64, $(findstring windows-x64, $(T_A)))
 LIB_INSTALLS_WIN32    += ../os/windows-x64/atmcd64m.lib
 LIB_INSTALLS_WIN32    += ../os/windows-x64/ShamrockCIFm.lib
 
-else ifeq (linux-x86_64, $(findstring linux-x86_64, $(T_A)))
-LIB_INSTALLS_Linux += ../os/linux-x86_64/libandor.so.2
-LIB_INSTALLS_Linux += ../os/linux-x86_64/libandor.so
-LIB_INSTALLS_Linux += ../os/linux-x86_64/libshamrockcif.so.2
-LIB_INSTALLS_Linux += ../os/linux-x86_64/libshamrockcif.so
+else ifeq ($(OS_CLASS), Linux)
+  ifeq ($(ARCH_CLASS), x86_64)
+  LIB_INSTALLS_Linux += ../os/linux-x86_64/libandor.so.2
+  LIB_INSTALLS_Linux += ../os/linux-x86_64/libandor.so
+  LIB_INSTALLS_Linux += ../os/linux-x86_64/libshamrockcif.so.2
+  LIB_INSTALLS_Linux += ../os/linux-x86_64/libshamrockcif.so
 
-else ifeq (linux-x86, $(findstring linux-x86, $(T_A)))
-LIB_INSTALLS_Linux += ../os/linux-x86/libandor.so.2
-LIB_INSTALLS_Linux += ../os/linux-x86/libandor.so
-LIB_INSTALLS_Linux += ../os/linux-x86/libshamrockcif.so.2
-LIB_INSTALLS_Linux += ../os/linux-x86/libshamrockcif.so
+  else ifeq ($(ARCH_CLASS), x86)
+  LIB_INSTALLS_Linux += ../os/linux-x86/libandor.so.2
+  LIB_INSTALLS_Linux += ../os/linux-x86/libandor.so
+  LIB_INSTALLS_Linux += ../os/linux-x86/libshamrockcif.so.2
+  LIB_INSTALLS_Linux += ../os/linux-x86/libshamrockcif.so
 
+  endif
 endif
-
 #=============================
 
 include $(TOP)/configure/RULES
