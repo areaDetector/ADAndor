@@ -31,7 +31,9 @@
 #else
 #include "atmcdLXd.h"
 #endif
-#include "ShamrockCIF.h"
+#ifdef USE_SHAMROCK
+  #include "ShamrockCIF.h"
+#endif
 #include "SPEHeader.h"
 
 #include <epicsExport.h>
@@ -781,16 +783,17 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
       epicsEventSignal(dataEvent);
     }
 
-    if (status)
+    if (status) {
         asynPrint(pasynUser, ASYN_TRACE_ERROR,
               "%s:%s: error, status=%d function=%d, value=%d\n",
               driverName, functionName, status, function, value);
-    else
+    } else {
         asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
               "%s:%s: function=%d, value=%d\n",
               driverName, functionName, function, value);
         // For a successful write, clear the error message.
         setStringParam(AndorMessage, " ");
+    }
     return status;
 }
 
@@ -1882,26 +1885,28 @@ unsigned int AndorCCD::SaveAsSPE(char *fullFileName)
   for (i=0; i<nx; i++) calibration[i] = (float) i; 
   
   // If there is a valid Shamrock spectrometer get the calibration
-  int error;
-  int numSpectrometers;
-  error = ShamrockGetNumberDevices(&numSpectrometers);
-  if (error != SHAMROCK_SUCCESS) goto noSpectrometers;
-  if (numSpectrometers < 1) goto noSpectrometers;
-  if ((mShamrockId < 0) || (mShamrockId > numSpectrometers-1)) goto noSpectrometers;
-  error = ShamrockGetCalibration(mShamrockId, calibration, nx);
-  if (error != SHAMROCK_SUCCESS) {
-    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-      "%s::%s error reading Shamrock spectrometer calibration\n",
-      driverName, functionName);
-  }
+  #ifdef USE_SHAMROCK
+    int error;
+    int numSpectrometers;
+    error = ShamrockGetNumberDevices(&numSpectrometers);
+    if (error != SHAMROCK_SUCCESS) goto noSpectrometers;
+    if (numSpectrometers < 1) goto noSpectrometers;
+    if ((mShamrockId < 0) || (mShamrockId > numSpectrometers-1)) goto noSpectrometers;
+    error = ShamrockGetCalibration(mShamrockId, calibration, nx);
+    if (error != SHAMROCK_SUCCESS) {
+      asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+        "%s::%s error reading Shamrock spectrometer calibration\n",
+        driverName, functionName);
+    }
+   
+    // Create the calibration string
+    for (i=0; i<nx; i++) {
+      if (i > 0) strcat(calibrationString, ",");
+      sprintf(tempString, "%.6f", calibration[i]);
+      strcat(calibrationString, tempString);
+    }
   noSpectrometers:  
-  
-  // Create the calibration string
-  for (i=0; i<nx; i++) {
-    if (i > 0) strcat(calibrationString, ",");
-    sprintf(tempString, "%.6f", calibration[i]);
-    strcat(calibrationString, tempString);
-  }
+  #endif //USE_SHAMROCK
 
   // Create the XML data using SPETemplate.xml in the current directory as a template    
   if (mSPEDoc == 0) {
