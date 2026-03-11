@@ -240,7 +240,15 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
     checkStatus(SetReadMode(ARImage));
     checkStatus(SetImage(binX, binY, minX+1, minX+sizeX, minY+1, minY+sizeY));
     checkStatus(GetShutterMinTimes(&mMinShutterCloseTime, &mMinShutterOpenTime));
-    checkStatus(GetFastestRecommendedVSSpeed(&mVSIndex, &mVSPeriod));
+    try {
+      checkStatus(GetFastestRecommendedVSSpeed(&mVSIndex, &mVSPeriod));
+    } catch (const std::string &e) {
+      asynPrint(pasynUserSelf, ASYN_TRACE_WARNING,
+        "%s:%s: GetFastestRecommendedVSSpeed is not available: %lu: %s\n",
+         driverName, functionName, e.c_str());
+      mVSIndex = -1;
+      mVSPeriod = 0.0f;
+    }
     mCapabilities.ulSize = sizeof(mCapabilities);
     checkStatus(GetCapabilities(&mCapabilities));
 
@@ -529,18 +537,23 @@ void AndorCCD::setupVerticalShiftPeriods()
     int i, numVSPeriods;
     float VSPeriod;
     AndorVSPeriod_t *pPeriod = mVSPeriods;
+    static const char *functionName = "setupVerticalShiftPeriods";
 
     mNumVSPeriods = 0;
-    checkStatus(GetNumberVSSpeeds(&numVSPeriods));
-    for (i=0; i<numVSPeriods; i++) {
-        checkStatus(GetVSSpeed(i, &VSPeriod));
-        pPeriod->Index = i;
-        pPeriod->Period = VSPeriod;
-        epicsSnprintf(pPeriod->EnumString, MAX_ENUM_STRING_SIZE, 
-                      "%.2f us", VSPeriod);
-        mNumVSPeriods++;
-        if (mNumVSPeriods >= MAX_VS_PERIODS) return;
-        pPeriod++;
+    unsigned int error = GetNumberVSSpeeds(&mNumVSPeriods);
+    if (error == DRV_SUCCESS && mNumVSPeriods > 0) {
+        for (i=0; i<numVSPeriods; i++) {
+            checkStatus(GetVSSpeed(i, &VSPeriod));
+            pPeriod->Index = i;
+            pPeriod->Period = VSPeriod;
+            epicsSnprintf(pPeriod->EnumString, MAX_ENUM_STRING_SIZE, 
+                          "%.2f us", VSPeriod);
+            mNumVSPeriods++;
+            if (mNumVSPeriods >= MAX_VS_PERIODS) return;
+            pPeriod++;
+        }
+    } else {
+        printf("%s:%s: unable to set camera parameters\n", driverName, functionName);
     }
 }
 
@@ -608,15 +621,19 @@ void AndorCCD::report(FILE *fp, int details)
                 mPreAmpGains[i].EnumValue, mPreAmpGains[i].Gain);
       }
       
-      fprintf(fp, "  Vertical Shift Periods available: %d\n", mNumVSPeriods);
-      for (i=0; i<mNumVSPeriods; i++) {
-        fprintf(fp, "    Index=%d, Period=%f [us per pixel shift]\n",
-                mVSPeriods[i].EnumValue, mVSPeriods[i].Period);
+      if (mNumVSPeriods == 0) {
+        fprintf(fp, "  No Vertical Shift Periods available\n");
+      } else {
+        fprintf(fp, "  Vertical Shift Periods available: %d\n", mNumVSPeriods);
+        for (i=0; i<mNumVSPeriods; i++) {
+          fprintf(fp, "    Index=%d, Period=%f [us per pixel shift]\n",
+                  mVSPeriods[i].EnumValue, mVSPeriods[i].Period);
+        }
+        fprintf(fp, "  Fastest recommended Vertical Shift Period:\n");
+        checkStatus(GetFastestRecommendedVSSpeed(&vsIndex, &vsPeriod));
+        fprintf(fp, "    Index=%d, Period=%f [us per pixel shift]\n", vsIndex, vsPeriod);
       }
-      fprintf(fp, "  Fastest recommended Vertical Shift Period:\n");
-      checkStatus(GetFastestRecommendedVSSpeed(&vsIndex, &vsPeriod));
-      fprintf(fp, "    Index=%d, Period=%f [us per pixel shift]\n", vsIndex, vsPeriod);
-     
+
       fprintf(fp, "  Capabilities\n");
       fprintf(fp, "        AcqModes=0x%X\n", (int)mCapabilities.ulAcqModes);
       fprintf(fp, "       ReadModes=0x%X\n", (int)mCapabilities.ulReadModes);
@@ -1407,10 +1424,14 @@ asynStatus AndorCCD::setupAcquisition()
       driverName, functionName, frameTransferMode);
     checkStatus(SetFrameTransferMode(frameTransferMode));
 
-    asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-        "%s:%s:, SetVSSpeed(%d)\n",
-        driverName, functionName, verticalShiftPeriod);
-    checkStatus(SetVSSpeed(verticalShiftPeriod));
+    float s = 0.0f;
+    unsigned int error = GetVSSpeed(0, &s);
+    if (error == DRV_SUCCESS ) {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:%s:, SetVSSpeed(%d)\n",
+            driverName, functionName, verticalShiftPeriod);
+        checkStatus(SetVSSpeed(verticalShiftPeriod));
+    }
 
     if ((mCapabilities.ulSetFunctions & AC_SETFUNCTION_VSAMPLITUDE) != 0)
     {
