@@ -41,6 +41,7 @@
 #define AndorFrameTransferModeString       "ANDOR_FT_MODE"
 #define AndorVerticalShiftPeriodString     "ANDOR_VS_PERIOD"
 #define AndorVerticalShiftAmplitudeString  "ANDOR_VS_AMPLITUDE"
+#define AndorFanModeString                 "ANDOR_FAN_MODE"
 
 /**
  * Structure defining an ADC speed for the ADAndor driver.
@@ -117,7 +118,8 @@ class AndorCCD : public ADDriver {
   int AndorFrameTransferMode;
   int AndorVerticalShiftPeriod;
   int AndorVerticalShiftAmplitude;
-#define LAST_ANDOR_PARAM AndorVerticalShiftAmplitude
+  int AndorFanMode;
+#define LAST_ANDOR_PARAM AndorFanMode
 
  private:
 

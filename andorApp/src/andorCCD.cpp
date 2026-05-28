@@ -160,6 +160,8 @@ AndorCCD::AndorCCD(const char *portName, const char *installPath, int cameraSeri
   createParam(AndorFrameTransferModeString,       asynParamInt32, &AndorFrameTransferMode);
   createParam(AndorVerticalShiftPeriodString,     asynParamInt32, &AndorVerticalShiftPeriod);
   createParam(AndorVerticalShiftAmplitudeString,  asynParamInt32, &AndorVerticalShiftAmplitude);
+  createParam(AndorFanModeString,                 asynParamInt32, &AndorFanMode);
+
 
 
   // Create the epicsEvent for signaling to the status task when parameters should have changed.
@@ -758,6 +760,19 @@ asynStatus AndorCCD::writeInt32(asynUser *pasynUser, epicsInt32 value)
     else if (function == AndorBaselineClamp) {
       try {
         checkStatus(SetBaselineClamp(value));
+      } catch (const std::string &e) {
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+          "%s:%s: %s\n",
+          driverName, functionName, e.c_str());
+        status = asynError;
+      }
+    }
+    else if (function == AndorFanMode) {
+      try {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+          "%s:%s:, SetFanMode(%d)\n",
+          driverName, functionName, value);
+        checkStatus(SetFanMode(value));
       } catch (const std::string &e) {
         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
           "%s:%s: %s\n",
